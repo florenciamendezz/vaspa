@@ -1,12 +1,12 @@
 <?php
 include_once '../controlSistema/ManejadorPlan.php';
 include_once '../lib/ControlAcceso.Class.php';
-ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PLANES);
+ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
 include_once '../modeloSistema/Carrera.Class.php';
 
 // validamos que se esta enviando el codigo de la carrera
 if (!isset($_GET["id"]) || empty($_GET["id"])){
-    header("Location: planes.php");
+    header("Location: carreras.php");
     exit;
 }
 
@@ -15,7 +15,7 @@ $carrera = new Carrera($codCarrera);
 
 if (is_null($carrera->getId())){
     // no existe la carrera regresamos a la pantalla de planes
-    header("Location: planes.php");
+    header("Location: carreras.php");
     exit;
 }
 
@@ -66,11 +66,11 @@ $planes = $carrera->getPlanesDeEstudio();
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
                                 <?php
                                 foreach ($planes as $plan) {
                                     
                                     ?>
+                                <tr>
                                     <td><?= $plan->getId(); ?></td>
                                     <td><?= $plan->getAnio_inicio(); ?></td>
                                     <td><?= $plan->getAnio_fin(); ?></td>
@@ -97,12 +97,12 @@ $planes = $carrera->getPlanesDeEstudio();
                         </tbody>
                     </table>
                 </div>
-                <div class="card-footer">
-                    <a href="planes.php">
-                            <button type="button" class="btn btn-info">
-                                <span class="oi oi-justify-center"></span> Volver a Planes
-                            </button>
-                        </a>
+                <div class="card-footer text-center">
+                    <a href="carreras.php">
+                        <button type="button" class="btn btn-primary">
+                            <span class="oi oi-account-logout"></span> Volver A Carreras
+                        </button>
+                    </a>
                 </div>
             </div>
         </div>

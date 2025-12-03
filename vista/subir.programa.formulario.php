@@ -114,7 +114,7 @@ if (!is_dir($directorio)){
                         <button type="submit" class="btn btn-outline-primary" id="boton" name="boton">
                             <span class="oi oi-cloud-upload"></span> Subir Programa</button>
 
-                        <a href="panelSA.php">
+                        <a href="panelVA.php">
                             <button type="button" class="btn btn-outline-secondary">
                                 <span class="oi oi-home"></span> Volver a Inicio
                             </button>

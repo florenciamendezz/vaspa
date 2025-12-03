@@ -19,7 +19,7 @@ $ubicacionActual = $Programa->getUbicacion();
 
 if($ubicacionActual == "SA"){
 
-    $ubicacionActual = 'Secretar&iacute;a Acad&eacute;mica';
+    $ubicacionActual = 'Vinculaci&oacute;n Acad&eacute;mica';
 
     }elseif ($ubicacionActual == "DPTO") {
         
@@ -69,7 +69,7 @@ if($ubicacionActual == "SA"){
                         <br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         <input type="radio" name="ubicacion" value="SA" id="SA" checked>
-                        <label for="SA"><b>Secretar&iacute;a Acad&eacute;mica</b></label>
+                        <label for="SA"><b>Vinculaci&oacute;n Acad&eacute;mica</b></label>
                         <br/>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         <input type="radio" name="ubicacion" value="DPTO" id="DPTO">

@@ -39,21 +39,36 @@ if (isset($_POST['idProfesor']) && isset($_POST['anio'])){
             $codAsignatura = $registro["idAsignatura"];
             $codCarrera = $registro["idCarrera"];
             
-            $query = "SELECT * "
-                    . "FROM PROGRAMA_PDF WHERE "
-                    . "anio = '{$anio}' AND nombre LIKE 'prg_".$codAsignatura."_".$codCarrera."%'";
-            $programa = BDConexionSistema::getInstancia()->query($query);
-                    
+            $estaDisponible = false;
+
+            // 1. Verificar PDF Legacy + Aprobación en tabla programa
+            $queryLegacy = "SELECT * FROM PROGRAMA_PDF WHERE anio = '{$anio}' AND nombre LIKE 'prg_".$codAsignatura."_".$codCarrera."%'";
+            $resLegacy = BDConexionSistema::getInstancia()->query($queryLegacy);
+            if ($resLegacy && $resLegacy->num_rows > 0) {
+                 $sqlApp = "SELECT id FROM programa WHERE idAsignatura = {$codAsignatura} AND anio = {$anio} AND aprobadoVa = 1 AND aprobadoDepto = 1";
+                 $resApp = BDConexionSistema::getInstancia()->query($sqlApp);
+                 if ($resApp && $resApp->num_rows > 0) {
+                     $estaDisponible = true;
+                 }
+            }
+
+            // 2. Verificar PDF Nuevo + Aprobación
+            if (!$estaDisponible) {
+                $sqlNew = "SELECT id FROM programa_pdf_detalle WHERE id_asignatura = {$codAsignatura} AND anio = {$anio} AND aprobado_va = 1 AND aprobado_depto = 1";
+                $resNew = BDConexionSistema::getInstancia()->query($sqlNew);
+                if ($resNew && $resNew->num_rows > 0) {
+                    $estaDisponible = true;
+                }
+            }
+            
             $print .= '<tr><td>'.$registro["idPlan"].'</td>';
             $print .= '<td>'.$registro["idAsignatura"].'</td>';
             $print .= '<td>'.$registro["nombre"].'</td>';
-            
-            if ($programa->num_rows > 0){
-                //$print .= '<td class="bg-success text-white text-center">Si</td></tr>';
+
+            if ($estaDisponible){
                 $print .= '<td class="text-success text-center">Si <span class="oi oi-check"></span></td></tr>';
                 $cantProgDisponible++;
             } else {
-                //$print .= '<td class="bg-danger text-white text-center">No</td></tr>';
                 $print .= '<td class="text-danger text-center">No <span class="oi oi-x"></span></td></tr>';
                 $cantProgNoDisponible++;
             }

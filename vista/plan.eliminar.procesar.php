@@ -1,6 +1,6 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
-ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PLANES);
+ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
 include_once '../lib/Constantes.Class.php';
 include_once '../controlSistema/ManejadorPlan.php';
 include_once '../modeloSistema/Plan.Class.php';
@@ -60,9 +60,9 @@ try {
                                 <span class="oi oi-arrow-thick-left"></span> Volver a Revisiones del Plan
                             </button>
                         </a>
-                        <a href="planes.php">
+                        <a href="carreras.php">
                             <button type="button" class="btn btn-info">
-                                <span class="oi oi-justify-center"></span> Volver a Planes
+                                <span class="oi oi-justify-center"></span> Volver a Carreras
                             </button>
                         </a>
                 </div>

@@ -4,6 +4,7 @@ include_once '../lib/ControlAcceso.Class.php';
 require_once '../modeloSistema/Profesor.Class.php';
 require_once '../modeloSistema/BDConexionSistema.Class.php';
 require_once '../modeloSistema/Programa.Class.php';
+require_once '../modeloSistema/Asignatura.Class.php';
 
 // Obtenemos el rol del usuario logueado en el sistema
 $usuario = $_SESSION['usuario'];
@@ -34,6 +35,53 @@ if (!$resultado) {
 
 if (!$mostrarError){ // No ocurrio un error, y existe el profesor, obtenemos las asignaturas
     $asignaturas = $profesor->obtenerAsignaturasDePlanVigente();
+    
+    // Además, obtenemos TODAS las asignaturas del sistema
+    $sqlTodas = "SELECT DISTINCT a.* FROM ASIGNATURA a ORDER BY a.nombre ASC";
+    $resultadoTodas = BDConexionSistema::getInstancia()->query($sqlTodas);
+    $todasAsignaturas = array();
+    if ($resultadoTodas && $resultadoTodas->num_rows > 0) {
+        while ($fila = $resultadoTodas->fetch_assoc()) {
+            $asigTemp = new Asignatura($fila['id']);
+            if ($asigTemp->getId()) {
+                $todasAsignaturas[] = $asigTemp;
+            }
+        }
+    }
+    
+    // Obtenemos TODAS las carreras del sistema
+    $sqlCarreras = "SELECT * FROM CARRERA ORDER BY nombre ASC";
+    $resultadoCarreras = BDConexionSistema::getInstancia()->query($sqlCarreras);
+    $todasCarreras = array();
+    if ($resultadoCarreras && $resultadoCarreras->num_rows > 0) {
+        while ($filaCarrera = $resultadoCarreras->fetch_assoc()) {
+            $todasCarreras[] = $filaCarrera;
+        }
+    }
+    
+    // Construir mapa asignatura -> lista de carreras (puede haber varias)
+    $sqlRel = "SELECT c.id AS carreraID, c.nombre AS carrera, a.id AS asignaturaID, a.nombre AS asignatura, p.id AS plan "
+            . "FROM carrera c "
+            . "JOIN plan p ON p.idCarrera = c.id "
+            . "JOIN plan_asignatura pa ON pa.idPlan = p.id "
+            . "JOIN asignatura a ON a.id = pa.idAsignatura "
+            . "ORDER BY c.nombre";
+    $resultadoRel = BDConexionSistema::getInstancia()->query($sqlRel);
+    $asignaturaCarrera = array();
+    if ($resultadoRel && $resultadoRel->num_rows > 0) {
+        while ($r = $resultadoRel->fetch_assoc()) {
+            $aid = $r['asignaturaID'];
+            $cname = $r['carrera'];
+            if (!isset($asignaturaCarrera[$aid])) {
+                $asignaturaCarrera[$aid] = $cname;
+            } else {
+                // evitar duplicados
+                if (strpos($asignaturaCarrera[$aid], $cname) === false) {
+                    $asignaturaCarrera[$aid] .= ', ' . $cname;
+                }
+            }
+        }
+    }
 }
 
 ?>
@@ -95,6 +143,17 @@ if (!$mostrarError){ // No ocurrio un error, y existe el profesor, obtenemos las
                     <h3>Mis Asignaturas</h3>
                 </div>
                 <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="filtroCarrera">Filtrar por Carrera:</label>
+                            <select class="form-control" id="filtroCarrera">
+                                <option value="">Todas las Carreras</option>
+                                <?php foreach ($todasCarreras as $carrera) { ?>
+                                    <option value="<?= $carrera['id'] ?>"><?= $carrera['nombre'] ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                    </div>
                     <?php
                     if ($mostrarError) { ?>
                         <div class="alert alert-danger text-center" role="alert">
@@ -103,9 +162,9 @@ if (!$mostrarError){ // No ocurrio un error, y existe el profesor, obtenemos las
                     <?php
                     } else {
                         //var_dump($asignaturas);
-                        if (is_null($asignaturas)){ ?>
+                        if (empty($todasAsignaturas)){ ?>
                             <div class="alert alert-warning text-center" role="alert">
-                                No hay asignaturas en la cual el profesor es responsable.
+                                No hay asignaturas en el sistema.
                             </div>
                         <?php    
                         } else { ?>
@@ -113,107 +172,128 @@ if (!$mostrarError){ // No ocurrio un error, y existe el profesor, obtenemos las
                         <tr class="table-info">
                             <th>C&oacute;digo de Asignatura</th>
                             <th>Nombre</th>
+                            <th>Carreras</th>
                             <th>Estado del programa</th>
                             <th>Vigencia</th>
                             <th>Gestionar Programa</th>
                         </tr>
-                        <tr>
-                            <?php foreach ($asignaturas as $Asignatura) { ?>
+                        <?php foreach ($todasAsignaturas as $Asignatura) { 
+                                $carreras = $Asignatura->getCarreras();
+                                $idsCarreras = [];
+                                $nombresCarreras = [];
+                                if ($carreras) {
+                                    foreach ($carreras as $c) {
+                                        $idsCarreras[] = $c->getId();
+                                        $nombresCarreras[] = $c->getNombre();
+                                    }
+                                }
+                                $dataCarreras = implode(',', $idsCarreras);
+                            ?>
+                            <tr class="fila-asignatura" data-carreras="<?= $dataCarreras ?>">
                             <td><?= $Asignatura->getId(); ?></td>
                             <td><?= $Asignatura->getNombre(); ?></td>
+                            <td>
+                                <?php
+                                if (!empty($nombresCarreras)) {
+                                    echo implode("<br>", $nombresCarreras);
+                                } else {
+                                    echo "-";
+                                }
+                                ?>
+                            </td>
                             <td><?php 
                                  // Recuperamos un objeto Programa, vigente (del anio actual) si es que lo tiene
-                                 $programa = $Asignatura->obtenerProgramaVigente();
+                                 $programa = $Asignatura->obtenerUltimoPrograma();
                                  $vigencia = '-';
+                                 $estado = 'No Cargado';
+                                 $claseEstado = 'badge-secondary';
                                  
                                  // botones
-                                 $btnNuevoProgramaHabilitado = '<a title="Nuevo Programa" class="btn btn-outline-success" href="programa.crear.php?id='.$Asignatura->getId().'" role="button"><span class="oi oi-plus"></span></a>&nbsp;';
-                                 $btnNuevoProgramaDeshablitado = '<button type="button" title="Nuevo Programa" class="btn btn-outline-success" disabled><span class="oi oi-plus"></span></button>&nbsp;';
+                                 $btnNuevoProgramaHabilitado = '<a title="Nuevo Programa" class="btn btn-outline-success btn-sm" href="programa.crear.php?id='.$Asignatura->getId().'" role="button"><span class="oi oi-plus"></span></a>&nbsp;';
+                                 $btnNuevoProgramaDeshablitado = '<button type="button" title="Nuevo Programa" class="btn btn-outline-success btn-sm" disabled><span class="oi oi-plus"></span></button>&nbsp;';
                                  
+                                     
+                                 $btnModificarProgramaHabilitado = '<a title="Modificar Programa Actual" class="btn btn-outline-warning btn-sm" href="programa.modificar.pdf.php?id='.$Asignatura->getId().'" role="button"><span class="oi oi-pencil"></span></a>&nbsp;';
+                                 $btnModificarProgramaDeshabilitado = '<button type="button" title="Modificar Programa Actual" class="btn btn-outline-warning btn-sm" disabled><span class="oi oi-pencil"></span></button>&nbsp;';
+                                     
+                                 $btnEnviarRevisionDeshabilitado = '<button type="button" title="Enviar a Revisión" class="btn btn-outline-purple btn-sm" disabled><span class="oi oi-share"></span></button>&nbsp;';
                                  
-                                 $btnBibliografiaHabilitado = '<a title="Gestionar Bibliograf&iacute;a" class="btn btn-outline-primary" href="../lib/funcionesUtiles/getProgramaVigenteDeAsignatura.php?id='.$Asignatura->getId().'" role="button"><span class="oi oi-book"></span></a>&nbsp;';
-                                 $btnBibliografiaDeshabilitado= '<button type="button" title="Gestionar Bibliograf&iacute;a" class="btn btn-outline-primary" disabled><span class="oi oi-book"></span></button>&nbsp;';
-                                     
-                                 $btnModificarProgramaHabilitado = '<a title="Modificar Programa Actual" class="btn btn-outline-warning" href="programa.modificar.php?id='.$Asignatura->getId().'" role="button"="true"><span class="oi oi-pencil"></span></a>&nbsp;';
-                                 $btnModificarProgramaDeshabilitado = '<button type="button" title="Modificar Programa Actual" class="btn btn-outline-warning" disabled><span class="oi oi-pencil"></span></button>&nbsp;';
-                                     
-                                 //$btnEnviarRevisionHabilitado = '<a title="Enviar a Revisi&oacute;n" class="btn btn-outline-purple" href="#" role="button"><span class="oi oi-share"></span></a>&nbsp;';
-                                 $btnEnviarRevisionDeshabilitado = '<button type="button" title="Enviar a Revisi&oacute;n" class="btn btn-outline-purple" disabled><span class="oi oi-share"></span></button>&nbsp;';
-                                     
-                                 //$btnGenerarPDFHabilitado = '<a title="Generar PDF" class="btn btn-outline-info" href="../controlSistema/programa.revisar.generarpdf.php?id='.$programa->getId().'" role="button" target="_blank"><span class="oi oi-document"></span></a>';
-                                 $btnGenerarPDFDeshabilitado = '<button type="button" class="btn btn-outline-info" disabled title="Generar PDF"><span class="oi oi-document"></span></button>';
+                                 $btnGenerarPDFDeshabilitado = '<button type="button" class="btn btn-outline-info btn-sm" disabled title="Descargar PDF"><span class="oi oi-document"></span></button>';
                                  
-                                 $botones = ''; // varibale donde almacenaremos etiquetas HTML para los botones
+                                 $botones = ''; // variable donde almacenaremos etiquetas HTML para los botones
                                  if (is_null($programa)){
-                                     echo 'No Cargado';
+                                     $estado = 'No Cargado';
+                                     $claseEstado = 'badge-secondary';
                                      $botones = $btnNuevoProgramaHabilitado
                                              .$btnModificarProgramaDeshabilitado
-                                             .$btnBibliografiaDeshabilitado
                                              .$btnEnviarRevisionDeshabilitado
                                              .$btnGenerarPDFDeshabilitado;
                                  } else {
-                                     $estado = $programa->obtenerEstadoDelPrograma();
+                                     $estadoReal = $programa->obtenerEstadoDelPrograma();
+                                     $estado = $estadoReal;
                                      $anioPrograma = $programa->getAnio();
-                                     $vigencia = $programa->getVigencia();
-                                     if ($vigencia == 1){
+                                     $vigenciaVal = $programa->getVigencia();
+                                     if ($vigenciaVal == 1){
                                          $vigencia = "$anioPrograma";
-                                     } elseif ($vigencia == 2) {
+                                     } elseif ($vigenciaVal == 2) {
                                          $vigencia = "$anioPrograma - ".($anioPrograma+1);
-                                     } elseif ($vigencia == 3) {
+                                     } elseif ($vigenciaVal == 3) {
                                          $vigencia = "$anioPrograma - ".($anioPrograma+1)." - ".($anioPrograma+2);
                                      }
-                                     echo $estado;
                                      
-//                                    $btnNuevoProgramaHabilitado = '<a title="Nuevo Programa" class="btn btn-outline-success" href="programa.crear.php?id='.$Asignatura->getId().'" role="button"><span class="oi oi-plus"></span></a>&nbsp;';
-//                                    $btnNuevoProgramaDeshablitado = '<button type="button" title="Nuevo Programa" class="btn btn-outline-success" disabled><span class="oi oi-plus"></span></button>&nbsp;';
-//
-//                                    $btnModificarProgramaHabilitado = '<a title="Modificar Programa Actual" class="btn btn-outline-warning" href="programa.modificar.php?id='.$Asignatura->getId().'" role="button"="true"><span class="oi oi-pencil"></span></a>&nbsp;';
-//                                    $btnModificarProgramaDeshabilitado = '<button type="button" title="Modificar Programa Actual" class="btn btn-outline-warning" disabled><span class="oi oi-pencil"></span></button>&nbsp;';
-
-                                    $btnEnviarRevisionHabilitado = '<a title="Enviar a Revisi&oacute;n" class="btn btn-outline-purple" href="enviarProgramaRevision.php?idPrograma='.$programa->getId().'" role="button"><span class="oi oi-share"></span></a>&nbsp;';
+                                     // Colores de badge según estado
+                                     switch ($estadoReal) {
+                                         case 'Aprobado':
+                                         case 'En Vigencia':
+                                             $claseEstado = 'badge-success';
+                                             break;
+                                         case 'Cargando':
+                                             $claseEstado = 'badge-warning';
+                                             break;
+                                         case 'En Revisión':
+                                             $claseEstado = 'badge-primary';
+                                             break;
+                                         case 'Desaprobado':
+                                             $claseEstado = 'badge-danger';
+                                             break;
+                                     }
+                                     
+                                    $btnEnviarRevisionHabilitado = '<a title="Enviar a Revisión" class="btn btn-outline-purple btn-sm" href="enviarProgramaRevision.php?idPrograma='.$programa->getId().'" role="button"><span class="oi oi-share"></span></a>&nbsp;';
                                     
-                                    //$btnEnviarRevisionDeshabilitado = '<button type="button" title="Enviar a Revisi&oacute;n" class="btn btn-outline-purple" disabled><span class="oi oi-share"></span></button>&nbsp;';
-
-                                    $btnGenerarPDFHabilitado = '<a title="Generar PDF" class="btn btn-outline-info" href="../vista/programa.generarPDF.php?id='.$programa->getId().'" role="button" target="_blank"><span class="oi oi-document"></span></a>';
-                                    //$btnGenerarPDFDeshabilitado = '<button type="button" class="btn btn-outline-info" disabled title="Generar PDF"><span class="oi oi-document"></span></button>';
+                                    $btnGenerarPDFHabilitado = '<a title="Descargar PDF" class="btn btn-outline-info btn-sm" href="programa.descargarPDF.php?id='.$programa->getId().'" role="button" target="_blank"><span class="oi oi-document"></span></a>';
 
                                      // segun estado habilitamos ciertos botones
-                                     switch ($estado) {
+                                     switch ($estadoReal) {
                                          case "En Vigencia":
                                              $botones = $btnNuevoProgramaHabilitado
                                                         .$btnModificarProgramaDeshabilitado
-                                                        .$btnBibliografiaDeshabilitado
-                                                        .$btnEnviarRevisionHabilitado
-                                                        .$btnGenerarPDFDeshabilitado;
+                                                        .$btnEnviarRevisionDeshabilitado
+                                                        .$btnGenerarPDFHabilitado;
                                              break;
                                          case "Cargando":
                                              $botones = $btnNuevoProgramaDeshablitado
                                                         .$btnModificarProgramaHabilitado
-                                                        .$btnBibliografiaHabilitado
                                                         .$btnEnviarRevisionHabilitado
-                                                        .$btnGenerarPDFDeshabilitado;
+                                                        .$btnGenerarPDFHabilitado;
                                              
                                              break;
-                                         case "En Revisi&oacute;n":
+                                         case "En Revisión":
                                              $botones = $btnNuevoProgramaDeshablitado
                                                         .$btnModificarProgramaDeshabilitado
-                                                        .$btnBibliografiaDeshabilitado
                                                         .$btnEnviarRevisionDeshabilitado
-                                                        .$btnGenerarPDFDeshabilitado;
+                                                        .$btnGenerarPDFHabilitado;
                                              
                                              break;
                                          case "Desaprobado":
                                              $botones = $btnNuevoProgramaDeshablitado
                                                         .$btnModificarProgramaHabilitado
-                                                        .$btnBibliografiaHabilitado
-                                                        .$btnEnviarRevisionDeshabilitado
-                                                        .$btnGenerarPDFDeshabilitado;
+                                                        .$btnEnviarRevisionHabilitado
+                                                        .$btnGenerarPDFHabilitado;
                                              
                                              break;
                                          case "Aprobado":
                                              $botones = $btnNuevoProgramaDeshablitado
                                                         .$btnModificarProgramaDeshabilitado
-                                                        .$btnBibliografiaDeshabilitado
                                                         .$btnEnviarRevisionDeshabilitado
                                                         .$btnGenerarPDFHabilitado;
 
@@ -223,6 +303,7 @@ if (!$mostrarError){ // No ocurrio un error, y existe el profesor, obtenemos las
                                      }
                                  }
                                 ?>
+                                <span class="badge <?= $claseEstado; ?>"><?= htmlspecialchars($estado); ?></span>
                             </td>
                             <td><?= $vigencia;?></td>
 
@@ -241,5 +322,26 @@ if (!$mostrarError){ // No ocurrio un error, y existe el profesor, obtenemos las
             </div>
         </div>
         <?php include_once '../gui/footer.php'; ?>
+        <script>
+            $(document).ready(function() {
+                $('#filtroCarrera').on('change', function() {
+                    var carreraId = $(this).val();
+                    if (carreraId === "") {
+                        $('.fila-asignatura').show();
+                    } else {
+                        $('.fila-asignatura').each(function() {
+                            var ids = $(this).data('carreras');
+                            // Convert to string and split, or handle empty case
+                            var idsArray = String(ids).split(',');
+                            if (idsArray.includes(carreraId)) {
+                                $(this).show();
+                            } else {
+                                $(this).hide();
+                            }
+                        });
+                    }
+                });
+            });
+        </script>
     </body>
 </html>

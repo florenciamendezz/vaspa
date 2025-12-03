@@ -14,10 +14,24 @@ if (!isset($_GET['id']) || $_GET['id'] == "" || !is_numeric($_GET['id']) || $_GE
 }
 
 
+include_once '../modeloSistema/ProgramaPDFDetalle.Class.php';
+
 // validamos que no se intenta aprobar nuevamente dicho programa
 
 
-$enlace = "../controlSistema/programa.revisar.generarpdf.php?id=".$_GET['id']."#toolbar=0&navpanes=0&scrollbar=0";
+// Verificamos si existe un PDF asociado al programa
+$objPDF = ProgramaPDFDetalle::obtenerPorAsignaturaYAnio($programa->getIdAsignatura(), $programa->getAnio());
+$enlace = "";
+
+if ($objPDF) {
+    $rutaArchivo = $objPDF->getRutaArchivo();
+    $enlace = "../archivos/programas/" . $rutaArchivo;
+} else {
+    // Si no hay PDF subido, mantenemos la lógica anterior (o mostramos mensaje)
+    // El usuario pidió "no generar pdfs", así que quizás deberíamos avisar si no hay PDF.
+    // Pero por compatibilidad con viejos programas, dejamos el generador por ahora o mostramos alerta.
+    $enlace = "../controlSistema/programa.revisar.generarpdf.php?id=".$_GET['id']."#toolbar=0&navpanes=0&scrollbar=0";
+}
 //$enlace = "generarPDFprograma.php?id=".$_GET['id']."#toolbar=0&navpanes=0&scrollbar=0";
 
 
@@ -155,10 +169,10 @@ $carreras = $asignatura->getCarreras();
             
             <?php 
                                 
-                                if (!is_null($programa->getComentarioSa())){
+                                if (!is_null($programa->getComentarioVa())){
                                     echo '<div class="card-body">
-                                            <h5 class="card-title">Secretar&iacute;a Acad&eacute;mica</h5>
-                                            <p class="card-text text-muted">'.$programa->getComentarioSa().'</p>
+                                            <h5 class="card-title">Vinculaci&oacute;n Acad&eacute;mica</h5>
+                                            <p class="card-text text-muted">'.$programa->getComentarioVa().'</p>
                                           </div>';
                                 }
                                 if (!is_null($programa->getComentarioDepto())){

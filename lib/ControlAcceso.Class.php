@@ -1,8 +1,8 @@
 <?php
 
 session_start();
-include_once 'Constantes.Class.php';
-include_once '../modelo/BDColeccionGenerica.Class.php';
+include_once __DIR__ . '/Constantes.Class.php';
+include_once __DIR__ . '/../modelo/BDColeccionGenerica.Class.php';
 header('Content-Type: text/html; charset=UTF-8');    
 /**
  * Clase de constantes para el uso del sistema de Roles y Permisos.
@@ -43,13 +43,13 @@ class PermisosSistema {
      */
     // Permisos para ABM del sistema (Rol "Secretario Academico" y "Admin")
     const PERMISO_CARRERAS = "Carreras";
-    const PERMISO_PLANES = "Planes";
+
     const PERMISO_ASIGNATURAS = "Asignaturas";
     const PERMISO_PROFESORES = "Profesores";
     
     // Permisos para el Rol "Secretario Academico" y "Admin"
     const PERMISO_SUBIR_PROGRAMA_FIRMADO = "Subir Programa Firmado";
-    const PERMISO_SUBIR_PLAN = "Subir Plan";
+
     const PERMISO_SEGUIR_PROGRAMA = "Seguir Programa";
     const PERMISO_ENVIAR_NOTIFICACION = "Enviar Notificacion";
     const PERMISO_CARGA_MASIVA_PROGRAMAS = "Carga Masiva Programas";
@@ -71,8 +71,9 @@ class PermisosSistema {
      */
     //const ROL_ESTANDAR = 'Usuario Comun'; // Eliminar este ROL
     const ROL_ADMIN = "Administrador";
-    const ROL_SECRETARIO_ACADEMICO = "Secretaría Académica";
+    const ROL_VINCULACION_ACADEMICA = "Vinculación Académica";
     const ROL_DIRECTOR_DEPARTAMENTO = "Director de Departamento";
+    const ROL_DIRECTOR_ESCUELA = "Director de Escuela";
     const ROL_PROFESOR = "Profesor";
     //const ROL_INVITADO = "Invitado";
 
@@ -436,8 +437,8 @@ class ControlAcceso {
                 $this->ubicacion = Constantes::HOMEAUTH;
                 header("Location: {$this->ubicacion}");
             }
-            if ($rol == PermisosSistema::ROL_SECRETARIO_ACADEMICO){
-                $this->ubicacion = Constantes::HOME_SA;
+            if ($rol == PermisosSistema::ROL_VINCULACION_ACADEMICA){
+                $this->ubicacion = Constantes::HOME_VA;
                 header("Location: {$this->ubicacion}");
             }
             if ($rol == PermisosSistema::ROL_PROFESOR){
@@ -445,6 +446,10 @@ class ControlAcceso {
                 header("Location: {$this->ubicacion}");
             }
             if ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO){
+                $this->ubicacion = Constantes::HOME_DPTO;
+                header("Location: {$this->ubicacion}");
+            }
+            if ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA){
                 $this->ubicacion = Constantes::HOME_DPTO;
                 header("Location: {$this->ubicacion}");
             }

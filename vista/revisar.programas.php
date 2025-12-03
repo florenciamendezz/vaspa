@@ -2,15 +2,15 @@
 header ('Content-Type: text/html; charset=ISO-8859-1');
 /* Aqui comienza el CU Revisar Programa
  * Observaciones: 
- * - Rol Secretario Academico y Administrador comparten la misma funcionalidad
+ * - Rol Vinculación Académica y Administrador comparten la misma funcionalidad
  * Esto quiere decir que si el usuario tiene el rol de Admin va a revisar los programas
- * como si fuese un usuario de SA. (preguntar a los chicos)
- * 
- */
+ * como si fuese un usuario de VA. (preguntar a los chicos)
+ * */
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_REVISAR_PROGRAMA);
 include_once '../modeloSistema/BDConexionSistema.Class.php';
 require_once '../controlSistema/ManejadorCarrera.php';
+include_once '../lib/funcionesUtiles/constantesMail.php'; // Incluido aquí para asegurar disponibilidad
 
 $manejadorCarrera = new ManejadorCarrera();
 $carreras = $manejadorCarrera->getColeccion();
@@ -19,43 +19,47 @@ $carreras = $manejadorCarrera->getColeccion();
 $Usuario = $_SESSION['usuario'];
 $rol = $Usuario->roles[0]->nombre;
 
-$filtro = '1=1';// Filtro para utilizar en la query
+$filtro = '1=1';// Filtro por defecto
 
-if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_SECRETARIO_ACADEMICO){
-    $rol = 'SA'; // administrador / SA
-    $filtro = " aprobadoSa IS NULL"; // Filtro para utilizar en la query
+// --- INICIO: LÓGICA DE FILTRADO DINÁMICO PARA CARGA INICIAL ---
+// La clave es que el filtro debe excluir lo que el rol ya aprobó (aprobadoX = 1).
+if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACION_ACADEMICA){
+    $rol = 'VA'; // administrador / VA
+    // Filtro VA: Sólo si NO ha sido aprobado por VA
+    $filtro = " (aprobadoVa IS NULL OR aprobadoVa = 0) "; 
 } elseif ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO) {
-    include_once '../lib/funcionesUtiles/constantesMail.php';
     if ($Usuario->email == MAIL_DEPTO_CNE){
         $rol = 'DCNE'; // Dpto Ciencias Naturales y Exactas;
-        $filtro = " idDepartamento = '2' AND aprobadoDepto IS NULL"; // Filtro para utilizar en la query
+        // Filtro Depto: Sólo si NO ha sido aprobado por Depto
+        $filtro = " idDepartamento = '2' AND (aprobadoDepto IS NULL OR aprobadoDepto = 0) "; 
     } elseif ($Usuario->email == MAIL_DEPTO_CS) {
         $rol = 'DCS'; // Dpto Ciencias Sociales 
-        $filtro = " idDepartamento = '1' AND aprobadoDepto IS NULL"; // Filtro para utilizar en la query
+        // Filtro Depto: Sólo si NO ha sido aprobado por Depto
+        $filtro = " idDepartamento = '1' AND (aprobadoDepto IS NULL OR aprobadoDepto = 0) "; 
     } else {
-        $rol = 'NA'; // No se  encontro el rol del Usuario
-    }  
+        $rol = 'NA'; // No se encontro el rol del Usuario (aplicar filtro estricto por defecto)
+        $filtro = " (aprobadoVa IS NULL OR aprobadoVa = 0) AND (aprobadoDepto IS NULL OR aprobadoDepto = 0) ";
+    } 
 }
+// --- FIN: LÓGICA DE FILTRADO DINÁMICO PARA CARGA INICIAL ---
+
 
 // ARMAMOS LA CONSULTA EN DONDE SE OBTENDRAN LOS 20 PROGRAMAS DE ASIGNATURAS "NO REVISADOS" MAS RECIENTES TENIENDO EN CUENTA QUE LA VIGENCIA CONTENGA EL AÑO ACTUAL
 $anioActual = date("Y"); //obtenemos el anio (4 digitos) del servidor (anio actual)
 
 $query = "SELECT DISTINCT (p.id) as idPrograma, nombre, a.id, anio, vigencia, fechaCarga 
-                FROM plan pl
-                JOIN plan_asignatura pa 
-                ON pl.id = pa.idPlan
-                JOIN asignatura a 
-                ON pa.idAsignatura = a.id 
-                JOIN programa p 
-                ON a.id = p.idAsignatura 
-                WHERE enRevision = 1 AND $filtro "
-                . "AND anio <= {$anioActual} "
-                . "AND (anio+vigencia-1) >= {$anioActual} "
-                . "ORDER BY fechaCarga DESC "
-                . "LIMIT 20";
-
-        //var_dump($query);
-        //exit();
+                 FROM plan pl
+                 JOIN plan_asignatura pa 
+                 ON pl.id = pa.idPlan
+                 JOIN asignatura a 
+                 ON pa.idAsignatura = a.id 
+                 JOIN programa p 
+                 ON a.id = p.idAsignatura 
+                 WHERE enRevision = 1 AND (fueDesaprobado IS NULL OR fueDesaprobado = 0) AND $filtro " // Se incluye el filtro de desaprobado y el filtro por rol
+                 . "AND anio <= {$anioActual} "
+                 . "AND (anio+vigencia-1) >= {$anioActual} "
+                 . "ORDER BY fechaCarga DESC "
+                 . "LIMIT 20";
 
 // Ejecutamos la query
 
@@ -63,25 +67,18 @@ function getVigencia($anio, $vigencia) {
     switch ($vigencia) {
         case 1:
             return $anio;
-            //break;
         case 2:
             return $anio.' - '.($anio+1);
-            //break;
         case 3:
             return $anio.' - '.($anio+1).' - '.($anio+2);
-            //break;
-
         default:
             return $anio;
-            //break;
     }
 }
 
 function obtenerProgramasAsignaturasRecientes($query) {
     $resultado = BDConexionSistema::getInstancia()->query($query);
-    //$html = '<br>'; // variable a retornar
     $html = '<h5 class="text-center text-muted">Programas recientes No Revisados</h5>';
-    //$html .= '<br>'; 
     if ($resultado !== false){
         if ($resultado->num_rows > 0) {
             // Creamos la tabla donde presentaremos la info
@@ -107,30 +104,31 @@ function obtenerProgramasAsignaturasRecientes($query) {
                 $html .= '<td>'.getVigencia($fila['anio'], $fila['vigencia']).'</td>';
                 $html .= '<td>'.$fechaCarga.'</td>';
                 $html .= '<td><a title="Revisar Programa" href="revisar.programa.php?id='.$fila['idPrograma'].'">
-                                        <button type="button" class="btn btn-outline-success">
-                                            <span class="oi oi-document"></span>
-                                        </button></a></td>';
+                                         <button type="button" class="btn btn-outline-success">
+                                             <span class="oi oi-document"></span>
+                                         </button></a></td>';
                 $html .= '</tr>';
 
             }
             // cerramos etiquetas de la tabla
             $html .= '</tbody>';
             $html .= '</table>';
+            $html .= '<div class="alert alert-info">Mostrando los '.min(20, $resultado->num_rows).' programas más recientes.</div>';
         } else { // No hay registros --> Mostramos mensaje 
             $html .= '<div class="alert alert-warning alert-dismissible fade show text-center" role="alert">
-                    No hay programas de asignaturas para revisar.
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>';
+                      No hay programas de asignaturas para revisar.
+                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>';
         }
     } else { // Ocurrio un error al realizar peticion --> Mostramos mensaje
             $html .= '<div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
-                    Ocurrio un Error al realizar peticion a la BD.
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>';
+                      Ocurrio un Error al realizar peticion a la BD.
+                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>';
         }
     return $html;
 }
@@ -171,20 +169,14 @@ function obtenerProgramasAsignaturasRecientes($query) {
                                 <?php
                                 if (!empty($carreras)) {
                                     
-                                        foreach ($carreras as $carrera) {
-                                            echo '<option value="' . $carrera->getId() . '">'.$carrera->getId().' - '.$carrera->getNombre().'</option>';
-                                        }
-                                    
+                                            foreach ($carreras as $carrera) {
+                                                echo '<option value="' . $carrera->getId() . '">'.$carrera->getId().' - '.$carrera->getNombre().'</option>';
+                                            }
+                                        
                                 }
                                 ?>
                             </select>
                         </div>
-
-<!--                        <div class="col-sm-3">
-                            <label for="plan">Plan de Estudio</label>
-                            <select id="plan" name="plan" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione Plan de Estudio" data-none-results-text="No se encontraron resultados" data-size="5">
-                            </select>
-                        </div>-->
 
                     </div>
                     <br>
@@ -197,7 +189,8 @@ function obtenerProgramasAsignaturasRecientes($query) {
                     ?>
                     <div id="tabProgramas">
                         <?php 
-                            echo obtenerProgramasAsignaturasRecientes($query); // Mostramos tabla programas recientes o mensaje
+                            // Esta línea llama a la función con el filtro dinámico ya preparado para la carga inicial
+                            echo obtenerProgramasAsignaturasRecientes($query); 
                         ?>
                     </div>
                     <br>
@@ -207,41 +200,42 @@ function obtenerProgramasAsignaturasRecientes($query) {
                 </div>
             </div>
         </div>
-         <?php include_once '../gui/footer.php'; ?>
+          <?php include_once '../gui/footer.php'; ?>
         
         <script>
             $(document).ready(function(){
-                  $('#carrera').change(function () {
-                    var codCarrera = $('#carrera').val();
-                    // constante que almacena el rol del usuario logueado en el sistema
-                    //const rol = "";
-                    const rol = "<?php echo $rol; ?>";
-                    //alert(codCarrera);
-                    $.ajax({
-                      type: 'POST',
-                      url: '../lib/consultaAjax/revisarPrograma/tablaProgramasAsignaturas.php',
-                      data: {'codCarrera': codCarrera,
-                            'rol': rol}
-                    })
-                    .done(function(programas){
-                      $('#tabProgramas').html(programas);
-                    })
-                    .fail(function(){
-                      alert('Hubo un error al cargar los Programas de Asignaturas.')
-                    });
-                  });
-                                    
-              });
-    </script>
-    
-    <script type="text/javascript">
-                $('#tablaPrograma').DataTable({
-                    language: {
-                        url: '../lib/datatable/es-ar.json'
-                    }
-                });
-</script>
-    
+                      $('#carrera').change(function () {
+                        var codCarrera = $('#carrera').val();
+                        // constante que almacena el rol del usuario logueado en el sistema
+                        const rol = "<?php echo $rol; ?>";
+                        $.ajax({
+                          type: 'POST',
+                          url: '../lib/consultaAjax/revisarPrograma/tablaProgramasAsignaturas.php',
+                          data: {'codCarrera': codCarrera,
+                                'rol': rol}
+                        })
+                        .done(function(programas){
+                          $('#tabProgramas').html(programas);
+                          // Inicializar DataTable en la respuesta AJAX (asumiendo que tablaProgramasAsignaturas.php devuelve la estructura de tabla)
+                          $('#tablaPrograma').DataTable({
+                                language: {
+                                    url: '../lib/datatable/es-ar.json'
+                                }
+                          });
+                        })
+                        .fail(function(){
+                          alert('Hubo un error al cargar los Programas de Asignaturas.')
+                        });
+                      });
+                              
+                      // Inicializar DataTable en la carga inicial
+                      $('#tablaPrograma').DataTable({
+                            language: {
+                                url: '../lib/datatable/es-ar.json'
+                            }
+                      });
+            });
+        </script>
+        
     </body>
 </html>
-

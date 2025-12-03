@@ -1,5 +1,5 @@
 <?php 
-include_once 'BDConexion.Class.php';
+include_once __DIR__ . '/BDConexion.Class.php';
 
 /**
  * Descripcion de BDModeloGenerico

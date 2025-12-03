@@ -224,17 +224,6 @@ $tieneCorrelativa = BDConexionSistema::getInstancia()->query($consulta);
 
                     <div id="tabla"></div>
 
-                </div>
-                <div class="card-footer text-center">
-                    <a href="planes.php">
-                    <button type="button" class="btn btn-primary">
-                        <span class="oi oi-account-logout"></span> Volver a Planes
-                    </button>
-                    </a>
-                </div>    
-            </div>
-        </div>
-
         <?php include_once '../gui/footer.php'; ?>
 
 

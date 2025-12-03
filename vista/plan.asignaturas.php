@@ -1,7 +1,7 @@
 <?php
 
     include_once '../lib/ControlAcceso.Class.php';
-    ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PLANES);
+    ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
     include_once '../modeloSistema/Plan.Class.php';
 
     $idCarrera = $_GET['idCarrera'];
@@ -181,9 +181,9 @@
                     <div id="tabla"></div>
                 </div>
                 <div class="card-footer text-center">
-                    <a href="planes.php">
+                    <a href="carreras.php">
                         <button type="button" class="btn btn-primary">
-                            <span class="oi oi-account-logout"></span> Volver A Planes
+                            <span class="oi oi-account-logout"></span> Volver A Carreras
                         </button>
                     </a>
                 </div>    

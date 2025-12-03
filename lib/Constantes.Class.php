@@ -28,7 +28,7 @@ class Constantes {
     const HOMEAUTH = "http://localhost/vaspa/app/usuarios.php";
     
     // constante que almacena la direccion de la pantalla principal del rol Secretario Academico
-    const HOME_SA = "http://localhost/vaspa/vista/panelSA.php";
+    const HOME_VA = "http://localhost/vaspa/vista/panelVA.php";
     
     // constante que almacena la direccion de la pantalla principal del rol Profesor
     const HOME_PROF = "http://localhost/vaspa/vista/asignaturasDeProfesor.php";

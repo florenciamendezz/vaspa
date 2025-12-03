@@ -46,19 +46,6 @@ function sendemail($mail_username, $mail_userpassword, $mail_addAddress, $mail_s
 		//echo 'Error de correo: ' . $mail->ErrorInfo."</p>";
             echo '<div class="alert alert-danger" role="alert">Ha ocurrido un error al enviar el correo.<b>('.$mail->ErrorInfo.')</b></div>';
 	} 
-//        else {
-//		//echo '<p style="color:green">Tu mensaje ha sido enviado!</p>';
-//                echo '<div class="alert alert-success" role="alert">Correo enviado con &eacute;xito.</div>';
-//	}
-}
-
-// funcion que prepara los datos necesarios para notificar al usuario de Secretaria 
-// Academica de la creacion de un nuevo programa de asignatura para que despues lo revise
-function enviarMailNuevoProgramaSA($idPrograma) {
-    include_once '../modeloSistema/Asignatura.Class.php';
-    include_once '../modeloSistema/Profesor.Class.php';
-    include_once '../modeloSistema/Programa.Class.php';
-    //if (isset($_GET['codAsig'])) {
         //include("../sendemail.php"); //Mando a llamar la funcion que se encarga de enviar el correo electronico
         $programa = new Programa($idPrograma);
         $asignatura = new Asignatura($programa->getIdAsignatura());

@@ -1,4 +1,14 @@
-<?php include_once '../lib/ControlAcceso.Class.php'; ?>
+<?php
+// HABILITAR ERRORES EN PANTALLA (solo para desarrollo)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+
+// (opcional) loguear también a archivo
+ini_set('log_errors', 1);
+ini_set('error_log', 'C:/xampp/php/logs/php_error_log');
+include_once '../lib/ControlAcceso.Class.php'; ?>
+
 <style>
     .dropdown {
         position: relative;
@@ -34,7 +44,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     
     <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_VER_VIGENCIA_PROGRAMAS)) { ?>
-        <a class="navbar-brand" href="../vista/panelSA.php">
+        <a class="navbar-brand" href="../vista/panelVA.php">
             <img src="../lib/img/VASPA_isotipo.png" width="40" height="30" class="d-inline-block align-top" alt="">
             VASPA
         </a>
@@ -81,7 +91,7 @@
             <?php } ?>
 
             <!--                MENU "GESTIONAR PROGRAMAS"             -->
-            <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_SEGUIR_PROGRAMA)) { ?>
+            <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_REVISAR_PROGRAMA) || ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_GENERAR_INFORME_GERENCIAL)) { ?>
                 <div class="dropdown">
                     <li class="nav-item">
                         <a class="nav-link" href="#">
@@ -90,13 +100,6 @@
                         </a>
                     </li>
                     <div class="dropdown-content">
-
-                        <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_SEGUIR_PROGRAMA)) { ?>
-                            <a class = "nav-link" href = "../vista/programa.seguirPdf.php">
-                                <span class = "oi oi-document" />
-                                Seguimiento de Programas
-                            </a>
-                        <?php } ?>
 
                         <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_REVISAR_PROGRAMA)) { ?>
                             <a class = "nav-link" href = "../vista/revisar.programas.php">
@@ -115,38 +118,9 @@
                 </div>
             <?php } ?>
 
-            <!--                MENU "CARGA DE ARCHIVOS"             -->
-            <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_SUBIR_PROGRAMA_FIRMADO)) { ?>
-                <div class="dropdown">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <span class="oi oi-cloud-upload" />
-                            Carga de Archivos
-                        </a>
-                    </li>
-                    <div class="dropdown-content">
-                        <a class="nav-link" href="../vista/subir.programa.formulario.php">
-                            <span class="oi oi-document" />
-                            Subir Programa
-                        </a>
 
-                        <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_CARGA_MASIVA_PROGRAMAS)) { ?>
-                            <a class = "nav-link" href = "../vista/programa.formulario.cargaMasiva.php">
-                                <span class = "oi oi-document" />
-                                Carga Masiva de Programas
-                            </a>
-                        <?php } ?>
 
-                        <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_SUBIR_PLAN)) { ?>
-                            <a class = "nav-link" href = "../vista/subir.plan.formulario.php">
-                                <span class = "oi oi-document" />
-                                Subir Plan
-                            </a>
-                        <?php } ?>
 
-                    </div>
-                </div>
-            <?php } ?>
 
             
             <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_CARRERAS)) { ?>
@@ -159,14 +133,7 @@
             <?php } ?>
 
             
-            <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_PLANES)) { ?>
-                <li class="nav-item">
-                    <a class="nav-link" href="../vista/planes.php">
-                        <span class="oi oi-justify-center" />
-                        Planes
-                    </a>
-                </li>                
-            <?php } ?>
+
 
             
             <?php 
@@ -174,7 +141,7 @@
             $UsuarioSes = $_SESSION['usuario'];
             $perfil = $UsuarioSes->roles[0]->nombre;
             
-            if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_PROFESORES && $perfil == PermisosSistema::ROL_SECRETARIO_ACADEMICO)) { ?>
+            if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_PROFESORES && $perfil == PermisosSistema::ROL_VINCULACION_ACADEMICA)) { ?>
                 <li class="nav-item">
                     <a class="nav-link" href="../vista/profesores.php">
                         <span class="oi oi-people" />
@@ -184,14 +151,7 @@
             <?php } ?>
 
             
-            <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_ASIGNATURAS)) { ?>
-                <li class="nav-item">
-                    <a class="nav-link" href="../vista/asignaturas.php">
-                        <span class="oi oi-align-center" />
-                        Asignaturas
-                    </a>
-                </li>                
-            <?php } ?>
+
 
 
 

@@ -1,6 +1,6 @@
 <?php
 
-include_once 'BDModeloGenerico.Class.php';
+include_once __DIR__ . '/BDModeloGenerico.Class.php';
 
 /**
  * Descripcion de ColeccionBDGenerica

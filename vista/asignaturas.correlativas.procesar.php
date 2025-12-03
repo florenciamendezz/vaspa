@@ -36,10 +36,10 @@ if (isset($_POST['idPlan']) && isset($_POST['idAsignatura'])){
 
 		if($vectorTipos[$i] == 'Precedente'){
 				
-				$consulta.="('','".$vectorRequisitos[$i]."','".$idAsignatura."','".$vectorAsignaturas[$i]."','".$idPlan."'),"; 
+				$consulta.="(NULL,'".$vectorRequisitos[$i]."','".$idAsignatura."','".$vectorAsignaturas[$i]."','".$idPlan."'),"; 
 		}
 		else{
-				$consulta.="('','".$vectorRequisitos[$i]."','".$vectorAsignaturas[$i]."','".$idAsignatura."','".$idPlan."'),"; 
+				$consulta.="(NULL,'".$vectorRequisitos[$i]."','".$vectorAsignaturas[$i]."','".$idAsignatura."','".$idPlan."'),"; 
 		}
 		
 	}
@@ -101,9 +101,9 @@ if (isset($_POST['idPlan']) && isset($_POST['idAsignatura'])){
                             <span class="oi oi-arrow-thick-left"></span> Volver a Asignaturas Correlativas
                         </button>
                     </a>
-                    <a href="planes.php">
+                    <a href="carreras.php">
                         <button type="button" class="btn btn-info">
-                            <span class="oi oi-justify-center"></span> Volver a Planes
+                            <span class="oi oi-justify-center"></span> Volver a Carreras
                         </button>
                     </a>
                 </div>

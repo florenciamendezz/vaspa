@@ -37,14 +37,16 @@ class Programa {
     private $aprobacionLibre;
     private $ubicacion;
     private $idAsignatura;
-    private $aprobadoSa;
+    private $aprobadoVa;
     private $aprobadoDepto;
     private $fechaCarga;
     private $vigencia;
-    private $comentarioSa;
+    private $comentarioVa;
     private $comentarioDepto;
+    private $comentarioEscuela;
     private $enRevision;
     private $fueDesaprobado;
+    private $aprobadoEscuela;
     private $query;
 
     /**
@@ -80,8 +82,9 @@ class Programa {
             $this->setAprobacionLibre($datos['aprobacionLibre']);
             $this->setUbicacion($datos['ubicacion']);
             $this->setIdAsignatura($datos['idAsignatura']);
-            $this->setAprobadoSa($datos['aprobadoSa']);
+            $this->setAprobadoVa($datos['aprobadoVa']);
             $this->setAprobadoDepto($datos['aprobadoDepto']);
+            $this->setAprobadoEscuela($datos['aprobadoEscuela']);
             $this->setFechaCarga($datos['fechaCarga']);
             $this->setVigencia($datos['vigencia']);
     
@@ -105,7 +108,10 @@ class Programa {
         if ($this->datos->num_rows == 1){
             $this->datos = $this->datos->fetch_assoc();
             foreach ($this->datos as $atributo => $valor) {
-                $this->{$atributo} = $valor;
+                // Mapeo de columnas antiguas a nuevas propiedades si es necesario
+                if ($atributo == 'aprobadoSa') $this->aprobadoVa = $valor;
+                elseif ($atributo == 'comentarioSa') $this->comentarioVa = $valor;
+                else $this->{$atributo} = $valor;
             }    
         } else {
             // seteamos a NULL el id del objeto, con lo que se deberia validar si el id es NULL es que el no existe un programa con tal ID
@@ -300,12 +306,16 @@ class Programa {
         $this->ubicacion = $ubicacion;
     }
 
-    function getAprobadoSa() {
-        return $this->aprobadoSa;
+    function getAprobadoVa() {
+        return $this->aprobadoVa;
     }
 
     function getAprobadoDepto() {
         return $this->aprobadoDepto;
+    }
+
+    function getAprobadoEscuela() {
+        return $this->aprobadoEscuela;
     }
 
     function getFechaCarga() {
@@ -316,12 +326,16 @@ class Programa {
         return $this->vigencia;
     }
 
-    function setAprobadoSa($aprobadoSa) {
-        $this->aprobadoSa = $aprobadoSa;
+    function setAprobadoVa($aprobadoVa) {
+        $this->aprobadoVa = $aprobadoVa;
     }
 
     function setAprobadoDepto($aprobadoDepto) {
         $this->aprobadoDepto = $aprobadoDepto;
+    }
+
+    function setAprobadoEscuela($aprobadoEscuela) {
+        $this->aprobadoEscuela = $aprobadoEscuela;
     }
 
     function setFechaCarga($fechaCarga) {
@@ -332,20 +346,28 @@ class Programa {
         $this->vigencia = $vigencia;
     }
     
-    function getComentarioSa() {
-        return $this->comentarioSa;
+    function getComentarioVa() {
+        return $this->comentarioVa;
     }
 
     function getComentarioDepto() {
         return $this->comentarioDepto;
     }
 
-    function setComentarioSa($comentarioSa) {
-        $this->comentarioSa = $comentarioSa;
+    function getComentarioEscuela() {
+        return $this->comentarioEscuela;
+    }
+
+    function setComentarioVa($comentarioVa) {
+        $this->comentarioVa = $comentarioVa;
     }
 
     function setComentarioDepto($comentarioDepto) {
         $this->comentarioDepto = $comentarioDepto;
+    }
+
+    function setComentarioEscuela($comentarioEscuela) {
+        $this->comentarioEscuela = $comentarioEscuela;
     }
 
     function getEnRevision() {
@@ -506,7 +528,7 @@ class Programa {
         // Observacion el estado "No Cargado" se debe validar a la hora de obtener 
         // el programa vigente de la asignatura, si no tiene, devuelve NULL
         
-        // V1.2
+        // V1.3 - Versión mejorada con manejo de NULL
         $anioActual = date("Y"); //obtenemos el anio (4 digitos) del servidor (anio actual)
         $anioPrograma = $this->anio; // año de creacion del programa
         $anioVigencia = $this->vigencia;  // años de vigencia del programa
@@ -515,45 +537,40 @@ class Programa {
          * Un programa va a estar en vigencia si el año actual se encuentra en el segundo
          * de la vigencia ó en el tercer año de vigencia, ademas el programa tiene que estar aprobado
          */
+        
+        // 1. Verificar si está en vigencia
         if ($anioActual > $anioPrograma && $anioActual <= ($anioPrograma+$anioVigencia-1) 
-                && $this->aprobadoSa == "1" && $this->aprobadoDepto == "1"){
+                && $this->aprobadoVa == "1" && $this->aprobadoDepto == "1" && $this->aprobadoEscuela == "1"){
             return "En Vigencia";
-        } elseif ($this->aprobadoSa == "1" && $this->aprobadoDepto == "1"){ // Estado Aprobado
-            return "Aprobado";
-        } elseif (($this->aprobadoSa == "0" && $this->aprobadoDepto == "0") || 
-                ($this->aprobadoSa == "1" && $this->aprobadoDepto == "0") || 
-                ($this->aprobadoSa == "0" && $this->aprobadoDepto == "1")) { // Estado Desaprobado
+        } 
+        // 2. Verificar si fue desaprobado (Prioridad alta)
+        elseif ($this->fueDesaprobado == "1") {
             return "Desaprobado";
-        } elseif ($this->enRevision == "1") { // Estado En Revision
-            return "En Revisi&oacute;n";
-        } elseif ($this->enRevision == "0") { // Estado Cargando
+        }
+        // 3. Verificar si está aprobado (pero no en vigencia)
+        elseif ($this->aprobadoVa == "1" && $this->aprobadoDepto == "1" && $this->aprobadoEscuela == "1"){ 
+            return "Aprobado";
+        } 
+        // 4. Verificar si está en revisión
+        elseif ($this->enRevision == "1") { 
+            return "En Revisión";
+        } 
+        // 5. Verificar si está cargando (enRevision=0 y aprobaciones NULL)
+        elseif ($this->enRevision == "0" && ($this->aprobadoVa === NULL || $this->aprobadoDepto === NULL || $this->aprobadoEscuela === NULL)) { 
+            return "Cargando";
+        } 
+        // 6. Fallback para desaprobado por flags individuales (legacy support)
+        elseif (($this->aprobadoVa == "0" && $this->aprobadoDepto == "0") || 
+                ($this->aprobadoVa == "1" && $this->aprobadoDepto == "0") || 
+                ($this->aprobadoVa == "0" && $this->aprobadoDepto == "1")) { 
+            return "Desaprobado";
+        } 
+        // 7. Fallback para cargando
+        elseif ($this->enRevision == "0") { 
             return "Cargando";
         } 
         
-        // V1.1
-//        if ($this->aprobadoSa == "1" && $this->aprobadoDepto == "1"){ // Estado Aprobado
-//            return "Aprobado";
-//        } elseif (($this->aprobadoSa == "0" && $this->aprobadoDepto == "0") || ($this->aprobadoSa == "1" && $this->aprobadoDepto == "0") || ($this->aprobadoSa == "0" && $this->aprobadoDepto == "1")) { // Estado Desaprobado
-//            return "Desaprobado";
-//        } elseif ($this->enRevision == "1") { // Estado En Revision
-//            return "En Revisi&oacute;n";
-//        } elseif ($this->enRevision == "0") { // Estado Cargando
-//            return "Cargando";
-//        } else { // Estado En Vigencia
-//            return "En Vigencia";
-//        }
-       
-//        if ($this->aprobadoSa == 1 && $this->aprobadoDepto == 1){ // Estado Aprobado
-//            return "Aprobado";
-//        } elseif (!is_null($this->aprobadoSa) && !is_null($this->aprobadoDepto) && $this->aprobadoSa == 0 && $this->aprobadoDepto == 0) { // Estado Desaprobado
-//            return "Desaprobado";
-//        } elseif ($this->enRevision == 1) { // Estado En Revision
-//            return "En Revisi&oacute;n";
-//        } elseif ($this->enRevision == 0) { // Estado Cargando
-//            return "Cargando";
-//        } else { // Estado En Vigencia
-//            return "En Vigencia";
-//        } 
+        return "Cargando"; // Estado por defecto
     }
     
     

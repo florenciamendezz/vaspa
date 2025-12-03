@@ -1,11 +1,11 @@
 <?php
 
 // Aqui se actualiza el estado de un Programa de asignatura (APROBADO, DESAPROBADO).
-// en caso de desaprobado se guarda el comentario realizado por el usuario segun su Rol (SA, Depto)
+// en caso de desaprobado se guarda el comentario realizado por el usuario segun su Rol (VA, Depto)
 /*
- * Observaciones: Rol Secretario Academico y Admin comparten la misma funcionalidad
+ * Observaciones: Rol Vinculación Académica y Admin comparten la misma funcionalidad
  * Esto quiere decir que si el usuario tiene el rol de Admin va a revisar los programas
- * como si fuese un usuario de SA. (preguntar a los chicos)
+ * como si fuese un usuario de VA. (preguntar a los chicos)
  */
 // 17/05/20 --> Se agrega funcionalidad que Envia Notificacion al Profesor infomando el resultado de la revision
 // 30/06/20 --> Se agrega mas info al mensaje que se devuelve cuando se aprueba/desaprueba un programa (como el nombre de la asignatura, codigo y vigencia del programa)
@@ -39,12 +39,12 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST"){
     header("location: ../vista/revisar.programas.php");
 } elseif (isset ($_POST["aprobarPrograma"])) {
     
-    // preparamos la sentencia SQL segun el rol del usuario (SA o Dpto)
+    // preparamos la sentencia SQL segun el rol del usuario (VA o Dpto)
     
     $Usuario = $_SESSION['usuario'];
     $rol = $Usuario->roles[0]->nombre;
     $query = '';
-    if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_SECRETARIO_ACADEMICO){
+    if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACION_ACADEMICA){
         // comprobamos si fue desaprobado por Dpto para setear a 1 el campo  fueDesaprobado
         if ($programa->getAprobadoDepto() === '0'){
             $desa = ", fueDesaprobado = 1 ";
@@ -52,12 +52,12 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST"){
             $desa = "";
         }
         $query = "UPDATE PROGRAMA "
-                        . "SET aprobadoSA = 1 "
+                        . "SET aprobadoVa = 1 "
                         . $desa 
                         . "WHERE id = '{$idPrograma}'";
     } elseif ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO) {
-        // comprobamos si fue desaprobado por SA para setear a 1 el campo  fueDesaprobado
-        if ($programa->getAprobadoSa() === '0'){
+        // comprobamos si fue desaprobado por VA para setear a 1 el campo  fueDesaprobado
+        if ($programa->getAprobadoVa() === '0' || $programa->getAprobadoEscuela() === '0'){
             $desa = ", fueDesaprobado = 1 ";
         }else {
             $desa = "";
@@ -66,6 +66,32 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST"){
                         . "SET aprobadoDepto = 1 "
                         . $desa 
                         . "WHERE id = '{$idPrograma}'";
+    } elseif ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA) {
+        // comprobamos si fue desaprobado por VA o Depto
+        if ($programa->getAprobadoVa() === '0' || $programa->getAprobadoDepto() === '0'){
+            $desa = ", fueDesaprobado = 1 ";
+        }else {
+            $desa = "";
+        }
+        $query = "UPDATE PROGRAMA "
+                        . "SET aprobadoEscuela = 1 "
+                        . $desa 
+                        . "WHERE id = '{$idPrograma}'";
+    }
+    
+    // Actualizamos tambien la tabla programa_pdf_detalle si existe
+    $idAsignatura = $programa->getIdAsignatura();
+    $anio = $programa->getAnio();
+    $queryPDF = "";
+    if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACION_ACADEMICA){
+        $queryPDF = "UPDATE programa_pdf_detalle SET aprobado_va = 1 WHERE id_asignatura = '{$idAsignatura}' AND anio = {$anio}";
+    } elseif ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO) {
+        $queryPDF = "UPDATE programa_pdf_detalle SET aprobado_depto = 1 WHERE id_asignatura = '{$idAsignatura}' AND anio = {$anio}";
+    } elseif ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA) {
+        $queryPDF = "UPDATE programa_pdf_detalle SET aprobado_escuela = 1 WHERE id_asignatura = '{$idAsignatura}' AND anio = {$anio}";
+    }
+    if ($queryPDF != "") {
+        BDConexionSistema::getInstancia()->query($queryPDF);
     }
     
     //procedemos a cambiar el estado del programa a "APROBADO"
@@ -108,12 +134,12 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST"){
     //procedemos a cambiar el estado del programa a "DESAPROBADO" y modificando el comentario
     // Con que uno lo haya desaprobado al programa, este pasa al estado "Desaprobado" por lo cual tambien se modifica el campo "fueDesaprobado"
     
-    // preparamos la sentencia SQL segun el rol del usuario (SA o Dpto)
+    // preparamos la sentencia SQL segun el rol del usuario (VA o Dpto)
     
     $Usuario = $_SESSION['usuario'];
     $rol = $Usuario->roles[0]->nombre;
     $query = '';
-    if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_SECRETARIO_ACADEMICO){
+    if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACION_ACADEMICA){
         // comprobamos si depto todavia no califico el programa, en ese caso el campo fueDesaprobado se setea a 0 ya que sino se muestra el mensaje que el programa ya fue desaprobado con anterioridad
         if (is_null($programa->getAprobadoDepto())){
             $desa = 0;
@@ -121,13 +147,13 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST"){
             $desa = 1;
         }
         $query = "UPDATE PROGRAMA "
-                        . "SET aprobadoSA = 0, "
+                        . "SET aprobadoVa = 0, "
                         . "fueDesaprobado = {$desa}, "
-                        . "comentarioSa = '{$comentario}' "
+                        . "comentarioVa = '{$comentario}' "
                         . "WHERE id = '{$idPrograma}'";
     } elseif ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO) {
         // comprobamos si depto todavia no califico el programa, en ese caso el campo fueDesaprobado se setea a 0 ya que sino se muestra el mensaje que el programa ya fue desaprobado con anterioridad
-        if (is_null($programa->getAprobadoSa())){
+        if (is_null($programa->getAprobadoVa()) && is_null($programa->getAprobadoEscuela())){
             $desa = 0;
         } else {
             $desa = 1;
@@ -137,6 +163,32 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST"){
                         . "fueDesaprobado = {$desa}, "
                         . "comentarioDepto = '{$comentario}' "
                         . "WHERE id = '{$idPrograma}'";
+    } elseif ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA) {
+        if (is_null($programa->getAprobadoVa()) && is_null($programa->getAprobadoDepto())){
+            $desa = 0;
+        } else {
+            $desa = 1;
+        }
+        $query = "UPDATE PROGRAMA "
+                        . "SET aprobadoEscuela = 0, "
+                        . "fueDesaprobado = {$desa}, "
+                        . "comentarioEscuela = '{$comentario}' "
+                        . "WHERE id = '{$idPrograma}'";
+    }
+    
+    // Actualizamos tambien la tabla programa_pdf_detalle si existe
+    $idAsignatura = $programa->getIdAsignatura();
+    $anio = $programa->getAnio();
+    $queryPDF = "";
+    if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACION_ACADEMICA){
+        $queryPDF = "UPDATE programa_pdf_detalle SET aprobado_va = 0, fue_desaprobado = 1 WHERE id_asignatura = '{$idAsignatura}' AND anio = {$anio}";
+    } elseif ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO) {
+        $queryPDF = "UPDATE programa_pdf_detalle SET aprobado_depto = 0, fue_desaprobado = 1 WHERE id_asignatura = '{$idAsignatura}' AND anio = {$anio}";
+    } elseif ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA) {
+        $queryPDF = "UPDATE programa_pdf_detalle SET aprobado_escuela = 0, fue_desaprobado = 1 WHERE id_asignatura = '{$idAsignatura}' AND anio = {$anio}";
+    }
+    if ($queryPDF != "") {
+        BDConexionSistema::getInstancia()->query($queryPDF);
     }
     
     $resultado = BDConexionSistema::getInstancia()->query($query);
@@ -172,11 +224,11 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST"){
         
 }
 
-// metodo que comprueba si el programa ya fue revisado por ambas autoridades tanto SA o como Dpto
+// metodo que comprueba si el programa ya fue revisado por ambas autoridades tanto VA o como Dpto
 function fueRevisadoPorSAyDpto($idPrograma){
     $programa = new Programa($idPrograma);
-    // comprobamos que los campos aprobados tanto en SA como en Dpto no sean nulos
-    if (!is_null($programa->getAprobadoSa()) && !is_null($programa->getAprobadoDepto())){
+    // comprobamos que los campos aprobados tanto en SA como en Dpto y Escuela no sean nulos
+    if (!is_null($programa->getAprobadoVa()) && !is_null($programa->getAprobadoDepto()) && !is_null($programa->getAprobadoEscuela())){
         return TRUE;
     } else {
         return FALSE;

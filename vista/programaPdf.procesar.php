@@ -49,7 +49,7 @@ $consulta = $ManejadorPrograma->modificarUbicacion($ubicacion, $idPrograma);
                             <span class="oi oi-document"></span> Ver ubicaci&oacute;n de otro programa
                         </button>
                     </a>
-                    <a href="panelSA.php">
+                    <a href="panelVA.php">
                         <button type="button" class="btn btn-primary">
                             <span class="oi oi-account-logout"></span> Salir
                         </button>

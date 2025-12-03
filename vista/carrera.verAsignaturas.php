@@ -64,9 +64,9 @@ else {
 <!--                    <hr />
                     <h5 class="card-text">Opciones</h5>-->
                     <div class="card-footer text-center">
-                        <a href="planes.php">
+                        <a href="carreras.php">
                         <button type="button" class="btn btn-primary">
-                            <span class="oi oi-account-logout"></span> Volver A Planes
+                            <span class="oi oi-account-logout"></span> Volver A Carreras
                         </button>
                         </a>
                     </div>    

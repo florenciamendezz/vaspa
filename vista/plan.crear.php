@@ -1,11 +1,11 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
 include_once '../modeloSistema/Carrera.Class.php';
-ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PLANES);
+ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
 
 // validamos que se esta enviando el codigo de la carrera
 if (!isset($_GET["id"]) || empty($_GET["id"])){
-    header("Location: planes.php");
+    header("Location: carreras.php");
     exit;
 }
 //$_GET["id"] = '016';
@@ -14,7 +14,7 @@ $carrera = new Carrera($codCarrera);
 
 if (is_null($carrera->getId())){
     // no existe la carrera regresamos a la pantalla de planes
-    header("Location: planes.php");
+    header("Location: carreras.php");
     exit;
 }
 
@@ -79,7 +79,7 @@ if (is_null($carrera->getId())){
                         <button type="submit" class="btn btn-outline-success" onclick="return valida_anios(event);">
                             <span class="oi oi-check"></span> Confirmar
                         </button>
-                        <a href="planes.php">
+                        <a href="carreras.php">
                             <button type="button" class="btn btn-outline-danger">
                                 <span class="oi oi-x"></span> Cancelar
                             </button>

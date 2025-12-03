@@ -114,7 +114,7 @@ class Asignatura {
      * @return Carrera[]
      */
     function getCarreras() {
-        $this->query = "SELECT carrera.id, carrera.nombre FROM asignatura JOIN plan_asignatura JOIN plan JOIN carrera WHERE asignatura.id = plan_asignatura.idAsignatura AND plan_asignatura.idPlan = plan.id AND plan.idCarrera = carrera.id AND asignatura.id = '{$this->id}'";
+        $this->query = "SELECT DISTINCT carrera.id, carrera.nombre FROM asignatura JOIN plan_asignatura JOIN plan JOIN carrera WHERE asignatura.id = plan_asignatura.idAsignatura AND plan_asignatura.idPlan = plan.id AND plan.idCarrera = carrera.id AND asignatura.id = '{$this->id}'";
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);
 
         $Carreras = NULL;
@@ -332,6 +332,32 @@ class Asignatura {
 
         return $programa;
                 
+    }
+
+    /**
+     * Obtiene el último programa cargado para la asignatura, sin importar si está vigente o es futuro.
+     * @return Programa|null
+     */
+    function obtenerUltimoPrograma() {
+        include_once __DIR__.'/Programa.Class.php';
+        
+        $this->query = "SELECT * FROM programa WHERE idAsignatura = '{$this->id}' ORDER BY anio DESC LIMIT 1";
+        
+        $this->datos = BDConexionSistema::getInstancia()->query($this->query);
+        
+        if (!$this->datos) {
+            throw new Exception("Error al obtener el último programa de la asignatura: {$this->id}");
+        }
+        
+        $programa = NULL;
+        if ($this->datos->num_rows > 0) {
+            $programa = $this->datos->fetch_object("Programa");
+        }
+        
+        unset($this->query);
+        unset($this->datos);
+        
+        return $programa;
     }
 
     function obtenerCantidadNotificacionDelProgramaActual(){       

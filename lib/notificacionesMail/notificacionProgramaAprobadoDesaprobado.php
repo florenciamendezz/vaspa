@@ -2,7 +2,7 @@
 
 /* En este script se llevara a cabo el procesamiento del envio de mail (Notificacion) al profesor
  * responsable de asignatura, notificandole el resultado de la revision de las autoridades
- * (SA y Dpto) que puede ser Aprobado o Desaprobado, en el caso de que este desaprobado, se le indicara
+ * (Vinculación y Dpto) que puede ser Aprobado o Desaprobado, en el caso de que este desaprobado, se le indicara
  * en el mismo correo las observaciones realizadas por las autoridades.
  */
 
@@ -62,10 +62,10 @@ function enviarNotificacionProfesor($idPrograma) {
     // chequeamos el estado del programa (aprobado/desaprobado)
     $aprobado = '';
     $observaciones = '';
-    if ($programa->getAprobadoSa() && $programa->getAprobadoDepto()){
+    if ($programa->getAprobadoVa() && $programa->getAprobadoDepto()){
         $aprobado = 'aprobado';
         $observaciones = '<br><p>Puede descargar el programa de dicha asignatura, ingresando '
-                . 'al <a href="'.Constantes::HOMEURL.'">Sistema VASPA</a>, o bien puede solicitarlo en Secretar&iacute;a '
+                . 'al <a href="'.Constantes::HOMEURL.'">Sistema VASPA</a>, o bien puede solicitarlo en Vinculaci&oacute;n '
                 . 'Acad&eacute;mica.</p>';
     } else {
         $aprobado = 'desaprobado';
@@ -74,9 +74,9 @@ function enviarNotificacionProfesor($idPrograma) {
             $observaciones .= '<br><p><u>Observaciones del Director del Departamento:</u></p>'
                     . '<p>'.$programa->getComentarioDepto().'</p>';
         }
-        if (!$programa->getAprobadoSa()){
-            $observaciones .= '<br><p><u>Observaciones de Secretar&iacute;a Acad&eacute;mica:</u></p>'
-                    . '<p>'.$programa->getComentarioSa().'</p>';
+        if (!$programa->getAprobadoVa()){
+            $observaciones .= '<br><p><u>Observaciones de Vinculación Académica:</u></p>'
+                    . '<p>'.$programa->getComentarioVa().'</p>';
         }
         $observaciones .= '<br><p>De acuerdo a las observaciones marcadas, tenga a bien modificar y corregir el '
                 . 'programa de la asignatura, puede hacerlo ingresando al <a href="'.Constantes::HOMEURL.'">Sistema VASPA</a>.</p>';

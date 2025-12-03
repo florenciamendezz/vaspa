@@ -1,7 +1,12 @@
 <?php
+session_start();
+// Verificamos si el usuario está logueado
+if (!isset($_SESSION['usuario'])) {
+    header("Location: ../app/index.php");
+    exit;
+}
 
-include_once '../lib/ControlAcceso.Class.php'; 
-ControlAcceso::requierePermiso(PermisosSistema::PERMISO_GENERAR_PDF);
+include_once '../modeloSistema/BDConexionSistema.Class.php';
 include_once '../modeloSistema/Programa.Class.php';
 include_once '../modeloSistema/Asignatura.Class.php';
 require_once('../modeloSistema/MYPDF.php');
@@ -19,9 +24,9 @@ if (is_null($programa->getId())){
     mostrarPantallaError($mensaje);
 }
 
-// comprobamos que el programa este aprobado por SA y Dpto para permitir la generacion del pdf
-if ($programa->getAprobadoSa() != '1' || $programa->getAprobadoDepto() != '1'){
-    $mensaje = 'El programa de asignatura no esta aprobado, solo se permite la generaci&oacute;n de programas que fueron aprobados tanto por Secretar&iacute;a Ac&aacute;demica y el Director de Departamento correspondiente.';
+// comprobamos que el programa este aprobado por VA y Dpto para permitir la generacion del pdf
+if ($programa->getAprobadoVa() != '1' || $programa->getAprobadoDepto() != '1'){
+    $mensaje = 'El programa de asignatura no esta aprobado, solo se permite la generaci&oacute;n de programas que fueron aprobados tanto por Vinculaci&oacute;n Acad&eacute;mica y el Director de Departamento correspondiente.';
     mostrarPantallaError($mensaje);
 }
 

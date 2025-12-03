@@ -1,7 +1,7 @@
 <?php
 
 include_once '../lib/ControlAcceso.Class.php';
-ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PLANES);
+ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
 include_once '../modeloSistema/BDConexionSistema.Class.php';
 
 //Recibimos el array con los codigos de las asignaturas
@@ -74,9 +74,9 @@ if (isset($_POST['codPlan'])){
                             <span class="oi oi-arrow-thick-left"></span> Volver a Asignaturas Revisi&oacute;n del Plan
                         </button>
                     </a>
-                    <a href="planes.php">
+                    <a href="carreras.php">
                         <button type="button" class="btn btn-info">
-                            <span class="oi oi-justify-center"></span> Volver a Planes
+                            <span class="oi oi-justify-center"></span> Volver a Carreras
                         </button>
                     </a>
                 </div>

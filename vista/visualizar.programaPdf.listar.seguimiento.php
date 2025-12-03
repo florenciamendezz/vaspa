@@ -12,8 +12,8 @@ $carrera = new Carrera($codCarrera, NULL);
 
 $consulta = "SELECT asignatura.nombre, asignatura.id, programa.ubicacion, programa.id AS idPrograma, plan.id AS idRevision  FROM carrera JOIN plan JOIN plan_asignatura JOIN asignatura JOIN programa" .
                        " WHERE carrera.`id` = plan.`idCarrera` AND plan.`id` = plan_asignatura.`idPlan` "
-                       . "AND asignatura.`id` = plan_asignatura.`idAsignatura` AND plan.`anio_fin` is NULL AND (carrera.`id` LIKE '$codCarrera') AND (programa.`anio` = $anio)"
-                       . " AND (asignatura.`id` = programa.`idAsignatura`) AND (programa.`aprobadoSa` = '1' AND programa.`aprobadoDepto` = '1')";
+                       . "AND asignatura.`id` = plan_asignatura.`idAsignatura` AND plan.`anio_inicio` <= $anio AND (plan.`anio_fin` >= $anio OR plan.`anio_fin` IS NULL) AND (carrera.`id` LIKE '$codCarrera') AND (programa.`anio` = $anio)"
+                       . " AND (asignatura.`id` = programa.`idAsignatura`)";
 
 $asignaturas = BDConexionSistema::getInstancia()->query($consulta);
 
@@ -70,7 +70,7 @@ $asignaturas = BDConexionSistema::getInstancia()->query($consulta);
                                     <?php echo $asignatura['idRevision']; ?>
                                 </td>
                                 <?php if( $asignatura['ubicacion'] == 'SA'){ ?>
-                                    <td><?php echo 'Secretar&iacute;a Acad&eacute;mica'; ?></td>
+                                    <td><?php echo 'Vinculaci&oacute;n Acad&eacute;mica'; ?></td>
                                 <?php }elseif ($asignatura['ubicacion'] == 'DPTO') {?>
                                         <td><?php echo 'Departamento'; ?></td>
                                 <?php }else{ ?>

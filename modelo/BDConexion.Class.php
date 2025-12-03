@@ -19,7 +19,7 @@ class BDConexion extends mysqli {
     function __construct() {
         $this->host = "localhost";
         $this->usuario = "root";
-        $this->contrasenia = "";
+        $this->contrasenia = "1234";
         $this->schema = "bdgef_vaspa";
 
         parent::__construct($this->host, $this->usuario, $this->contrasenia, $this->schema);

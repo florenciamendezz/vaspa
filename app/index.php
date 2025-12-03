@@ -1,10 +1,16 @@
-<?php 
-include_once '../lib/ControlAcceso.Class.php'; 
-include_once '../controlSistema/ManejadorCarrera.php';
+<?php
+// HABILITAR ERRORES EN PANTALLA (solo para desarrollo)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 
-$ManejadorCarrera = new ManejadorCarrera();
-$Carreras = $ManejadorCarrera->getColeccion();
 
+
+// (opcional) loguear también a archivo
+ini_set('log_errors', 1);
+ini_set('error_log', 'C:/xampp/php/logs/php_error_log');
+
+include_once __DIR__ . '/../lib/ControlAcceso.Class.php'; 
 ?>
 
 <html lang="es">
@@ -67,7 +73,7 @@ $Carreras = $ManejadorCarrera->getColeccion();
                     <hr>
 
                     <div class="row">
-                        <div class="col-md-6 mb-1">                                
+                        <div class="col-md-12 mb-1">                                
                             <form action="visualizar.programa.listar.php" method="post"> 
                                 <div class="card">
                                     
@@ -106,30 +112,7 @@ $Carreras = $ManejadorCarrera->getColeccion();
                             </form>
                     </div>
                         
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Visualizar Plan de Estudio</h5>
-                                <p>
-                                    Seleccione una Carrera. 
-                                </p>
-                            </div>
 
-                            <div class="card-body" id="datos">
-                                <div class="form-group">
-                                    <label for="selectCarrera1">Carrera</label>
-                                    <br>
-                                    <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="selectCarrera" id="selectCarrera1" title="Seleccione una carrera" required="" data-size="7">
-                                        <?php foreach ($Carreras as $Carrera) { ?>
-                                            <option value="<?= $Carrera->getId(); ?>"><?= $Carrera->getId() ?>&nbsp;-&nbsp;<?= $Carrera->getNombre(); ?> </option>
-                                        <?php } ?>
-                                    </select>
-                                </div>
-                                <div id="planesCarrera"></div>
-                            </div>
-                            
-                        </div>
-                    </div>
                 </div>
 
                 <div class="row">
@@ -137,7 +120,7 @@ $Carreras = $ManejadorCarrera->getColeccion();
                         <div class="card h-100">
                             <div class="card-body">
                                 <h5 class="card-title">Ingreso al Sistema</h5>
-                                <p class="card-text">Si usted es un Profesor, empleado de Secretar&iacute;a Acad&eacute;mica o Director de Departamento y desea realizar operaciones en el Sistema, por favor presione el siguiente bot&oacute;n.</p>
+                                <p class="card-text">Si usted es un Profesor, empleado de Vinculaci&oacute;n Acad&eacute;mica o Director de Departamento y desea realizar operaciones en el Sistema, por favor presione el siguiente bot&oacute;n.</p>
                                 <div id="okgoogle" class="g-signin2" onclick="ClickLogin()" data-onsuccess="onSignIn" title="Acceder al <?= Constantes::NOMBRE_SISTEMA; ?>"></div>
                             </div>
                         </div>
@@ -201,27 +184,7 @@ $Carreras = $ManejadorCarrera->getColeccion();
               });
     </script>
     
-    <script type="text/javascript">
-            //El siguiente script actualiza la tabla de planes, con los planes 
-            //correspóndientes de acuerdo a la carrera seleccionada de la lista
-            $(document).ready(function(){
-                  $('#selectCarrera1').change(function () {
-                    var codCarrera = $('#selectCarrera1').val();
-                    //alert(codCarrera);
-                    $.ajax({
-                      type: 'POST',
-                      url: '../lib/consultaAjax/visualizar.plan.cargarPlanesCarrera.php',
-                      data: {'codCarrera': codCarrera}
-                    })
-                    .done(function(planes){
-                      $("#planesCarrera").html(planes);
-                    })
-                    .fail(function(){
-                      alert('Hubo un error al cargar los planes');
-                    });
-                  });
-              });
-        </script>
+
     
     </body>
 </html>

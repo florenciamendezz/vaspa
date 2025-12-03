@@ -1,6 +1,6 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
-ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PLANES);
+ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
 include_once '../controlSistema/ManejadorPlan.php';
 include_once '../lib/Constantes.Class.php';
 
@@ -9,7 +9,7 @@ $DatosFormulario = $_POST;
 $ManejadorPlan = new ManejadorPlan();
 
 if (empty($DatosFormulario)) {
-    header("location: planes.php");
+    header("location: carreras.php");
 } else {
     
     $error = "";
@@ -63,9 +63,9 @@ if (empty($DatosFormulario)) {
                                 <span class="oi oi-arrow-thick-left"></span> Volver a Revisiones del Plan
                             </button>
                         </a>
-                        <a href="planes.php">
+                        <a href="carreras.php">
                             <button type="button" class="btn btn-info">
-                                <span class="oi oi-justify-center"></span> Volver a Planes
+                                <span class="oi oi-justify-center"></span> Volver a Carreras
                             </button>
                         </a>
                     </div>

@@ -267,14 +267,15 @@ class Carrera {
         
         foreach ($planes as $plan) {
             if (is_null($plan->getAnio_fin())){
-                $anioFin = date("Y"); // obtenemos anio actual del server
-                
+                // Si el plan no tiene año de fin, es vigente para cualquier año >= anio_inicio
+                if ($anio >= $plan->getAnio_inicio()){
+                    return $plan;
+                }
             } else {
                 $anioFin = $plan->getAnio_fin();
-            }
-            
-            if ($anio >= $plan->getAnio_inicio() && $anio <= $anioFin){
-                return $plan;
+                if ($anio >= $plan->getAnio_inicio() && $anio <= $anioFin){
+                    return $plan;
+                }
             }
             
         }

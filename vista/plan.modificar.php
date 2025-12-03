@@ -1,6 +1,6 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
-ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PLANES);
+ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
 include_once '../modeloSistema/Plan.Class.php';
 include_once '../modeloSistema/Carrera.Class.php';
 include_once '../controlSistema/ManejadorCarrera.php';
@@ -90,7 +90,7 @@ $Carreras = $ManejadorCarrera->getColeccion();
                         <button type="submit" class="btn btn-outline-success" onclick="return valida_anios(event);">
                             <span class="oi oi-check"></span> Confirmar
                         </button>
-                        <a href="planes.php">
+                        <a href="carreras.php">
                             <button type="button" class="btn btn-outline-danger">
                                 <span class="oi oi-x"></span> Cancelar
                             </button>

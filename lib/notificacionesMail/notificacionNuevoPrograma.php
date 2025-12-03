@@ -35,17 +35,17 @@ function sendemail($mail_username, $mail_userpassword, $mail_addAddress, $mail_s
         $message = str_replace('{{nombreAsignatura}}', $nombreAsignatura, $message);
         $message = str_replace('{{nombreProfesor}}', $nombreProfesor, $message);
         $message = str_replace('{{idPrograma}}', $idPrograma, $message);
-        $message = utf8_decode($message);
+        $message = mb_convert_encoding($message, 'ISO-8859-1', 'UTF-8');
 	
 	$mail->isHTML(true);  // Establecer el formato de correo electrónico en HTML
 	
 	$mail->Subject = $mail_subject;
-        $mail->Subject = utf8_decode($mail->Subject); 
+        $mail->Subject = mb_convert_encoding($mail->Subject, 'ISO-8859-1', 'UTF-8'); 
                 
 	$mail->msgHTML($message);
         
         if($destinatario == 0){
-            $destinatario = "Secretaría Académica";
+            $destinatario = "Vinculación Académica";
         } else {
              $asignatura = new Asignatura($codAsignatura);
              $departamento = new Departamento($asignatura->getIdDepartamento());
@@ -65,7 +65,7 @@ function sendemail($mail_username, $mail_userpassword, $mail_addAddress, $mail_s
 
 
 
-// funcion que prepara los datos necesarios para notificar al usuario de Secretaria 
+// funcion que prepara los datos necesarios para notificar al usuario de Vinculación 
 // Academica de la creacion de un nuevo programa de asignatura para que despues lo revise
 function enviarMailNuevoProgramaSA($idPrograma) {
     include_once '../modeloSistema/Asignatura.Class.php';

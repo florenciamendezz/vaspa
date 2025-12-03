@@ -37,8 +37,8 @@ if (isset($_POST['codCarrera'])){
                             <table class="table table-hover table-sm" id="tablaAsignaturas">
                             <thead>
                                 <tr class="table-info">
-                                    <th>A&ntilde;o</th>
-                                    <th>Cuatr.</th>
+                                    <!-- <th>A&ntilde;o</th> -->
+                                    <!-- <th>Cuatr.</th> -->
                                     <th>C&oacute;digo</th>
                                     <th>Asignatura</th>
                                     <th>Docente Responsable</th>
@@ -126,8 +126,8 @@ if (isset($_POST['codCarrera'])){
                 }
 
                 $html .= '<tr>'
-                        . '<td>'.$anioCarrera.'</td>'
-                        . '<td>'.$cursada.'</td>'
+                        // . '<td>'.$anioCarrera.'</td>'
+                        // . '<td>'.$cursada.'</td>'
                         . '<td>'.$asignatura->getId().'</td>'
                         . '<td>'.$asignatura->getNombre().'</td>'
                         . '<td>'.$profesor->getApellido().' '. substr($profesor->getNombre(), 0, 1).'.</td>'
@@ -161,4 +161,3 @@ if (isset($_POST['codCarrera'])){
         </button>
       </div>';
 }
-

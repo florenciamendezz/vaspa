@@ -19,7 +19,7 @@ class BDConexionSistema extends mysqli {
     function __construct() {
         $this->host = "localhost";
         $this->usuario = "root";
-        $this->contrasenia = "";
+        $this->contrasenia = "1234";
         $this->schema = "bdgef_vaspa";
 
         parent::__construct($this->host, $this->usuario, $this->contrasenia, $this->schema);
@@ -38,7 +38,7 @@ class BDConexionSistema extends mysqli {
             try {
                 self::$instancia = new self;
             } catch (Exception $e) {
-                die("Error de Conexion a la Base de Datos: " . $e->getCode() . ".");
+                die("Error de Conexion a la Base de Datos: " . $e . ".");
             }
         }
         return self::$instancia;
