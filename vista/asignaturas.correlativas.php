@@ -218,11 +218,24 @@ $tieneCorrelativa = BDConexionSistema::getInstancia()->query($consulta);
 
                             <?php } ?>
 
+
                         </form> 
 
                     </p>
 
                     <div id="tabla"></div>
+                </div> <!-- End card-body -->
+                
+                <div class="card-footer text-center">
+                    <a href="carrera.verPlanes.php?id=<?= $plan->getIdCarrera(); ?>">
+                        <button type="button" class="btn btn-primary">
+                            <span class="oi oi-arrow-thick-left"></span> Volver A Planes
+                        </button>
+                    </a>
+                </div>
+            </div> <!-- End card -->
+
+
 
         <?php include_once '../gui/footer.php'; ?>
 

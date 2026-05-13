@@ -70,11 +70,15 @@ function enviarNotificacionProfesor($idPrograma) {
     } else {
         $aprobado = 'desaprobado';
         $observaciones = '<br><p>A continuaci&oacute;n las observaciones realizadas por la cual el programa no fue aprobado:</p>';
-        if (!$programa->getAprobadoDepto()){
+        if (!$programa->getAprobadoDepto() && !empty($programa->getComentarioDepto())){
             $observaciones .= '<br><p><u>Observaciones del Director del Departamento:</u></p>'
                     . '<p>'.$programa->getComentarioDepto().'</p>';
         }
-        if (!$programa->getAprobadoVa()){
+        if (!$programa->getAprobadoEscuela() && !empty($programa->getComentarioEscuela())){
+            $observaciones .= '<br><p><u>Observaciones del Director de Escuela:</u></p>'
+                    . '<p>'.$programa->getComentarioEscuela().'</p>';
+        }
+        if (!$programa->getAprobadoVa() && !empty($programa->getComentarioVa())){
             $observaciones .= '<br><p><u>Observaciones de Vinculación Académica:</u></p>'
                     . '<p>'.$programa->getComentarioVa().'</p>';
         }

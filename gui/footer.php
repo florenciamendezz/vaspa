@@ -4,5 +4,5 @@
     <?php $usuario = $_SESSION['usuario']; 
     echo $usuario->nombre;
     ?>
-    <a href="../app/salir.php">Salir</a>
+
 </footer>

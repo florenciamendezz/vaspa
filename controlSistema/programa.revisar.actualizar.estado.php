@@ -140,35 +140,23 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST"){
     $rol = $Usuario->roles[0]->nombre;
     $query = '';
     if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACION_ACADEMICA){
-        // comprobamos si depto todavia no califico el programa, en ese caso el campo fueDesaprobado se setea a 0 ya que sino se muestra el mensaje que el programa ya fue desaprobado con anterioridad
-        if (is_null($programa->getAprobadoDepto())){
-            $desa = 0;
-        } else {
-            $desa = 1;
-        }
+        // comprobamos si depto todavia no califico el programa
+        $desa = 1;
         $query = "UPDATE PROGRAMA "
                         . "SET aprobadoVa = 0, "
                         . "fueDesaprobado = {$desa}, "
                         . "comentarioVa = '{$comentario}' "
                         . "WHERE id = '{$idPrograma}'";
     } elseif ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO) {
-        // comprobamos si depto todavia no califico el programa, en ese caso el campo fueDesaprobado se setea a 0 ya que sino se muestra el mensaje que el programa ya fue desaprobado con anterioridad
-        if (is_null($programa->getAprobadoVa()) && is_null($programa->getAprobadoEscuela())){
-            $desa = 0;
-        } else {
-            $desa = 1;
-        }
+        // comprobamos si depto todavia no califico el programa
+        $desa = 1;
         $query = "UPDATE PROGRAMA "
                         . "SET aprobadoDepto = 0, "
                         . "fueDesaprobado = {$desa}, "
                         . "comentarioDepto = '{$comentario}' "
                         . "WHERE id = '{$idPrograma}'";
     } elseif ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA) {
-        if (is_null($programa->getAprobadoVa()) && is_null($programa->getAprobadoDepto())){
-            $desa = 0;
-        } else {
-            $desa = 1;
-        }
+        $desa = 1;
         $query = "UPDATE PROGRAMA "
                         . "SET aprobadoEscuela = 0, "
                         . "fueDesaprobado = {$desa}, "
@@ -204,8 +192,9 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST"){
           </div>';
         
         // Chequeamos si fue revisado por ambas autoridades para enviar el email notificando al profesor el resultado de la evaluacion del programa
+        // O SI FUE DESAPROBADO (si fueDesaprobado es 1, se envia mail de rechazo inmediatamente)
         $revisado = fueRevisadoPorSAyDpto($idPrograma);
-        if ($revisado){
+        if ($revisado || $desa == 1){ 
             include_once '../lib/notificacionesMail/notificacionProgramaAprobadoDesaprobado.php';
             enviarNotificacionProfesor($idPrograma); // enviamos el mail
         }

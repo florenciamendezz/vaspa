@@ -39,6 +39,60 @@ class ProgramaPDFDetalle {
         }
     }
 
+    public function crear($idAsignatura, $anio, $vigencia, $rutaArchivo) {
+        $conexion = BDConexionSistema::getInstancia();
+        $conexion->autocommit(FALSE); // Iniciar transaccion
+
+        try {
+            $fechaCarga = date('Y-m-d');
+            
+            // 1. Insertar en tabla PROGRAMA (Legacy)
+            // Se insertan valores minimos requeridos y defaults para evitar errores
+            // Se agregan campos de texto vacios para cumplir con NOT NULL
+            // Se agregan flags de estado
+            $sqlPrograma = "INSERT INTO programa (idAsignatura, anio, vigencia, fechaCarga, ubicacion, 
+                                                  horasTeoria, horasPractica, horasOtros, regimenCursada,
+                                                  fundamentacion, objetivosGenerales, organizacionContenidos, criteriosEvaluacion,
+                                                  metodologiaPresencial, regularizacionPresencial, aprobacionPresencial,
+                                                  metodologiaSATEP, regularizacionSATEP, aprobacionSATEP,
+                                                  metodologiaLibre, aprobacionLibre,
+                                                  aprobadoVa, aprobadoDepto, aprobadoEscuela, enRevision, fueDesaprobado,
+                                                  comentarioVa, comentarioDepto, comentarioEscuela) 
+                            VALUES ('{$idAsignatura}', '{$anio}', '{$vigencia}', '{$fechaCarga}', 'DPTO',
+                                    '00:00:00', '00:00:00', '00:00:00', 'A',
+                                    '', '', '', '',
+                                    '', '', '',
+                                    '', '', '',
+                                    '', '',
+                                    NULL, NULL, NULL, 0, 0,
+                                    '', '', '')";
+            
+            if (!$conexion->query($sqlPrograma)) {
+                throw new Exception("Error al insertar en tabla programa: " . $conexion->error);
+            }
+            
+            // 2. Insertar en tabla PROGRAMA_PDF_DETALLE
+            $sqlDetalle = "INSERT INTO programa_pdf_detalle (id_asignatura, anio, vigencia, ruta_archivo, fecha_carga) 
+                           VALUES ('{$idAsignatura}', '{$anio}', '{$vigencia}', '{$rutaArchivo}', '{$fechaCarga}')";
+            
+            if (!$conexion->query($sqlDetalle)) {
+                throw new Exception("Error al insertar en tabla programa_pdf_detalle: " . $conexion->error);
+            }
+
+            $this->id = $conexion->insert_id; // Obtener ID del ultimo insert (programa_pdf_detalle)
+            $conexion->commit();
+            $conexion->autocommit(TRUE);
+            return true;
+
+        } catch (Exception $e) {
+            $conexion->rollback();
+            $conexion->autocommit(TRUE);
+            // Log error or handle it
+            error_log($e->getMessage());
+            return false;
+        }
+    }
+
     public static function obtenerPorAsignaturaYAnio($idAsignatura, $anio) {
         $sql = "SELECT id FROM programa_pdf_detalle WHERE id_asignatura = {$idAsignatura} AND anio = {$anio}";
         $resultado = BDConexionSistema::getInstancia()->query($sql);
@@ -51,41 +105,93 @@ class ProgramaPDFDetalle {
 
     public function aprobar($rol) {
         $campoTabla = "";
+        $campoLegacy = "";
         
         if ($rol == 'Vinculación Académica' || $rol == 'Administrador') {
             $campoTabla = "aprobado_va";
+            $campoLegacy = "aprobadoVa";
         } elseif ($rol == 'Director de Departamento') {
             $campoTabla = "aprobado_depto";
-        } elseif ($rol == 'Secretario de Escuela') {
+            $campoLegacy = "aprobadoDepto";
+        } elseif ($rol == 'Secretario de Escuela' || $rol == 'Director de Escuela') {
             $campoTabla = "aprobado_escuela";
+            $campoLegacy = "aprobadoEscuela";
         } else {
             return false;
         }
         
-        $sql = "UPDATE programa_pdf_detalle SET {$campoTabla} = 1, en_revision = 0, fue_desaprobado = 0 WHERE id = {$this->id}";
-        return BDConexionSistema::getInstancia()->query($sql);
+        $conexion = BDConexionSistema::getInstancia();
+        $conexion->autocommit(FALSE);
+
+        try {
+            // 1. Actualizar PROGRAMA_PDF_DETALLE
+            $sql = "UPDATE programa_pdf_detalle SET {$campoTabla} = 1, en_revision = 0, fue_desaprobado = 0 WHERE id = {$this->id}";
+            if (!$conexion->query($sql)) throw new Exception("Error updating PDF detail");
+
+            // 2. Actualizar PROGRAMA (Legacy)
+            $idLegacy = $this->getProgramaLegacyId();
+            if ($idLegacy) {
+                // Mapeo de columnas legacy (camelCase vs snake_case si aplica, pero aqui parecen ser camelCase en legacy)
+                // Revisando schema: aprobadoVa, aprobadoDepto, aprobadoEscuela
+                $sqlLegacy = "UPDATE programa SET {$campoLegacy} = 1, enRevision = 0, fueDesaprobado = 0 WHERE id = {$idLegacy}";
+                if (!$conexion->query($sqlLegacy)) throw new Exception("Error updating Legacy program");
+            }
+
+            $conexion->commit();
+            $conexion->autocommit(TRUE);
+            return true;
+        } catch (Exception $e) {
+            $conexion->rollback();
+            $conexion->autocommit(TRUE);
+            return false;
+        }
     }
 
     public function desaprobar($rol, $comentario) {
-        // Nota: El comentario se guarda en la tabla programa (legacy) o necesitamos una tabla de comentarios para PDF?
-        // Por ahora asumimos que se guarda en la tabla programa legacy si existe, o no se guarda si no hay estructura.
-        // Pero el método original parecía tener lógica para esto.
-        // Vamos a actualizar el estado en programa_pdf_detalle.
-        
         $campoTabla = "";
+        $campoLegacy = "";
+        $campoComentarioLegacy = "";
         
         if ($rol == 'Vinculación Académica' || $rol == 'Administrador') {
             $campoTabla = "aprobado_va";
+            $campoLegacy = "aprobadoVa";
+            $campoComentarioLegacy = "comentarioVa";
         } elseif ($rol == 'Director de Departamento') {
             $campoTabla = "aprobado_depto";
-        } elseif ($rol == 'Secretario de Escuela') {
+            $campoLegacy = "aprobadoDepto";
+            $campoComentarioLegacy = "comentarioDepto";
+        } elseif ($rol == 'Secretario de Escuela' || $rol == 'Director de Escuela') {
             $campoTabla = "aprobado_escuela";
+            $campoLegacy = "aprobadoEscuela";
+            $campoComentarioLegacy = "comentarioEscuela";
         } else {
             return false;
         }
 
-        $sql = "UPDATE programa_pdf_detalle SET {$campoTabla} = 0, en_revision = 0, fue_desaprobado = 1 WHERE id = {$this->id}";
-        return BDConexionSistema::getInstancia()->query($sql);
+        $conexion = BDConexionSistema::getInstancia();
+        $conexion->autocommit(FALSE);
+
+        try {
+            // 1. Actualizar PROGRAMA_PDF_DETALLE
+            $sql = "UPDATE programa_pdf_detalle SET {$campoTabla} = 0, en_revision = 0, fue_desaprobado = 1 WHERE id = {$this->id}";
+            if (!$conexion->query($sql)) throw new Exception("Error updating PDF detail");
+
+            // 2. Actualizar PROGRAMA (Legacy)
+            $idLegacy = $this->getProgramaLegacyId();
+            if ($idLegacy) {
+                $comentarioEscaped = $conexion->real_escape_string($comentario);
+                $sqlLegacy = "UPDATE programa SET {$campoLegacy} = 0, enRevision = 0, fueDesaprobado = 1, {$campoComentarioLegacy} = '{$comentarioEscaped}' WHERE id = {$idLegacy}";
+                if (!$conexion->query($sqlLegacy)) throw new Exception("Error updating Legacy program");
+            }
+
+            $conexion->commit();
+            $conexion->autocommit(TRUE);
+            return true;
+        } catch (Exception $e) {
+            $conexion->rollback();
+            $conexion->autocommit(TRUE);
+            return false;
+        }
     }
     
     public function getProgramaLegacyId() {
@@ -96,6 +202,20 @@ class ProgramaPDFDetalle {
             return $row['id'];
         }
         return null;
+    }
+
+    public function actualizarArchivo($idAsignatura, $anio, $nombreArchivo) {
+        $sqlId = "SELECT id FROM programa_pdf_detalle WHERE id_asignatura = {$idAsignatura} AND anio = {$anio}";
+        $resId = BDConexionSistema::getInstancia()->query($sqlId);
+        
+        if ($resId && $resId->num_rows > 0) {
+            $row = $resId->fetch_assoc();
+            $id = $row['id'];
+            
+            $sql = "UPDATE programa_pdf_detalle SET ruta_archivo = '{$nombreArchivo}' WHERE id = {$id}";
+            return BDConexionSistema::getInstancia()->query($sql);
+        }
+        return false;
     }
 
     public function getId() { return $this->id; }

@@ -7,7 +7,16 @@ ini_set('display_startup_errors', 1);
 // (opcional) loguear también a archivo
 ini_set('log_errors', 1);
 ini_set('error_log', 'C:/xampp/php/logs/php_error_log');
-include_once '../lib/ControlAcceso.Class.php'; ?>
+ini_set('error_log', 'C:/xampp/php/logs/php_error_log');
+include_once '../lib/ControlAcceso.Class.php'; 
+
+// Obtenemos el perfil del usuario para validar permisos adicionales
+$UsuarioSes = $_SESSION['usuario'];
+$perfil = "";
+if (isset($UsuarioSes->roles[0])) {
+    $perfil = $UsuarioSes->roles[0]->nombre;
+}
+?>
 
 <style>
     .dropdown {
@@ -91,7 +100,7 @@ include_once '../lib/ControlAcceso.Class.php'; ?>
             <?php } ?>
 
             <!--                MENU "GESTIONAR PROGRAMAS"             -->
-            <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_REVISAR_PROGRAMA) || ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_GENERAR_INFORME_GERENCIAL)) { ?>
+            <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_REVISAR_PROGRAMA) || ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_GENERAR_INFORME_GERENCIAL) || $perfil == PermisosSistema::ROL_VINCULACION_ACADEMICA) { ?>
                 <div class="dropdown">
                     <li class="nav-item">
                         <a class="nav-link" href="#">
@@ -123,11 +132,20 @@ include_once '../lib/ControlAcceso.Class.php'; ?>
 
 
             
-            <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_CARRERAS)) { ?>
+            <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_CARRERAS) || $perfil == PermisosSistema::ROL_VINCULACION_ACADEMICA) { ?>
                 <li class="nav-item">
                     <a class="nav-link" href="../vista/carreras.php">
                         <span class="oi oi-spreadsheet" />
                         Carreras
+                    </a>
+                </li>                
+            <?php } ?>
+
+            <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_CARRERAS) || $perfil == PermisosSistema::ROL_VINCULACION_ACADEMICA) { ?>
+                <li class="nav-item">
+                    <a class="nav-link" href="../vista/planes.php">
+                        <span class="oi oi-book" />
+                        Planes
                     </a>
                 </li>                
             <?php } ?>
@@ -138,10 +156,7 @@ include_once '../lib/ControlAcceso.Class.php'; ?>
             
             <?php 
             
-            $UsuarioSes = $_SESSION['usuario'];
-            $perfil = $UsuarioSes->roles[0]->nombre;
-            
-            if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_PROFESORES && $perfil == PermisosSistema::ROL_VINCULACION_ACADEMICA)) { ?>
+            if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_PROFESORES) || $perfil == PermisosSistema::ROL_VINCULACION_ACADEMICA) { ?>
                 <li class="nav-item">
                     <a class="nav-link" href="../vista/profesores.php">
                         <span class="oi oi-people" />

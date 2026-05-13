@@ -1,6 +1,16 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
-ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
+// Obtenemos el usuario de la sesion
+$UsuarioSes = $_SESSION['usuario'];
+$perfil = "";
+if (isset($UsuarioSes->roles[0])) {
+    $perfil = $UsuarioSes->roles[0]->nombre;
+}
+
+// Si NO tiene permiso de Carreras Y NO es VA, entonces requiere permiso (lo cual redirigira)
+if (!ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_CARRERAS, $UsuarioSes) && $perfil != PermisosSistema::ROL_VINCULACION_ACADEMICA) {
+    ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
+}
 include_once '../lib/Constantes.Class.php';
 include_once '../modeloSistema/Carrera.Class.php';
 include_once '../modeloSistema/Plan.Class.php';
@@ -32,10 +42,16 @@ $planes = $ManejadorPlan->getPlanesSegunCarrera($codigoCarrera);
             <p></p>
             <div class="card">
                 <div class="card-header">
-                    <h3>Revisiones del Plan de Estudios de <span class="text-info"><?= $carrera->getId();?> - <?= $carrera->getNombre();?></span> </h3>
+                    <h3>Planes de Estudio de <span class="text-info"><?= $carrera->getId();?> - <?= $carrera->getNombre();?></span> </h3>
                 </div>
                 <div class="card-body">
-                    
+                    <p>
+                        <a href="plan.crear.php?id=<?= $carrera->getId(); ?>">
+                            <button type="button" class="btn btn-success">
+                                <span class="oi oi-plus"></span> Nuevo Plan
+                            </button>
+                        </a>
+                    </p>
                   
                     <table class="table table-hover table-sm text-center" id="tablaPlanes">
                         <thead>
@@ -69,6 +85,16 @@ $planes = $ManejadorPlan->getPlanesSegunCarrera($codigoCarrera);
                                                 <a title="Ver Asignaturas" href="plan.asignaturas.php?id=<?= $plan->getId(); ?>&idCarrera=<?= $codigoCarrera ?>">
                                                     <button type="button" class="btn btn-outline-info">
                                                         <span class="oi oi-list"></span>
+                                                    </button>
+                                                </a>
+                                                <a title="Modificar" href="plan.modificar.php?id=<?= $plan->getId(); ?>">
+                                                    <button type="button" class="btn btn-outline-warning">
+                                                        <span class="oi oi-pencil"></span>
+                                                    </button>
+                                                </a>
+                                                <a title="Eliminar" href="plan.eliminar.php?id=<?= $plan->getId(); ?>">
+                                                    <button type="button" class="btn btn-outline-danger">
+                                                        <span class="oi oi-trash"></span>
                                                     </button>
                                                 </a> 
                                             </td>

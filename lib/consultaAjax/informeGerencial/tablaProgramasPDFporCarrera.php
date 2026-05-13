@@ -1,6 +1,7 @@
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+include_once '../../ControlAcceso.Class.php';
 include_once '../../../modeloSistema/Carrera.Class.php';
 include_once '../../../modeloSistema/Plan.Class.php';
 include_once '../../../modeloSistema/Asignatura.Class.php';
@@ -104,7 +105,25 @@ if (isset($_POST['codCarrera']) && isset($_POST['anio'])){
                     Faltan datos.
                   </div>';
 }
-echo $print;
+    // --- INICIO LOGGING ---
+    // Guardar log del informe generado
+    include_once '../../../modeloSistema/LogInforme.Class.php';
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    $idUsuarioLog = 0;
+    $emailUsuarioLog = 'Desconocido';
+    if (isset($_SESSION['usuario'])) {
+        $idUsuarioLog = $_SESSION['usuario']->id;
+        $emailUsuarioLog = $_SESSION['usuario']->email;
+    }
+    
+    $tipoInforme = "Reporte Carreras (Carrera: {$codCarrera}, Año: {$anio})";
+    LogInforme::guardarLog($idUsuarioLog, $emailUsuarioLog, $tipoInforme, $print);
+    // --- FIN LOGGING ---
+    
+    echo $print;
 ?>
 <script type="text/javascript">
 google.charts.load('current', {'packages':['corechart']});

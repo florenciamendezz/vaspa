@@ -153,7 +153,54 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
                     }
                 } else {
                     $link = ($data['origen'] == 'pdf') ? "revisar.programa.pdf.php?id=".$data['id'] : "revisar.programa.php?id=".$data['id'];
-                    $rows .= '<td><a title="Ver Programa" href="'.$link.'"><button type="button" class="btn btn-outline-info"><span class="oi oi-document"></span></button></a></td>';
+                    $acciones = '<a title="Ver Programa" href="'.$link.'"><button type="button" class="btn btn-outline-info"><span class="oi oi-document"></span></button></a>';
+                    
+                    // Boton Subir PDF Firmado (Aprobar)
+                    $puedeSubirFirmado = false;
+                    if ($data['origen'] == 'pdf' && $rol != "Profesor" && $data['fueDesaprobado'] != 1) {
+                        if (($rol == "Director de Departamento" || $rol == "DCNE" || $rol == "DCS" || $rol == 10) && $data['aprobadoDepto'] != 1 && $data['aprobadoEscuela'] == 1) {
+                            $puedeSubirFirmado = true;
+                        } elseif ($rol == "Director de Escuela" && $data['aprobadoEscuela'] != 1 && $data['enRevision'] == 1) {
+                            $puedeSubirFirmado = true;
+                        } elseif (($rol == "VA" || $rol == 8) && $data['aprobadoVa'] != 1 && $data['aprobadoDepto'] == 1) {
+                            $puedeSubirFirmado = true;
+                        }
+                    }
+
+                    if ($puedeSubirFirmado) {
+                        $acciones .= ' <button type="button" class="btn btn-outline-warning btn-sm" title="Subir PDF Firmado y Aprobar" onclick="abrirModalSubirPdf('.$data['id'].')"><span class="oi oi-cloud-upload"></span></button>';
+                    }
+                    
+                    // Boton Enviar a Revision
+                    $puedeEnviarRevision = false;
+                    if ($data['origen'] == 'pdf' && $data['fueDesaprobado'] != 1) {
+                        // Logica ajustada: Si ya aprobo/subio, no mostrar boton de enviar
+                        /* 
+                        if ($rol == "Director de Escuela" && $data['aprobadoEscuela'] == 1 && $data['aprobadoDepto'] != 1) {
+                            $puedeEnviarRevision = true;
+                        } elseif (($rol == "Director de Departamento" || $rol == "DCNE" || $rol == "DCS" || $rol == 10) && $data['aprobadoDepto'] == 1 && $data['aprobadoVa'] != 1) {
+                            $puedeEnviarRevision = true;
+                        }
+                        */
+                        $puedeEnviarRevision = false;
+                    }
+                    
+                    if ($puedeEnviarRevision) {
+                         $acciones .= ' <a title="Enviar a Revisión" class="btn btn-outline-purple btn-sm" href="enviarProgramaRevision.php?idPrograma='.$data['id'].'" role="button"><span class="oi oi-share"></span></a>';
+                    }
+                    
+                    // Mostrar quien subio el ultimo PDF firmado
+                    if ($data['ruta_archivo']) {
+                        if (strpos($data['ruta_archivo'], '_firmado-VA_') !== false) {
+                            $acciones .= ' <span class="badge badge-info">Firmado por VA</span>';
+                        } elseif (strpos($data['ruta_archivo'], '_firmado-Depto_') !== false) {
+                            $acciones .= ' <span class="badge badge-warning">Firmado por Depto</span>';
+                        } elseif (strpos($data['ruta_archivo'], '_firmado-Escuela_') !== false) {
+                            $acciones .= ' <span class="badge badge-success">Firmado por Escuela</span>';
+                        }
+                    }
+                    
+                    $rows .= '<td>'.$acciones.'</td>';
                 }
                 $rows .= '</tr>';
             }
@@ -205,17 +252,67 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
                     $rows .= '<td>'.getVigencia($data['anio'], $data['vigencia']).'</td>';
                     $rows .= '<td>'.$fechaCarga->format('d/m/y').'</td>';
                     $rows .= '<td><span class="badge '.$info['badgeClass'].'">'.$info['estado'].'</span></td>';
-                    
+
+                    $acciones = '';
+
                     if ($data['aprobadoVa'] == 1 && $data['aprobadoDepto'] == 1 && $data['aprobadoEscuela'] == 1) {
                          if ($data['origen'] == 'pdf') {
-                            $rows .= '<td><a title="Descargar Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=pdf" download><button type="button" class="btn btn-outline-primary"><span class="oi oi-data-transfer-download"></span></button></a></td>';
+                            $acciones .= '<a title="Descargar Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=pdf" download><button type="button" class="btn btn-outline-primary"><span class="oi oi-data-transfer-download"></span></button></a>';
                         } else {
-                            $rows .= '<td><a title="Descargar Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=legacy"><button type="button" class="btn btn-outline-primary"><span class="oi oi-data-transfer-download"></span></button></a></td>';
+                            $acciones .= '<a title="Descargar Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=legacy"><button type="button" class="btn btn-outline-primary"><span class="oi oi-data-transfer-download"></span></button></a>';
                         }
                     } else {
                         $link = ($data['origen'] == 'pdf') ? "revisar.programa.pdf.php?id=".$data['id'] : "revisar.programa.php?id=".$data['id'];
-                        $rows .= '<td><a title="Ver Programa" href="'.$link.'"><button type="button" class="btn btn-outline-info"><span class="oi oi-document"></span></button></a></td>';
+                        $acciones .= '<a title="Ver Programa" href="'.$link.'"><button type="button" class="btn btn-outline-info"><span class="oi oi-document"></span></button></a>';
                     }
+
+                    // Boton Subir PDF Firmado en Aprobados
+                    $puedeSubirFirmado = false;
+                    // Solo permitir modificar si NO ha sido aprobado totalmente (por VA)
+                    if ($data['origen'] == 'pdf' && $data['aprobadoVa'] != 1) {
+                        if (($rol == "Director de Departamento" || $rol == "DCNE" || $rol == "DCS" || $rol == 10) && $data['aprobadoDepto'] == 1) {
+                            $puedeSubirFirmado = true;
+                        } elseif ($rol == "Director de Escuela" && $data['aprobadoEscuela'] == 1) {
+                            $puedeSubirFirmado = true;
+                        } 
+                        // VA se excluye aqui porque si aprobadoVa != 1, entonces VA no aprobo, 
+                        // y si VA aprobo, el if principal lo oculta.
+                        // Sin embargo, si queremos que VA pueda corregir MIENTRAS sea el ultimo... 
+                        // El usuario pidio "aprobado por TODOS... desaparecer". 
+                        // Si VA aprueba, es "aprobado por todos". Entonces desaparece.
+                        // Por lo tanto, VA nunca vera este boton en la pestaña "Aprobados".
+                    }
+
+                    if ($puedeSubirFirmado) {
+                        $acciones .= ' <button type="button" class="btn btn-outline-warning btn-sm" title="Subir PDF Firmado" onclick="abrirModalSubirPdf('.$data['id'].')"><span class="oi oi-cloud-upload"></span></button>';
+                    }
+
+                    // Boton Enviar a Revision (AGREGADO)
+                    $puedeEnviarRevision = false;
+                    if ($data['origen'] == 'pdf') {
+                        if ($rol == "Director de Escuela" && $data['aprobadoEscuela'] == 1 && $data['aprobadoDepto'] != 1) {
+                            $puedeEnviarRevision = true;
+                        } elseif (($rol == "Director de Departamento" || $rol == "DCNE" || $rol == "DCS" || $rol == 10) && $data['aprobadoDepto'] == 1 && $data['aprobadoVa'] != 1) {
+                            $puedeEnviarRevision = true;
+                        }
+                    }
+                    
+                    if ($puedeEnviarRevision) {
+                         $acciones .= ' <a title="Enviar a Revisión" class="btn btn-outline-purple btn-sm" href="enviarProgramaRevision.php?idPrograma='.$data['id'].'" role="button"><span class="oi oi-share"></span></a>';
+                    }
+
+                    // Mostrar quien subio el ultimo PDF firmado
+                    if ($data['ruta_archivo']) {
+                        if (strpos($data['ruta_archivo'], '_firmado-VA_') !== false) {
+                            $acciones .= ' <span class="badge badge-info">Firmado por VA</span>';
+                        } elseif (strpos($data['ruta_archivo'], '_firmado-Depto_') !== false) {
+                            $acciones .= ' <span class="badge badge-warning">Firmado por Depto</span>';
+                        } elseif (strpos($data['ruta_archivo'], '_firmado-Escuela_') !== false) {
+                            $acciones .= ' <span class="badge badge-success">Firmado por Escuela</span>';
+                        }
+                    }
+
+                    $rows .= '<td>'.$acciones.'</td>';
                     $rows .= '</tr>';
                 }
             }
@@ -302,6 +399,43 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
     $html .= '</div>';
     
     $html .= '</div>'; // Fin tab-content
+    
+    // Modal Subir PDF Firmado
+    $html .= '
+    <div class="modal fade" id="modalSubirPdf" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Subir PDF Firmado</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="../controlSistema/programa.actualizar.pdf.php" method="POST" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <input type="hidden" name="idPrograma" id="idProgramaSubir">
+                        <div class="form-group">
+                            <label for="archivoPdf">Seleccione el archivo PDF firmado:</label>
+                            <input type="file" class="form-control-file" id="archivoPdf" name="archivoPdf" accept=".pdf" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Subir Archivo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function abrirModalSubirPdf(idPrograma) {
+        $("#idProgramaSubir").val(idPrograma);
+        $("#modalSubirPdf").modal("show");
+    }
+    </script>
+    ';
+    
     echo $html;
 }
 
@@ -391,28 +525,41 @@ function getLatestProgramData($idAsignatura) {
 }
 
 function getStatusInfo($data) {
+    // 1. Totalmente Aprobado
     if ($data['aprobadoVa'] == 1 && $data['aprobadoDepto'] == 1 && $data['aprobadoEscuela'] == 1) {
-        return ['estado' => "Aprobado por VA, Depto y Escuela", 'ubicacion' => "Aprobado", 'badgeClass' => "badge-success"];
-    } elseif ($data['fueDesaprobado'] == 1) {
+        return ['estado' => "Aprobado Totalmente", 'ubicacion' => "Finalizado", 'badgeClass' => "badge-success"];
+    } 
+    
+    // 2. Rechazado / Desaprobado
+    if ($data['fueDesaprobado'] == 1) {
         $estado = "Rechazado";
-        if (!is_null($data['aprobadoVa']) && $data['aprobadoVa'] == 0) {
-            $estado = "Desaprobado por VA";
+        if (!is_null($data['aprobadoEscuela']) && $data['aprobadoEscuela'] == 0) {
+            $estado = "Desaprobado por Escuela";
         } elseif (!is_null($data['aprobadoDepto']) && $data['aprobadoDepto'] == 0) {
-            $estado = "Desaprobado por Director de Departamento";
-        } elseif (!is_null($data['aprobadoEscuela']) && $data['aprobadoEscuela'] == 0) {
-            $estado = "Desaprobado por Director de Escuela";
+            $estado = "Desaprobado por Depto";
+        } elseif (!is_null($data['aprobadoVa']) && $data['aprobadoVa'] == 0) {
+            $estado = "Desaprobado por VA";
         }
         return ['estado' => $estado, 'ubicacion' => "Profesor", 'badgeClass' => "badge-danger"];
-    } elseif ($data['aprobadoVa'] == 1 && $data['aprobadoDepto'] == 1) {
-        return ['estado' => "Aprobado por VA y Depto", 'ubicacion' => "Pendiente Escuela", 'badgeClass' => "badge-warning"];
-    } elseif ($data['aprobadoVa'] == 1) {
-        return ['estado' => "Aprobado por VA", 'ubicacion' => "Pendiente Depto", 'badgeClass' => "badge-warning"];
-    } elseif ($data['aprobadoDepto'] == 1) {
-        return ['estado' => "Aprobado por Depto", 'ubicacion' => "Pendiente VA", 'badgeClass' => "badge-warning"];
-    } elseif ($data['enRevision'] == 1) {
-        return ['estado' => "En Revisión", 'ubicacion' => "Vinculación Académica", 'badgeClass' => "badge-info"];
-    } else {
-        return ['estado' => "Pendiente", 'ubicacion' => "Profesor", 'badgeClass' => "badge-secondary"];
     }
+
+    // 3. Flujo de Aprobación (Escuela -> Depto -> VA)
+    // Si está aprobado por Depto (y no por VA aun), está en VA
+    if ($data['aprobadoDepto'] == 1) {
+        return ['estado' => "Aprobado por Depto", 'ubicacion' => "Vinculación Académica", 'badgeClass' => "badge-warning"];
+    }
+    
+    // Si está aprobado por Escuela (y no por Depto aun), está en Depto
+    if ($data['aprobadoEscuela'] == 1) {
+        return ['estado' => "Aprobado por Escuela", 'ubicacion' => "Departamento", 'badgeClass' => "badge-warning"];
+    }
+    
+    // Si está en revisión (y no aprobado por Escuela aun), está en Escuela
+    if ($data['enRevision'] == 1) {
+        return ['estado' => "En Revisión", 'ubicacion' => "Escuela", 'badgeClass' => "badge-info"];
+    }
+    
+    // 4. Por defecto (recién cargado o borrador)
+    return ['estado' => "Pendiente", 'ubicacion' => "Profesor", 'badgeClass' => "badge-secondary"];
 }
 ?>

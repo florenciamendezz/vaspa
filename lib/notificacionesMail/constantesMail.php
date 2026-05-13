@@ -21,3 +21,6 @@ define('CONTRASENA_DEPTO_CNE', 'qkybvowecyfxdzok');
 define('MAIL_PROFESOR', 'esstefaniamendez@gmail.com');
 define('CONTRASENA_PROF', 'qkybvowecyfxdzok');
 
+// MAIL DE ESCUELA
+define('MAIL_ESCUELA', 'esstefaniamendez@gmail.com');
+

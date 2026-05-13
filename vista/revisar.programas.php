@@ -37,17 +37,16 @@ if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACI
         // Filtro Depto: Sólo si NO ha sido aprobado por Depto
         $filtro = " idDepartamento = '1' AND (aprobadoDepto IS NULL OR aprobadoDepto = 0) "; 
     } else {
-        $rol = 'NA'; // No se encontro el rol del Usuario (aplicar filtro estricto por defecto)
+        $rol = PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO; // Mantener el rol original para la lógica de la vista
         $filtro = " (aprobadoVa IS NULL OR aprobadoVa = 0) AND (aprobadoDepto IS NULL OR aprobadoDepto = 0) ";
     } 
+} elseif ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA) {
+    // Filtro Escuela: Sólo si NO ha sido aprobado por Escuela
+    $filtro = " (aprobadoEscuela IS NULL OR aprobadoEscuela = 0) ";
 }
-// --- FIN: LÓGICA DE FILTRADO DINÁMICO PARA CARGA INICIAL ---
-
-
-// ARMAMOS LA CONSULTA EN DONDE SE OBTENDRAN LOS 20 PROGRAMAS DE ASIGNATURAS "NO REVISADOS" MAS RECIENTES TENIENDO EN CUENTA QUE LA VIGENCIA CONTENGA EL AÑO ACTUAL
 $anioActual = date("Y"); //obtenemos el anio (4 digitos) del servidor (anio actual)
 
-$query = "SELECT DISTINCT (p.id) as idPrograma, nombre, a.id, anio, vigencia, fechaCarga 
+$query = "SELECT DISTINCT (p.id) as idPrograma, nombre, a.id, p.anio, p.vigencia, p.fechaCarga, ppd.id as idProgramaPDF 
                  FROM plan pl
                  JOIN plan_asignatura pa 
                  ON pl.id = pa.idPlan
@@ -55,10 +54,12 @@ $query = "SELECT DISTINCT (p.id) as idPrograma, nombre, a.id, anio, vigencia, fe
                  ON pa.idAsignatura = a.id 
                  JOIN programa p 
                  ON a.id = p.idAsignatura 
+                 LEFT JOIN programa_pdf_detalle ppd
+                 ON p.idAsignatura = ppd.id_asignatura AND p.anio = ppd.anio
                  WHERE enRevision = 1 AND (fueDesaprobado IS NULL OR fueDesaprobado = 0) AND $filtro " // Se incluye el filtro de desaprobado y el filtro por rol
-                 . "AND anio <= {$anioActual} "
-                 . "AND (anio+vigencia-1) >= {$anioActual} "
-                 . "ORDER BY fechaCarga DESC "
+                 . "AND p.anio <= {$anioActual} "
+                 . "AND (p.anio+p.vigencia-1) >= {$anioActual} "
+                 . "ORDER BY p.fechaCarga DESC "
                  . "LIMIT 20";
 
 // Ejecutamos la query
@@ -103,7 +104,15 @@ function obtenerProgramasAsignaturasRecientes($query) {
                 $html .= '<td>'.$fila['id'].'</td>';
                 $html .= '<td>'.getVigencia($fila['anio'], $fila['vigencia']).'</td>';
                 $html .= '<td>'.$fechaCarga.'</td>';
-                $html .= '<td><a title="Revisar Programa" href="revisar.programa.php?id='.$fila['idPrograma'].'">
+                
+                // Determinamos el enlace corrector (PDF vs Legacy)
+                if (!empty($fila['idProgramaPDF'])) {
+                     $link = "revisar.programa.pdf.php?id=".$fila['idProgramaPDF'];
+                } else {
+                     $link = "revisar.programa.php?id=".$fila['idPrograma'];
+                }
+
+                $html .= '<td><a title="Revisar Programa" href="'.$link.'">
                                          <button type="button" class="btn btn-outline-success">
                                              <span class="oi oi-document"></span>
                                          </button></a></td>';

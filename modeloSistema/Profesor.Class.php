@@ -178,7 +178,7 @@ class Profesor {
         
         // obtenemos las asignaturas que forman parte de una revision de Plan vigente 
         // en donde es responsable el profesor        
-        $this->query = "SELECT DISTINCT a.id, a.nombre, a.idDepartamento, contenidosMinimos, a.idProfesor, horasSemanales 
+        $this->query = "SELECT DISTINCT a.id, a.nombre, a.idDepartamento, a.idProfesor 
         FROM ((profesor p INNER JOIN asignatura a ON p.id = a.idProfesor) 
         INNER JOIN (SELECT idPlan, anio_inicio, anio_fin, idAsignatura, idCarrera FROM 
         plan p INNER JOIN plan_asignatura pa ON p.id = pa.idPlan) ap ON a.id = ap.idAsignatura)

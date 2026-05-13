@@ -62,6 +62,7 @@ $rutaPDF = '../archivos/programas/' . $programaPDF->getRutaArchivo();
                                   </div>';
                             }
                             ?>
+                            <?php if (!$programaLegacy || $programaLegacy->getFueDesaprobado() != 1) { ?>
                             <div class="text-center mb-3">
                                 <!-- Botones de accion -->
                                 <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalAprobar">
@@ -71,6 +72,7 @@ $rutaPDF = '../archivos/programas/' . $programaPDF->getRutaArchivo();
                                     Desaprobar Programa
                                 </button>
                             </div>
+                            <?php } ?>
 
                             <!-- Modal Aprobar -->
                             <div class="modal fade" id="modalAprobar" tabindex="-1" role="dialog" aria-hidden="true">
@@ -140,17 +142,24 @@ $rutaPDF = '../archivos/programas/' . $programaPDF->getRutaArchivo();
                                 <div class="card-header"><h4 class="card-title">Comentarios Anteriores</h4></div>
                                 <?php 
                                 if ($programaLegacy) {
-                                    if (!is_null($programaLegacy->getComentarioVa())){
+                                    if (!is_null($programaLegacy->getComentarioVa()) && !empty($programaLegacy->getComentarioVa())){
                                         echo '<div class="card-body">
                                                 <h5 class="card-title">Vinculaci&oacute;n Acad&eacute;mica</h5>
                                                 <p class="card-text text-muted">'.$programaLegacy->getComentarioVa().'</p>
                                               </div>';
                                     }
-                                    if (!is_null($programaLegacy->getComentarioDepto())){
+                                    if (!is_null($programaLegacy->getComentarioDepto()) && !empty($programaLegacy->getComentarioDepto())){
                                         echo '<hr>
                                               <div class="card-body">
                                                 <h5 class="card-title">Departamento</h5>
                                                 <p class="card-text text-muted">'.$programaLegacy->getComentarioDepto().'</p>
+                                              </div>';
+                                    }
+                                    if (!is_null($programaLegacy->getComentarioEscuela()) && !empty($programaLegacy->getComentarioEscuela())){
+                                        echo '<hr>
+                                              <div class="card-body">
+                                                <h5 class="card-title">Escuela</h5>
+                                                <p class="card-text text-muted">'.$programaLegacy->getComentarioEscuela().'</p>
                                               </div>';
                                     }
                                 }

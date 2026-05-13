@@ -44,22 +44,25 @@ function sendemail($mail_username, $mail_userpassword, $mail_addAddress, $mail_s
                 
 	$mail->msgHTML($message);
         
+        $nombreDestinatario = "Destinatario";
         if($destinatario == 0){
-            $destinatario = "Vinculación Académica";
-        } else {
+            $nombreDestinatario = "Vinculación Académica";
+        } elseif ($destinatario == 1) {
              $asignatura = new Asignatura($codAsignatura);
              $departamento = new Departamento($asignatura->getIdDepartamento());
-             $destinatario = "Departamento de ".$departamento->getNombre();
-             
+             $nombreDestinatario = "Departamento de ".$departamento->getNombre();
+        } elseif ($destinatario == 2) {
+            $nombreDestinatario = "Director de Escuela";
         }
+        
 	if(!$mail->send()) {
 		//echo '<p style="color:red">No se pudo enviar el mensaje..';
 		//echo 'Error de correo: ' . $mail->ErrorInfo."</p>";
-            echo '<div class="alert alert-danger" role="alert">Ha ocurrido un error al enviar la notificaci&oacute;n por correo a '.$destinatario.'.<b>('.$mail->ErrorInfo.')</b></div>';
+            echo '<div class="alert alert-danger" role="alert">Ha ocurrido un error al enviar la notificaci&oacute;n por correo a '.$nombreDestinatario.'.<b>('.$mail->ErrorInfo.')</b></div>';
 	} 
         else {
 		//echo '<p style="color:green">Tu mensaje ha sido enviado!</p>';
-                echo '<div class="alert alert-success" role="alert">Notificaci&oacute;n enviada con &eacute;xito a '.$destinatario.'.</div>';
+                echo '<div class="alert alert-success" role="alert">Notificaci&oacute;n enviada con &eacute;xito a '.$nombreDestinatario.'.</div>';
 	}
 }
 
@@ -129,8 +132,47 @@ function enviarMailNuevoProgramaDepartamento($idPrograma) {
     //}
 }
 
+// NUEVA FUNCION: Notificar a Director de Escuela
+function enviarMailNuevoProgramaEscuela($idPrograma) {
+    include_once '../modeloSistema/Asignatura.Class.php';
+    include_once '../modeloSistema/Profesor.Class.php';
+    include_once '../modeloSistema/Programa.Class.php';
+    
+    $programa = new Programa($idPrograma);
+    $asignatura = new Asignatura($programa->getIdAsignatura());
+    $profesor = new Profesor($asignatura->getIdProfesor());
+    $nombreProfesor = $profesor->getApellido().', '.$profesor->getNombre(); 
+    $nombreAsignatura = $asignatura->getNombre();
+    
+    $mail_username = MAIL_SISTEMA;
+    $mail_userpassword = CONTRASENA_SISTEMA;
+    $mail_addAddress = MAIL_ESCUELA; 
+    
+    // Usamos la misma plantilla que Depto por ahora, o podriamos crear una especifica
+    // Para simplificar, usamos la de Depto pero cambiamos el destinatario en el texto si fuera necesario, 
+    // pero sendemail reemplaza variables.
+    // Lo ideal seria crear mail_Escuela_Nuevo_Programa.html, pero usaremos mail_Departamento_Nuevo_Programa.html como base
+    $template = "../lib/notificacionesMail/plantillaMail/mail_Departamento_Nuevo_Programa.html"; 
+    $mail_subject = "Nuevo Programa de $nombreAsignatura para revisar";
+    $destinatario = 2; // 2 para Escuela
+    sendemail($mail_username, $mail_userpassword, $mail_addAddress, $mail_subject, $template, $asignatura->getId(), $nombreAsignatura, $nombreProfesor, $idPrograma, $destinatario);
+}
+
 // funcion que llama a las funciones que se encargan de realizar el envio del email tanto a SA como al Dpto correspondiente
-function notificarNuevoPrograma($idPrograma) {
-    enviarMailNuevoProgramaSA($idPrograma);
-    enviarMailNuevoProgramaDepartamento($idPrograma);
+// MODIFICADA PARA SECUENCIALIDAD
+function notificarNuevoPrograma($idPrograma, $rolRemitente = 'Profesor') {
+    if ($rolRemitente == 'Profesor') {
+        // Profesor envia a Escuela
+        enviarMailNuevoProgramaEscuela($idPrograma);
+    } elseif ($rolRemitente == 'Director de Escuela' || $rolRemitente == 'Secretario de Escuela') {
+        // Escuela envia a Departamento
+        enviarMailNuevoProgramaDepartamento($idPrograma);
+    } elseif ($rolRemitente == 'Director de Departamento') {
+        // Departamento envia a VA
+        enviarMailNuevoProgramaSA($idPrograma);
+    } else {
+        // Fallback por si acaso (comportamiento antiguo)
+        enviarMailNuevoProgramaSA($idPrograma);
+        enviarMailNuevoProgramaDepartamento($idPrograma);
+    }
 }

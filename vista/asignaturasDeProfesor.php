@@ -12,28 +12,24 @@ $rol = $usuario->roles[0]->nombre;
 
 // Obtenemos el email del profesor
 $email = $usuario->email;
-//var_dump($usuario->email);
 
 // Preparamos la query para obtener todos los datos de Profesor segun el email
-$sql = "SELECT * "
-     . "FROM profesor "
-     . "WHERE email = '{$email}'";
+$sql = "SELECT * FROM profesor WHERE email = '{$email}'";
      
 $resultado = BDConexionSistema::getInstancia()->query($sql);
 
-$mostrarError = FALSE; // variable que utilizaremos para mostrar el Error (error Bd, no existe profesor)
-// validamos el resultado de la query (si retorna false -> Ocurrio un error en la BD) Lanzamos una Excepcion informando el Error
+$mostrarError = FALSE; 
 if (!$resultado) {
     $mensaje = "Ocurrio un Error al obtener los datos del Profesor con email: {$email}.";
     $mostrarError = TRUE;
-} elseif ($resultado->num_rows == 1) { // los correos no se pueden repetir por lo que deberia deber 1 o 0 registro
-    $profesor = $resultado->fetch_object("Profesor"); // creamos objeto Profesor
+} elseif ($resultado->num_rows >= 1) { 
+    $profesor = $resultado->fetch_object("Profesor"); 
 } else {
     $mensaje = "No hay Profesor en el Sistema con email: <b>{$email}.</b>";
     $mostrarError = TRUE;
 }
 
-if (!$mostrarError){ // No ocurrio un error, y existe el profesor, obtenemos las asignaturas
+if (!$mostrarError){ 
     $asignaturas = $profesor->obtenerAsignaturasDePlanVigente();
     
     // Además, obtenemos TODAS las asignaturas del sistema
@@ -262,6 +258,8 @@ if (!$mostrarError){ // No ocurrio un error, y existe el profesor, obtenemos las
                                     
                                     $btnGenerarPDFHabilitado = '<a title="Descargar PDF" class="btn btn-outline-info btn-sm" href="programa.descargarPDF.php?id='.$programa->getId().'" role="button" target="_blank"><span class="oi oi-document"></span></a>';
 
+                                    $btnSubirPdfHabilitado = '<button type="button" title="Subir PDF Firmado" class="btn btn-outline-warning btn-sm" onclick="abrirModalSubirPdf('.$programa->getId().')"><span class="oi oi-cloud-upload"></span></button>&nbsp;';
+
                                      // segun estado habilitamos ciertos botones
                                      switch ($estadoReal) {
                                          case "En Vigencia":
@@ -273,20 +271,21 @@ if (!$mostrarError){ // No ocurrio un error, y existe el profesor, obtenemos las
                                          case "Cargando":
                                              $botones = $btnNuevoProgramaDeshablitado
                                                         .$btnModificarProgramaHabilitado
+                                                        .$btnSubirPdfHabilitado
                                                         .$btnEnviarRevisionHabilitado
                                                         .$btnGenerarPDFHabilitado;
                                              
                                              break;
-                                         case "En Revisión":
-                                             $botones = $btnNuevoProgramaDeshablitado
-                                                        .$btnModificarProgramaDeshabilitado
-                                                        .$btnEnviarRevisionDeshabilitado
-                                                        .$btnGenerarPDFHabilitado;
+                                        case "En Revisión":
+                                            $botones = $btnNuevoProgramaDeshablitado
+                                                       .$btnModificarProgramaDeshabilitado
+                                                       .$btnEnviarRevisionDeshabilitado // DESHABILITADO TRAS ENVIO
+                                                       .$btnGenerarPDFHabilitado;
                                              
                                              break;
                                          case "Desaprobado":
                                              $botones = $btnNuevoProgramaDeshablitado
-                                                        .$btnModificarProgramaHabilitado
+                                                        .$btnSubirPdfHabilitado
                                                         .$btnEnviarRevisionHabilitado
                                                         .$btnGenerarPDFHabilitado;
                                              
@@ -342,6 +341,39 @@ if (!$mostrarError){ // No ocurrio un error, y existe el profesor, obtenemos las
                     }
                 });
             });
+
+            function abrirModalSubirPdf(idPrograma) {
+                $("#idProgramaSubir").val(idPrograma);
+                $("#modalSubirPdf").modal("show");
+            }
         </script>
+
+    <!-- Modal Subir PDF Firmado -->
+    <div class="modal fade" id="modalSubirPdf" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Subir PDF Firmado</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="../controlSistema/programa.actualizar.pdf.php" method="POST" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <input type="hidden" name="idPrograma" id="idProgramaSubir">
+                        <div class="form-group">
+                            <label for="archivoPdf">Seleccione el archivo PDF firmado:</label>
+                            <input type="file" class="form-control-file" id="archivoPdf" name="archivoPdf" accept=".pdf" required>
+                            <small class="form-text text-muted">Al subir el archivo, se enviará automáticamente a revisión.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Subir y Enviar a Revisión</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     </body>
 </html>

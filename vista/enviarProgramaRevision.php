@@ -47,7 +47,8 @@ if (empty($DatosFormulario) && !isset($_GET['idPrograma'])) {
                     <div class="card-body">
                         <?php
                         if ($consulta) {
-                            notificarNuevoPrograma($idPrograma);
+                            $rolUsuario = $_SESSION['usuario']->roles[0]->nombre;
+                            notificarNuevoPrograma($idPrograma, $rolUsuario);
                             ?>
                             <div class="alert alert-success" role="alert">
                                 Se ha enviado el Programa a revisi&oacute;n con &eacute;xito.
@@ -58,9 +59,20 @@ if (empty($DatosFormulario) && !isset($_GET['idPrograma'])) {
                                 Ha ocurrido un error al enviar el Programa a revisi&oacute;n: <?= $error; ?>
                             </div>
     <?php } ?>
+                        <?php 
+                        $linkSalir = "asignaturasDeProfesor.php"; // Default para Profesor
+                        if (
+                            $rolUsuario == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO ||
+                            $rolUsuario == PermisosSistema::ROL_DIRECTOR_ESCUELA ||
+                            $rolUsuario == PermisosSistema::ROL_VINCULACION_ACADEMICA ||
+                            $rolUsuario == PermisosSistema::ROL_ADMIN
+                        ) {
+                            $linkSalir = "revisar.programas.php";
+                        }
+                        ?>
                         <hr />
                         <h5 class="card-text">Opciones</h5>
-                        <a href="asignaturasDeProfesor.php">
+                        <a href="<?= $linkSalir; ?>">
                             <button type="button" class="btn btn-primary">
                                 <span class="oi oi-account-logout"></span> Salir
                             </button>
