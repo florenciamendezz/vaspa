@@ -164,7 +164,14 @@ if (isset($UsuarioSes->roles[0])) {
                     </a>
                 </li>                
             <?php } ?>
-
+            <?php if ($perfil == PermisosSistema::ROL_PROFESOR) { ?>
+                <li class="nav-item">
+                    <a class="nav-link" href="../vista/asignaturasDeProfesor.php">
+                        <span class="oi oi-book" />
+                        Mis Asignaturas
+                    </a>
+                </li>
+            <?php } ?>
             
 
 
