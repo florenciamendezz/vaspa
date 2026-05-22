@@ -44,8 +44,12 @@ if (isset($_POST["aprobarPrograma"])) {
         if ($esFirmaFinal) {
             if (file_exists($mailLib)) {
                 include_once $mailLib;
-                if (function_exists('notificarAprobacionFinal')) {
-                    notificarAprobacionFinal($idProgramaPDF);
+                if (class_exists('notificacionCircuitoVaspa')) {
+                    $idAsignatura = $programaPDF->getIdAsignatura();
+                    $anio = $programaPDF->getAnio();
+                    $profesor = new Profesor($asignatura->getIdProfesor());
+                    $emailDocente = $profesor->getEmail();
+                    notificacionCircuitoVaspa::notificarAprobacionFinal($idAsignatura, $anio, $emailDocente, $idProgramaPDF);
                 }
             }
         }
@@ -71,14 +75,16 @@ if (isset($_POST["aprobarPrograma"])) {
         // Notificaciones según quién desaprobó
         if (file_exists($mailLib)) {
             include_once $mailLib;
-            if ($rol == 'Director de Departamento') {
-                if (function_exists('notificarDesaprobacionDepto')) {
-                    notificarDesaprobacionDepto($idProgramaPDF);
-                }
-            } else {
-                // Escuela, VA 1° paso o Admin desaprueban
-                if (function_exists('notificarDesaprobacion')) {
-                    notificarDesaprobacion($idProgramaPDF);
+            if (class_exists('notificacionCircuitoVaspa')) {
+                $idAsignatura = $programaPDF->getIdAsignatura();
+                $anio = $programaPDF->getAnio();
+                if ($rol == 'Director de Departamento') {
+                    notificacionCircuitoVaspa::notificarDesaprobacionDepto($idAsignatura, $anio, $comentario);
+                } else {
+                    // Escuela, VA 1° paso o Admin desaprueban
+                    $profesor = new Profesor($asignatura->getIdProfesor());
+                    $emailDocente = $profesor->getEmail();
+                    notificacionCircuitoVaspa::notificarDesaprobacion($idAsignatura, $anio, $emailDocente, $comentario);
                 }
             }
         }

@@ -117,6 +117,13 @@ if (isset($UsuarioSes->roles[0])) {
                             </a>
                         <?php } ?>
 
+                        <?php if ($perfil == PermisosSistema::ROL_ADMIN || $perfil == PermisosSistema::ROL_VINCULACION_ACADEMICA) { ?>
+                            <a class = "nav-link" href = "../vista/monitoreo.circuito.php">
+                                <span class = "oi oi-pulse" />
+                                Monitoreo del Circuito
+                            </a>
+                        <?php } ?>
+
                         <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_GENERAR_INFORME_GERENCIAL)) { ?>
                             <a class = "nav-link" href = "../vista/informeGerencial.programas.php">
                                 <span class = "oi oi-bar-chart" />

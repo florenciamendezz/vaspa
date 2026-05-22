@@ -72,8 +72,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['idPrograma'])) {
         $mailLib = '../lib/notificacionesMail/notificacionCircuitoVaspa.php';
         if (file_exists($mailLib)) {
             include_once $mailLib;
-            if ($notificacionFn && function_exists($notificacionFn)) {
-                $notificacionFn($idPrograma);
+            if (class_exists('notificacionCircuitoVaspa')) {
+                $idAsignatura = $programa->getIdAsignatura();
+                $anio = $programa->getAnio();
+                if ($notificacionFn == 'notificarEnvioAEscuela') {
+                    notificacionCircuitoVaspa::notificarEnvioAEscuela($idAsignatura, $anio);
+                } elseif ($notificacionFn == 'notificarEnvioAVA') {
+                    $origen = 'Escuela';
+                    if ($rolNombre == 'Profesor') {
+                        $origen = 'Profesor';
+                    } elseif ($rolNombre == 'Director de Departamento') {
+                        $origen = 'Departamento';
+                    }
+                    notificacionCircuitoVaspa::notificarEnvioAVA($idAsignatura, $anio, $origen);
+                } elseif ($notificacionFn == 'notificarEnvioADepto') {
+                    notificacionCircuitoVaspa::notificarEnvioADepto($idAsignatura, $anio);
+                }
             }
         }
         

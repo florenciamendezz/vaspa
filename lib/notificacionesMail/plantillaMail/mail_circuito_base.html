@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{subject}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            border: 1px solid #e1e8ed;
+        }
+        .header {
+            background-color: #1a365d;
+            color: #ffffff;
+            padding: 25px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .content {
+            padding: 30px 25px;
+            line-height: 1.6;
+        }
+        .content p {
+            margin-bottom: 20px;
+            font-size: 15px;
+            color: #4a5568;
+        }
+        .highlight-box {
+            background-color: #f7fafc;
+            border-left: 4px solid #3182ce;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .highlight-title {
+            font-weight: bold;
+            color: #2b6cb0;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .highlight-details {
+            font-size: 15px;
+            color: #2d3748;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0 10px 0;
+        }
+        .btn {
+            background-color: #3182ce;
+            color: #ffffff !important;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 15px;
+            display: inline-block;
+            box-shadow: 0 2px 5px rgba(49, 130, 206, 0.3);
+        }
+        .btn:hover {
+            background-color: #2b6cb0;
+        }
+        .footer {
+            background-color: #edf2f7;
+            color: #718096;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Encabezado -->
+        <div class="header">
+            <h1>Sistema VASPA</h1>
+        </div>
+        
+        <!-- Contenido principal -->
+        <div class="content">
+            <p>{{saludo}}</p>
+            <p>{{introduccion}}</p>
+            
+            <!-- Detalles de la materia -->
+            <div class="highlight-box">
+                <div class="highlight-title">Detalles de la Asignatura</div>
+                <div class="highlight-details">
+                    <strong>Código:</strong> {{codAsignatura}}<br>
+                    <strong>Asignatura:</strong> {{nombreAsignatura}}<br>
+                    <strong>Año del Programa:</strong> {{anio}}
+                </div>
+            </div>
+            
+            <p>{{cuerpo}}</p>
+            
+            <!-- Botón de acción opcional -->
+            {{botonHTML}}
+            
+            <p style="margin-top: 30px;">Atentamente,<br><strong>Equipo de Gestión VASPA</strong></p>
+        </div>
+        
+        <!-- Pie de página -->
+        <div class="footer">
+            <p>Este es un correo automático generado por el Sistema de Gestión de Programas Analíticos (VASPA).</p>
+            <p>Universidad Nacional de la Patagonia Austral - Unidad Académica Río Gallegos (UNPA-UARG)</p>
+        </div>
+    </div>
+</body>
+</html>
