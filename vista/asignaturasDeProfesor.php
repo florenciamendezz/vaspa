@@ -1,13 +1,14 @@
 <?php
-
-include_once '../lib/ControlAcceso.Class.php';
-require_once '../modeloSistema/Profesor.Class.php';
-require_once '../modeloSistema/BDConexionSistema.Class.php';
-require_once '../modeloSistema/Programa.Class.php';
-require_once '../modeloSistema/Asignatura.Class.php';
-
-// Obtenemos el rol del usuario logueado en el sistema
-$usuario = $_SESSION['usuario'];
+ 
+ include_once '../lib/ControlAcceso.Class.php';
+ require_once '../modeloSistema/Profesor.Class.php';
+ require_once '../modeloSistema/BDConexionSistema.Class.php';
+ require_once '../modeloSistema/Programa.Class.php';
+ require_once '../modeloSistema/Asignatura.Class.php';
+ require_once '../modeloSistema/ProgramaPDFDetalle.Class.php';
+ 
+ // Obtenemos el rol del usuario logueado en el sistema
+ $usuario = $_SESSION['usuario'];
 $rol = $usuario->roles[0]->nombre;
 
 // Obtenemos el email del profesor
@@ -184,10 +185,20 @@ if (!$mostrarError){
                                     }
                                 }
                                 $dataCarreras = implode(',', $idsCarreras);
-                            ?>
-                            <tr class="fila-asignatura" data-carreras="<?= $dataCarreras ?>">
+                            ?>                            <tr class="fila-asignatura" data-carreras="<?= $dataCarreras ?>">
                             <td><?= $Asignatura->getId(); ?></td>
-                            <td><?= $Asignatura->getNombre(); ?></td>
+                            <td>
+                                <?= htmlspecialchars($Asignatura->getNombre()); ?>
+                                <?php 
+                                $anioActual = date('Y');
+                                $programaDetalle = ProgramaPDFDetalle::obtenerPorAsignaturaYAnio($Asignatura->getId(), $anioActual);
+                                if ($programaDetalle && $programaDetalle->obtenerEstadoActual() == "Devuelto al Profesor" && !empty($programaDetalle->getComentarioDesaprobacion())) { ?>
+                                    <div class="alert alert-danger mt-1 p-2" style="font-size: 0.85em; border-left: 4px solid #dc3545;">
+                                        <strong>Observaciones de devolución:</strong><br>
+                                        <?= nl2br(htmlspecialchars($programaDetalle->getComentarioDesaprobacion())); ?>
+                                    </div>
+                                <?php } ?>
+                            </td>
                             <td>
                                 <?php
                                 if (!empty($nombresCarreras)) {
@@ -198,38 +209,34 @@ if (!$mostrarError){
                                 ?>
                             </td>
                             <td><?php 
-                                 // Recuperamos un objeto Programa, vigente (del anio actual) si es que lo tiene
-                                 $programa = $Asignatura->obtenerUltimoPrograma();
                                  $vigencia = '-';
                                  $estado = 'No Cargado';
                                  $claseEstado = 'badge-secondary';
                                  
-                                 // botones
-                                 $btnNuevoProgramaHabilitado = '<a title="Nuevo Programa" class="btn btn-outline-success btn-sm" href="programa.crear.php?id='.$Asignatura->getId().'" role="button"><span class="oi oi-plus"></span></a>&nbsp;';
-                                 $btnNuevoProgramaDeshablitado = '<button type="button" title="Nuevo Programa" class="btn btn-outline-success btn-sm" disabled><span class="oi oi-plus"></span></button>&nbsp;';
+                                 // Botones base
+                                 $btnNuevoHabilitado = '<a title="Subir Programa" class="btn btn-outline-success btn-sm" href="programa.crear.php?id='.$Asignatura->getId().'" role="button"><span class="oi oi-plus"></span></a>&nbsp;';
+                                 $btnNuevoDeshabilitado = '<button type="button" title="Subir Programa" class="btn btn-outline-success btn-sm" disabled><span class="oi oi-plus"></span></button>&nbsp;';
                                  
-                                     
-                                 $btnModificarProgramaHabilitado = '<a title="Modificar Programa Actual" class="btn btn-outline-warning btn-sm" href="programa.modificar.pdf.php?id='.$Asignatura->getId().'" role="button"><span class="oi oi-pencil"></span></a>&nbsp;';
-                                 $btnModificarProgramaDeshabilitado = '<button type="button" title="Modificar Programa Actual" class="btn btn-outline-warning btn-sm" disabled><span class="oi oi-pencil"></span></button>&nbsp;';
-                                     
-                                 $btnEnviarRevisionDeshabilitado = '<button type="button" title="Enviar a Revisión" class="btn btn-outline-purple btn-sm" disabled><span class="oi oi-share"></span></button>&nbsp;';
+                                 $btnModificarHabilitado = '<a title="Reemplazar PDF" class="btn btn-outline-warning btn-sm" href="programa.crear.php?id='.$Asignatura->getId().'" role="button"><span class="oi oi-pencil"></span></a>&nbsp;';
+                                 $btnModificarDeshabilitado = '<button type="button" title="Reemplazar PDF" class="btn btn-outline-warning btn-sm" disabled><span class="oi oi-pencil"></span></button>&nbsp;';
                                  
-                                 $btnGenerarPDFDeshabilitado = '<button type="button" class="btn btn-outline-info btn-sm" disabled title="Descargar PDF"><span class="oi oi-document"></span></button>';
+                                 $btnDescargarDeshabilitado = '<button type="button" class="btn btn-outline-info btn-sm" disabled title="Descargar PDF"><span class="oi oi-document"></span></button>';
                                  
-                                 $botones = ''; // variable donde almacenaremos etiquetas HTML para los botones
-                                 if (is_null($programa)){
+                                 $botones = '';
+                                 if (is_null($programaDetalle)) {
                                      $estado = 'No Cargado';
                                      $claseEstado = 'badge-secondary';
-                                     $botones = $btnNuevoProgramaHabilitado
-                                             .$btnModificarProgramaDeshabilitado
-                                             .$btnEnviarRevisionDeshabilitado
-                                             .$btnGenerarPDFDeshabilitado;
+                                     $btnEnviarDeshabilitado = '<button type="button" title="Enviar a Revisión" class="btn btn-outline-purple btn-sm" disabled><span class="oi oi-share"></span></button>&nbsp;';
+                                     $botones = $btnNuevoHabilitado
+                                                . $btnModificarDeshabilitado
+                                                . $btnEnviarDeshabilitado
+                                                . $btnDescargarDeshabilitado;
                                  } else {
-                                     $estadoReal = $programa->obtenerEstadoDelPrograma();
+                                     $estadoReal = $programaDetalle->obtenerEstadoActual();
                                      $estado = $estadoReal;
-                                     $anioPrograma = $programa->getAnio();
-                                     $vigenciaVal = $programa->getVigencia();
-                                     if ($vigenciaVal == 1){
+                                     $anioPrograma = $programaDetalle->getAnio();
+                                     $vigenciaVal = $programaDetalle->getVigencia();
+                                     if ($vigenciaVal == 1) {
                                          $vigencia = "$anioPrograma";
                                      } elseif ($vigenciaVal == 2) {
                                          $vigencia = "$anioPrograma - ".($anioPrograma+1);
@@ -237,79 +244,62 @@ if (!$mostrarError){
                                          $vigencia = "$anioPrograma - ".($anioPrograma+1)." - ".($anioPrograma+2);
                                      }
                                      
-                                     // Colores de badge según estado
-                                     switch ($estadoReal) {
-                                         case 'Aprobado':
-                                         case 'En Vigencia':
-                                             $claseEstado = 'badge-success';
-                                             break;
-                                         case 'Cargando':
-                                             $claseEstado = 'badge-warning';
-                                             break;
-                                         case 'En Revisión':
-                                             $claseEstado = 'badge-primary';
-                                             break;
-                                         case 'Desaprobado':
-                                             $claseEstado = 'badge-danger';
-                                             break;
+                                     // Definición de colores de badge según el nuevo estado
+                                     if ($estadoReal == 'Aprobado') {
+                                         $claseEstado = 'badge-success';
+                                     } elseif ($estadoReal == 'Borrador') {
+                                         $claseEstado = 'badge-warning';
+                                     } elseif ($estadoReal == 'Devuelto al Profesor') {
+                                         $claseEstado = 'badge-danger';
+                                     } elseif (strpos($estadoReal, 'Pendiente') !== false) {
+                                         $claseEstado = 'badge-primary';
+                                     } else {
+                                         $claseEstado = 'badge-info'; // Estados intermedios "Revisado por..."
                                      }
                                      
-                                    $btnEnviarRevisionHabilitado = '<a title="Enviar a Revisión" class="btn btn-outline-purple btn-sm" href="enviarProgramaRevision.php?idPrograma='.$programa->getId().'" role="button"><span class="oi oi-share"></span></a>&nbsp;';
-                                    
-                                    $btnGenerarPDFHabilitado = '<a title="Descargar PDF" class="btn btn-outline-info btn-sm" href="programa.descargarPDF.php?id='.$programa->getId().'" role="button" target="_blank"><span class="oi oi-document"></span></a>';
-
-                                    $btnSubirPdfHabilitado = '<button type="button" title="Subir PDF Firmado" class="btn btn-outline-warning btn-sm" onclick="abrirModalSubirPdf('.$programa->getId().')"><span class="oi oi-cloud-upload"></span></button>&nbsp;';
-
-                                     // segun estado habilitamos ciertos botones
+                                     $btnEnviarHabilitado = '<button type="button" title="Enviar a Revisión" class="btn btn-outline-purple btn-sm" onclick="enviarARevision('.$programaDetalle->getId().')"><span class="oi oi-share"></span></button>&nbsp;';
+                                     $btnEnviarDeshabilitado = '<button type="button" title="Enviar a Revisión" class="btn btn-outline-purple btn-sm" disabled><span class="oi oi-share"></span></button>&nbsp;';
+                                     
+                                     $btnDescargarHabilitado = '<a title="Descargar PDF" class="btn btn-outline-info btn-sm" href="programa.descargarPDF.php?id='.$programaDetalle->getId().'&tipo=pdf" role="button" target="_blank"><span class="oi oi-document"></span></a>';
+                                     
+                                     // Asignar botones según estado actual del circuito
                                      switch ($estadoReal) {
-                                         case "En Vigencia":
-                                             $botones = $btnNuevoProgramaHabilitado
-                                                        .$btnModificarProgramaDeshabilitado
-                                                        .$btnEnviarRevisionDeshabilitado
-                                                        .$btnGenerarPDFHabilitado;
+                                         case "Borrador":
+                                             $botones = $btnNuevoDeshabilitado
+                                                        . $btnModificarHabilitado
+                                                        . $btnEnviarHabilitado
+                                                        . $btnDescargarHabilitado;
                                              break;
-                                         case "Cargando":
-                                             $botones = $btnNuevoProgramaDeshablitado
-                                                        .$btnModificarProgramaHabilitado
-                                                        .$btnSubirPdfHabilitado
-                                                        .$btnEnviarRevisionHabilitado
-                                                        .$btnGenerarPDFHabilitado;
-                                             
-                                             break;
-                                        case "En Revisión":
-                                            $botones = $btnNuevoProgramaDeshablitado
-                                                       .$btnModificarProgramaDeshabilitado
-                                                       .$btnEnviarRevisionDeshabilitado // DESHABILITADO TRAS ENVIO
-                                                       .$btnGenerarPDFHabilitado;
-                                             
-                                             break;
-                                         case "Desaprobado":
-                                             $botones = $btnNuevoProgramaDeshablitado
-                                                        .$btnSubirPdfHabilitado
-                                                        .$btnEnviarRevisionHabilitado
-                                                        .$btnGenerarPDFHabilitado;
-                                             
+                                         case "Devuelto al Profesor":
+                                             $botones = $btnNuevoDeshabilitado
+                                                        . $btnModificarHabilitado
+                                                        . $btnEnviarDeshabilitado
+                                                        . $btnDescargarHabilitado;
                                              break;
                                          case "Aprobado":
-                                             $botones = $btnNuevoProgramaDeshablitado
-                                                        .$btnModificarProgramaDeshabilitado
-                                                        .$btnEnviarRevisionDeshabilitado
-                                                        .$btnGenerarPDFHabilitado;
-
+                                             $botones = $btnNuevoDeshabilitado
+                                                        . $btnModificarDeshabilitado
+                                                        . $btnEnviarDeshabilitado
+                                                        . $btnDescargarHabilitado;
                                              break;
                                          default:
+                                             // En revisión activa o estados de revisores intermedios
+                                             $botones = $btnNuevoDeshabilitado
+                                                        . $btnModificarDeshabilitado
+                                                        . $btnEnviarDeshabilitado
+                                                        . $btnDescargarHabilitado;
                                              break;
                                      }
                                  }
-                                ?>
-                                <span class="badge <?= $claseEstado; ?>"><?= htmlspecialchars($estado); ?></span>
-                            </td>
-                            <td><?= $vigencia;?></td>
-
-                                <td>
-                                    <?php echo $botones; ?>
-                                </td>
-                            </tr>
+                                 ?>
+                                 <span class="badge <?= $claseEstado; ?>"><?= htmlspecialchars($estado); ?></span>
+                             </td>
+                             <td><?= htmlspecialchars($vigencia);?></td>
+ 
+                             <td>
+                                 <?php echo $botones; ?>
+                             </td>
+                             </tr>
                         <?php } ?>
                     </table>
                     <?php    
@@ -342,38 +332,17 @@ if (!$mostrarError){
                 });
             });
 
-            function abrirModalSubirPdf(idPrograma) {
-                $("#idProgramaSubir").val(idPrograma);
-                $("#modalSubirPdf").modal("show");
+            function enviarARevision(idPrograma) {
+                if (confirm('¿Está seguro de enviar este programa a revisión? Una vez enviado, no podrá realizar cambios ni subir archivos hasta que sea revisado por los evaluadores.')) {
+                    $("#idProgramaEnviar").val(idPrograma);
+                    $("#formEnviarRevision").submit();
+                }
             }
         </script>
 
-    <!-- Modal Subir PDF Firmado -->
-    <div class="modal fade" id="modalSubirPdf" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Subir PDF Firmado</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form action="../controlSistema/programa.actualizar.pdf.php" method="POST" enctype="multipart/form-data">
-                    <div class="modal-body">
-                        <input type="hidden" name="idPrograma" id="idProgramaSubir">
-                        <div class="form-group">
-                            <label for="archivoPdf">Seleccione el archivo PDF firmado:</label>
-                            <input type="file" class="form-control-file" id="archivoPdf" name="archivoPdf" accept=".pdf" required>
-                            <small class="form-text text-muted">Al subir el archivo, se enviará automáticamente a revisión.</small>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Subir y Enviar a Revisión</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+        <!-- Formulario POST Oculto para Enviar a Revisión -->
+        <form id="formEnviarRevision" action="../controlSistema/programa.enviar.revision.php" method="POST" style="display:none;">
+            <input type="hidden" name="idPrograma" id="idProgramaEnviar">
+        </form>
     </body>
 </html>

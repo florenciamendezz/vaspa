@@ -19,48 +19,48 @@ $carreras = $manejadorCarrera->getColeccion();
 $Usuario = $_SESSION['usuario'];
 $rol = $Usuario->roles[0]->nombre;
 
-$filtro = '1=1';// Filtro por defecto
+$filtro = "1=0"; // Por seguridad
 
 // --- INICIO: LÓGICA DE FILTRADO DINÁMICO PARA CARGA INICIAL ---
-// La clave es que el filtro debe excluir lo que el rol ya aprobó (aprobadoX = 1).
+// La clave es que el filtro busque los programas que están listos para la revisión del rol logueado.
 if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACION_ACADEMICA){
-    $rol = 'VA'; // administrador / VA
-    // Filtro VA: Sólo si NO ha sido aprobado por VA
-    $filtro = " (aprobadoVa IS NULL OR aprobadoVa = 0) "; 
+    $rol = 'VA';
+    $filtro = " (ppd.id IS NOT NULL AND ppd.en_revision = 1 AND ppd.fue_desaprobado = 0 AND ((ppd.aprobado_escuela = 1 AND ppd.aprobado_va IS NULL) OR (ppd.aprobado_depto = 1 AND ppd.aprobado_va_firma IS NULL)))
+                OR
+                (ppd.id IS NULL AND p.enRevision = 1 AND p.aprobadoEscuela = 1 AND p.aprobadoVa IS NULL AND p.fueDesaprobado = 0) ";
 } elseif ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO) {
+    $deptoFiltro = "";
     if ($Usuario->email == MAIL_DEPTO_CNE){
-        $rol = 'DCNE'; // Dpto Ciencias Naturales y Exactas;
-        // Filtro Depto: Sólo si NO ha sido aprobado por Depto
-        $filtro = " idDepartamento = '2' AND (aprobadoDepto IS NULL OR aprobadoDepto = 0) "; 
+        $rol = 'DCNE';
+        $deptoFiltro = " a.idDepartamento = '2' AND ";
     } elseif ($Usuario->email == MAIL_DEPTO_CS) {
-        $rol = 'DCS'; // Dpto Ciencias Sociales 
-        // Filtro Depto: Sólo si NO ha sido aprobado por Depto
-        $filtro = " idDepartamento = '1' AND (aprobadoDepto IS NULL OR aprobadoDepto = 0) "; 
-    } else {
-        $rol = PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO; // Mantener el rol original para la lógica de la vista
-        $filtro = " (aprobadoVa IS NULL OR aprobadoVa = 0) AND (aprobadoDepto IS NULL OR aprobadoDepto = 0) ";
-    } 
+        $rol = 'DCS';
+        $deptoFiltro = " a.idDepartamento = '1' AND ";
+    }
+    $filtro = " {$deptoFiltro} (
+                (ppd.id IS NOT NULL AND ppd.en_revision = 1 AND ppd.aprobado_va = 1 AND ppd.aprobado_depto IS NULL AND ppd.fue_desaprobado = 0)
+                OR
+                (ppd.id IS NULL AND p.enRevision = 1 AND p.aprobadoVa = 1 AND p.aprobadoDepto IS NULL AND p.fueDesaprobado = 0)
+              ) ";
 } elseif ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA) {
-    // Filtro Escuela: Sólo si NO ha sido aprobado por Escuela
-    $filtro = " (aprobadoEscuela IS NULL OR aprobadoEscuela = 0) ";
+    $filtro = " (ppd.id IS NOT NULL AND ppd.en_revision = 1 AND ppd.aprobado_escuela IS NULL AND ppd.fue_desaprobado = 0)
+                OR
+                (ppd.id IS NULL AND p.enRevision = 1 AND p.aprobadoEscuela IS NULL AND p.fueDesaprobado = 0) ";
 }
+
 $anioActual = date("Y"); //obtenemos el anio (4 digitos) del servidor (anio actual)
 
-$query = "SELECT DISTINCT (p.id) as idPrograma, nombre, a.id, p.anio, p.vigencia, p.fechaCarga, ppd.id as idProgramaPDF 
+$query = "SELECT DISTINCT (p.id) as idPrograma, a.nombre, a.id, p.anio, p.vigencia, p.fechaCarga, ppd.id as idProgramaPDF 
                  FROM plan pl
-                 JOIN plan_asignatura pa 
-                 ON pl.id = pa.idPlan
-                 JOIN asignatura a 
-                 ON pa.idAsignatura = a.id 
-                 JOIN programa p 
-                 ON a.id = p.idAsignatura 
-                 LEFT JOIN programa_pdf_detalle ppd
-                 ON p.idAsignatura = ppd.id_asignatura AND p.anio = ppd.anio
-                 WHERE enRevision = 1 AND (fueDesaprobado IS NULL OR fueDesaprobado = 0) AND $filtro " // Se incluye el filtro de desaprobado y el filtro por rol
-                 . "AND p.anio <= {$anioActual} "
-                 . "AND (p.anio+p.vigencia-1) >= {$anioActual} "
-                 . "ORDER BY p.fechaCarga DESC "
-                 . "LIMIT 20";
+                 JOIN plan_asignatura pa ON pl.id = pa.idPlan
+                 JOIN asignatura a ON pa.idAsignatura = a.id 
+                 JOIN programa p ON a.id = p.idAsignatura 
+                 LEFT JOIN programa_pdf_detalle ppd ON p.idAsignatura = ppd.id_asignatura AND p.anio = ppd.anio
+                 WHERE ( {$filtro} )
+                 AND p.anio <= {$anioActual} 
+                 AND (p.anio+p.vigencia-1) >= {$anioActual} 
+                 ORDER BY p.fechaCarga DESC 
+                 LIMIT 20";
 
 // Ejecutamos la query
 
