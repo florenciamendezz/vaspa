@@ -69,9 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             $idDepto = $rowAD['idDepartamento'];
                             
                             include_once '../lib/funcionesUtiles/constantesMail.php';
-                            if ($idDepto == '2') {
+                            $deptoCNE = ['6', '7', '8', '11'];
+                            if (in_array($idDepto, $deptoCNE)) {
                                 $emailRevisor = MAIL_DEPTO_CNE;
-                            } elseif ($idDepto == '1') {
+                            } else {
                                 $emailRevisor = MAIL_DEPTO_CS;
                             }
                             $rolRevisor = "Director de Departamento";

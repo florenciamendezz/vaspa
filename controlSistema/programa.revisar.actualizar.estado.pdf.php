@@ -98,5 +98,5 @@ if (isset($_POST["aprobarPrograma"])) {
     }
 }
 
-header("location: ../vista/revisar.programas.php");
+header("location: ../vista/inicio.php");
 ?>

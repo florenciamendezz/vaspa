@@ -378,7 +378,34 @@ if ($circuito == 'estandar') {
                                 </div>
                                 <?php 
                                 $comentariosEncontrados = false;
-                                if ($programaLegacy) {
+                                $idPdf = intval($programaPDF->getId());
+                                $idLegacy = $programaLegacy ? intval($programaLegacy->getId()) : 0;
+                                
+                                $sqlDevs = "SELECT * FROM programa_devoluciones 
+                                            WHERE (id_programa_pdf = {$idPdf}" . ($idLegacy ? " OR id_programa = {$idLegacy}" : "") . ") 
+                                              AND resuelto = 0 
+                                            ORDER BY fecha DESC";
+                                $resDevs = BDConexionSistema::getInstancia()->query($sqlDevs);
+                                if ($resDevs && $resDevs->num_rows > 0) {
+                                    while ($dev = $resDevs->fetch_assoc()) {
+                                        if ($comentariosEncontrados) echo '<hr class="my-0">';
+                                        $comentariosEncontrados = true;
+                                        
+                                        $statusBadge = $dev['resuelto'] == 1 
+                                            ? '<span class="badge badge-success float-right"><span class="oi oi-circle-check"></span> Resuelto</span>' 
+                                            : '<span class="badge badge-danger float-right"><span class="oi oi-warning"></span> Pendiente</span>';
+                                            
+                                        $fechaFormat = date('d/m/Y H:i', strtotime($dev['fecha']));
+                                        
+                                        echo '<div class="card-body">
+                                                ' . $statusBadge . '
+                                                <h5 class="card-title font-weight-bold text-primary">' . htmlspecialchars($dev['rol_revisor']) . ' <small class="text-muted">(' . $fechaFormat . ')</small></h5>
+                                                <p class="card-text text-dark">' . nl2br(htmlspecialchars($dev['comentario'])) . '</p>
+                                              </div>';
+                                    }
+                                }
+                                
+                                if (!$comentariosEncontrados && $programaLegacy) {
                                     if (!is_null($programaLegacy->getComentarioVa()) && !empty($programaLegacy->getComentarioVa())){
                                         $comentariosEncontrados = true;
                                         echo '<div class="card-body">
@@ -403,6 +430,7 @@ if ($circuito == 'estandar') {
                                               </div>';
                                     }
                                 }
+                                
                                 if (!$comentariosEncontrados) {
                                     echo '<div class="card-body text-center text-muted">
                                             No hay comentarios registrados en este programa.

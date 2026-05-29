@@ -10,7 +10,7 @@ if (isset($_GET['id'])) {
     if ($programa->getId()) {
         if ($programa->enviarARevision()) {
             notificarNuevoProgramaPDF($idPrograma);
-            echo "<script>alert('Programa enviado a revisión correctamente.'); window.location.href = '../vista/asignaturasDeProfesor.php';</script>";
+            echo "<script>alert('Programa enviado a revisión correctamente.'); window.location.href = '../vista/inicio.php';</script>";
         } else {
             echo "<script>alert('Error al enviar a revisión.'); window.history.back();</script>";
         }
@@ -18,6 +18,6 @@ if (isset($_GET['id'])) {
         echo "<script>alert('Programa no encontrado.'); window.history.back();</script>";
     }
 } else {
-    header("Location: ../vista/asignaturasDeProfesor.php");
+    header("Location: ../vista/inicio.php");
 }
 ?>

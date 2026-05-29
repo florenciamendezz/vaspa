@@ -127,6 +127,78 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                     </div>
                 </div>
 
+                <!-- 
+                ========================================================================
+                [INICIO: ACCESO RÁPIDO PARA PRUEBAS Y DESARROLLO]
+                NOTA PARA EL FUTURO: Esta sección de código (tarjeta y script) debe ser
+                eliminada por completo antes del despliegue a producción.
+                ========================================================================
+                -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card border-warning">
+                            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center" style="cursor: pointer;" data-toggle="collapse" data-target="#collapseLoginPruebas" aria-expanded="false" aria-controls="collapseLoginPruebas">
+                                <h5 class="mb-0 font-weight-bold"><span class="oi oi-shield mr-2"></span> Acceso Rápido para Pruebas (Desarrollo)</h5>
+                                <span class="badge badge-dark">Hacer clic para expandir / colapsar</span>
+                            </div>
+                            <div id="collapseLoginPruebas" class="collapse">
+                                <div class="card-body">
+                                    <p class="text-muted" style="font-size: 0.85rem;">
+                                        <strong>[ENTORNO DE PRUEBAS]</strong> Utilice estos accesos rápidos para simular inicios de sesión sin necesidad del login de Google.
+                                    </p>
+                                    <form id="formLoginPruebas" method="POST" action="index.php">
+                                        <input type="hidden" name="email" id="emailPrueba">
+                                        <input type="hidden" name="nombre" id="nombrePrueba">
+                                    </form>
+                                    <script>
+                                        // Función de autenticación simulada de prueba (Eliminar en producción)
+                                        function iniciarSesionPrueba(email, nombre) {
+                                            document.getElementById('emailPrueba').value = email;
+                                            document.getElementById('nombrePrueba').value = nombre;
+                                            document.getElementById('formLoginPruebas').submit();
+                                        }
+                                    </script>
+                                    <div class="list-group">
+                                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="iniciarSesionPrueba('accesoriosperlados@gmail.com', 'Profesor Sandra Casas')">
+                                            <span><strong>Profesor:</strong> Sandra Casas</span>
+                                            <span class="badge badge-success px-2 py-1">accesoriosperlados@gmail.com</span>
+                                        </button>
+                                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="iniciarSesionPrueba('esstefaniamendez+profesor@gmail.com', 'Profesor Albert Sofia')">
+                                            <span><strong>Profesor:</strong> Albert Sofia</span>
+                                            <span class="badge badge-success px-2 py-1">esstefaniamendez+profesor@gmail.com</span>
+                                        </button>
+                                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="iniciarSesionPrueba('luzgarai40@gmail.com', 'Director de Escuela')">
+                                            <span><strong>Director de Escuela</strong></span>
+                                            <span class="badge badge-info px-2 py-1">luzgarai40@gmail.com</span>
+                                        </button>
+                                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="iniciarSesionPrueba('estiloperladoaccesorios@gmail.com', 'Director Depto Cs Naturales y Exactas')">
+                                            <span><strong>Director Depto. Ciencias Naturales y Exactas</strong></span>
+                                            <span class="badge badge-warning px-2 py-1">estiloperladoaccesorios@gmail.com</span>
+                                        </button>
+                                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="iniciarSesionPrueba('garaiestefi@gmail.com', 'Director Depto Cs Sociales')">
+                                            <span><strong>Director Depto. Ciencias Sociales</strong></span>
+                                            <span class="badge badge-warning px-2 py-1">garaiestefi@gmail.com</span>
+                                        </button>
+                                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="iniciarSesionPrueba('esstefaniamendez@gmail.com', 'Vinculación Académica')">
+                                            <span><strong>Vinculación Académica</strong></span>
+                                            <span class="badge badge-primary px-2 py-1">esstefaniamendez@gmail.com</span>
+                                        </button>
+                                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="iniciarSesionPrueba('luzmariagaraigarai@gmail.com', 'Administrador')">
+                                            <span><strong>Administrador</strong></span>
+                                            <span class="badge badge-danger px-2 py-1">luzmariagaraigarai@gmail.com</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 
+                ========================================================================
+                [FIN: ACCESO RÁPIDO PARA PRUEBAS Y DESARROLLO]
+                ========================================================================
+                -->
+
             </div>
         </div>
     </div>

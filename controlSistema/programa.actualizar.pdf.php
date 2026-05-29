@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['idPrograma']) && isset
             $res = $programa->revisorSubePdfFirmado($rolNombre, $nombreArchivo);
             
             if ($res) {
-                $redirectUrl = '../vista/revisar.programas.php';
+                $redirectUrl = '../vista/inicio.php';
                 echo "<script>alert('Programa firmado cargado correctamente como borrador de revisión. Presioná \"Enviar al siguiente\" para avanzar en el circuito.'); window.location.href = '{$redirectUrl}';</script>";
             } else {
                 echo "<script>alert('Error al actualizar la base de datos.'); window.history.back();</script>";
@@ -83,6 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['idPrograma']) && isset
     }
     
 } else {
-    header("Location: ../vista/revisar.programas.php");
+    header("Location: ../vista/inicio.php");
 }
 ?>

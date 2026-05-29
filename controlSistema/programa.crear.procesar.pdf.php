@@ -75,6 +75,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         if (!$conexion->query($sqlLegacy)) throw new Exception("Error al actualizar programa legacy: " . $conexion->error);
                     }
 
+                    // Marcar devoluciones previas como resueltas
+                    $idPdf = intval($programaExistente->getId());
+                    $idLegacy = intval($programaExistente->getProgramaLegacyId());
+                    $sqlMarkResolved = "UPDATE programa_devoluciones SET resuelto = 1 
+                                        WHERE (id_programa_pdf = {$idPdf}" . ($idLegacy ? " OR id_programa = {$idLegacy}" : "") . ") AND resuelto = 0";
+                    if (!$conexion->query($sqlMarkResolved)) throw new Exception("Error marking feedback as resolved: " . $conexion->error);
+
                     $conexion->commit();
                     $conexion->autocommit(TRUE);
                     $resultado = true;
@@ -100,9 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 }
 
                 if ($esCompartida) {
-                    echo "<script>alert('Programa cargado correctamente. ¡Atención! Esta asignatura está compartida entre múltiples planes de estudio. El archivo subido se aplicará a todos ellos.'); window.location.href = '../vista/asignaturasDeProfesor.php';</script>";
+                    echo "<script>alert('Programa cargado correctamente. ¡Atención! Esta asignatura está compartida entre múltiples planes de estudio. El archivo subido se aplicará a todos ellos.'); window.location.href = '../vista/inicio.php';</script>";
                 } else {
-                    echo "<script>alert('Programa cargado correctamente.'); window.location.href = '../vista/asignaturasDeProfesor.php';</script>";
+                    echo "<script>alert('Programa cargado correctamente.'); window.location.href = '../vista/inicio.php';</script>";
                 }
             } else {
                 echo "<script>alert('Error al guardar en la base de datos.'); window.history.back();</script>";
@@ -114,6 +121,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         echo "<script>alert('Debe seleccionar un archivo.'); window.history.back();</script>";
     }
 } else {
-    header("Location: ../vista/asignaturasDeProfesor.php");
+    header("Location: ../vista/inicio.php");
 }
 ?>

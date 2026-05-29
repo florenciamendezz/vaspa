@@ -15,6 +15,8 @@ if ($perfil !== PermisosSistema::ROL_ADMIN && $perfil !== PermisosSistema::ROL_V
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $vacancia = isset($_POST['vacancia']) && $_POST['vacancia'] == '1' ? '1' : '0';
+    $anio = isset($_POST['anio']) ? intval($_POST['anio']) : null;
+    $anioQuery = $anio ? "&anio=" . $anio : "";
     $conexion = BDConexionSistema::getInstancia();
     
     $conexion->autocommit(FALSE);
@@ -79,14 +81,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
         
-        header("Location: ../vista/monitoreo.circuito.php?mensaje=vacancia_actualizada");
+        header("Location: ../vista/monitoreo.circuito.php?mensaje=vacancia_actualizada" . $anioQuery);
         exit();
         
     } catch (Exception $e) {
         $conexion->rollback();
         $conexion->autocommit(TRUE);
         error_log($e->getMessage());
-        header("Location: ../vista/monitoreo.circuito.php?error=" . urlencode($e->getMessage()));
+        header("Location: ../vista/monitoreo.circuito.php?error=" . urlencode($e->getMessage()) . $anioQuery);
         exit();
     }
 } else {

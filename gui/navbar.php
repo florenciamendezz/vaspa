@@ -59,7 +59,7 @@ if (isset($UsuarioSes->roles[0])) {
         </a>
     <?php } else {
         ?>
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="../vista/inicio.php">
             <img src="../lib/img/VASPA_isotipo.png" width="40" height="30" class="d-inline-block align-top" alt="">
             VASPA
         </a> 

@@ -11,6 +11,10 @@ $ManejadorPrograma = new ManejadorPrograma();
 $idProgramaActual = $ManejadorPrograma->getIDProgramaActual($anioActual, $idAsignatura);
 
 $Programa = new Programa($idProgramaActual);
+
+$conexion = BDConexionSistema::getInstancia();
+$sqlMarkRead = "UPDATE programa_devoluciones SET leido = 1 WHERE id_programa = '{$idProgramaActual}' AND leido = 0";
+$conexion->query($sqlMarkRead);
 ?>
 <!DOCTYPE html>
 <html>

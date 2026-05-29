@@ -18,6 +18,9 @@ if ($perfil !== PermisosSistema::ROL_ADMIN && $perfil !== PermisosSistema::ROL_V
 
 $conexion = BDConexionSistema::getInstancia();
 $anioActual = date("Y");
+if (isset($_GET['anio']) && is_numeric($_GET['anio'])) {
+    $anioActual = intval($_GET['anio']);
+}
 
 // 1. Obtener estado de vacancia de Escuela
 $vacanciaActiva = false;
@@ -47,7 +50,7 @@ $mostrarOcultas = isset($_GET['mostrar_ocultas']) && $_GET['mostrar_ocultas'] ==
 // 3. Obtener todas las asignaturas de planes vigentes
 $sqlAsignaturas = "SELECT DISTINCT a.id as idAsignatura, a.nombre as nombreAsignatura, a.idProfesor, 
                     p.nombre as nombreProf, p.apellido as apellidoProf, p.email as emailProf,
-                    pl.codigo as codPlan, c.nombre as nombreCarrera, a.es_institucional,
+                    pl.id as codPlan, c.nombre as nombreCarrera, a.es_institucional,
                     ppd.id as idProgramaPDF, ppd.ruta_archivo, ppd.en_revision, ppd.aprobado_escuela,
                     ppd.aprobado_va, ppd.aprobado_depto, ppd.aprobado_va_firma, ppd.fue_desaprobado,
                     ppd.comentario_desaprobacion, ppd.fecha_ultimo_movimiento_circuito
@@ -132,21 +135,44 @@ $resAsignaturas = $conexion->query($sqlAsignaturas);
                                 </h1>
                                 <p class="text-muted mb-0">Control en tiempo real de los programas analíticos y configuraciones del circuito secuencial (Año <?php echo $anioActual; ?>).</p>
                             </div>
-                            <!-- Switch de Vacancia -->
-                            <div class="mt-3 mt-md-0 bg-white p-3 border rounded card-shadow">
-                                <form action="../controlSistema/programa.vacancia.php" method="POST" id="formVacancia">
-                                    <div class="custom-control custom-switch custom-switch-md">
-                                        <input type="checkbox" class="custom-control-input" id="switchVacancia" name="vacancia" value="1" <?php echo $vacanciaActiva ? 'checked' : ''; ?> onchange="document.getElementById('formVacancia').submit()">
-                                        <label class="custom-control-label font-weight-bold cursor-pointer" for="switchVacancia" style="user-select: none;">
-                                            Vacancia de Escuela: 
-                                            <?php if ($vacanciaActiva): ?>
-                                                <span class="badge badge-success ml-1 blink-alert">ACTIVA (Omite Escuela)</span>
-                                            <?php else: ?>
-                                                <span class="badge badge-secondary ml-1">INACTIVA</span>
-                                            <?php endif; ?>
-                                        </label>
-                                    </div>
-                                </form>
+                            <!-- Controles de Vacancia y Año -->
+                            <div class="mt-3 mt-md-0 d-flex align-items-center flex-wrap" style="gap: 15px;">
+                                <!-- Selector de Año de Monitoreo -->
+                                <div class="bg-white p-3 border rounded card-shadow d-flex align-items-center">
+                                    <form method="GET" action="" class="form-inline mb-0">
+                                        <label for="selectAnio" class="mr-2 font-weight-bold text-secondary mb-0">Año:</label>
+                                        <?php if (isset($_GET['mostrar_ocultas'])): ?>
+                                            <input type="hidden" name="mostrar_ocultas" value="<?php echo htmlspecialchars($_GET['mostrar_ocultas']); ?>">
+                                        <?php endif; ?>
+                                        <select name="anio" id="selectAnio" class="form-control form-control-sm font-weight-bold" onchange="this.form.submit()">
+                                            <?php
+                                            $anioMax = date("Y") + 1;
+                                            for ($y = 2019; $y <= $anioMax; $y++) {
+                                                $selected = ($y == $anioActual) ? 'selected' : '';
+                                                echo "<option value=\"{$y}\" {$selected}>{$y}</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                    </form>
+                                </div>
+
+                                <!-- Switch de Vacancia -->
+                                <div class="bg-white p-3 border rounded card-shadow">
+                                    <form action="../controlSistema/programa.vacancia.php" method="POST" id="formVacancia" class="mb-0">
+                                        <input type="hidden" name="anio" value="<?php echo $anioActual; ?>">
+                                        <div class="custom-control custom-switch custom-switch-md">
+                                            <input type="checkbox" class="custom-control-input" id="switchVacancia" name="vacancia" value="1" <?php echo $vacanciaActiva ? 'checked' : ''; ?> onchange="document.getElementById('formVacancia').submit()">
+                                            <label class="custom-control-label font-weight-bold cursor-pointer" for="switchVacancia" style="user-select: none;">
+                                                Vacancia de Escuela: 
+                                                <?php if ($vacanciaActiva): ?>
+                                                    <span class="badge badge-success ml-1 blink-alert">ACTIVA (Omite Escuela)</span>
+                                                <?php else: ?>
+                                                    <span class="badge badge-secondary ml-1">INACTIVA</span>
+                                                <?php endif; ?>
+                                            </label>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -195,7 +221,7 @@ $resAsignaturas = $conexion->query($sqlAsignaturas);
         <!-- Sección de Filtros rápidos y Controles de Vista -->
         <div class="row mb-3">
             <div class="col-md-12 d-flex justify-content-end">
-                <a href="?mostrar_ocultas=<?php echo $mostrarOcultas ? '0' : '1'; ?>" class="btn btn-outline-secondary btn-sm card-shadow">
+                <a href="?mostrar_ocultas=<?php echo $mostrarOcultas ? '0' : '1'; ?>&anio=<?php echo $anioActual; ?>" class="btn btn-outline-secondary btn-sm card-shadow">
                     <span class="oi <?php echo $mostrarOcultas ? 'oi-eye' : 'oi-eye'; ?> mr-1"></span>
                     <?php echo $mostrarOcultas ? 'Ocultar asignaturas descartadas' : 'Ver asignaturas descartadas (ocultadas)'; ?>
                 </a>

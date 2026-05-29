@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../PHPMailer/PHPMailerAutoload.php';
 require_once __DIR__ . '/constantesMail.php';
+require_once __DIR__ . '/../Constantes.Class.php';
 require_once __DIR__ . '/../../modeloSistema/BDConexionSistema.Class.php';
 require_once __DIR__ . '/../../modeloSistema/Asignatura.Class.php';
 require_once __DIR__ . '/../../modeloSistema/Profesor.Class.php';
@@ -14,7 +15,17 @@ class notificacionCircuitoVaspa {
         // Cargar información de la asignatura para el bloque destacado
         $asignatura = new Asignatura($idAsignatura);
         $nombreAsignatura = $asignatura->getNombre();
-        
+
+        // En desarrollo/localhost evitamos el delay de conectarse a un SMTP externo que puede fallar,
+        // a menos que se defina la constante FORZAR_ENVIO_MAIL como true en constantesMail.php
+        // Además, si detectamos que la petición viene de Playwright, simulamos el envío siempre para no ralentizar los tests.
+        $isPlaywright = isset($_SERVER['HTTP_X_PLAYWRIGHT_TEST']) || (isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'Playwright') !== false);
+        if ($isPlaywright || (defined('Constantes::SERVER') && strpos(Constantes::SERVER, 'localhost') !== false && (!defined('FORZAR_ENVIO_MAIL') || !FORZAR_ENVIO_MAIL))) {
+            error_log("DESARROLLO: Simulación de correo enviado a {$destinatario} con asunto: '{$asunto}'");
+            return true;
+        }
+
+
         $mail = new PHPMailer;
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
@@ -23,6 +34,7 @@ class notificacionCircuitoVaspa {
         $mail->Password = CONTRASENA_SISTEMA;
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
+        $mail->Timeout = 10; // Timeout de conexión de 10 segundos
         $mail->FromName = "Sistema VASPA";
         $mail->addAddress($destinatario);
         
@@ -52,8 +64,12 @@ class notificacionCircuitoVaspa {
         $mail->msgHTML($message);
         
         if (!$mail->send()) {
-            error_log("Error al enviar correo a {$destinatario}: " . $mail->ErrorInfo);
-            return false;
+            // Fallback a la función mail() local de PHP por si falla SMTP de Gmail
+            $mail->isMail();
+            if (!$mail->send()) {
+                error_log("Error al enviar correo a {$destinatario}: " . $mail->ErrorInfo);
+                return false;
+            }
         }
         return true;
     }
@@ -109,10 +125,11 @@ class notificacionCircuitoVaspa {
             
             $emailDepto = "";
             $nombreDepto = "";
-            if ($idDepto == '2') {
+            $deptoCNE = ['6', '7', '8', '11'];
+            if (in_array($idDepto, $deptoCNE)) {
                 $emailDepto = MAIL_DEPTO_CNE;
                 $nombreDepto = "Ciencias Naturales y Exactas";
-            } elseif ($idDepto == '1') {
+            } else {
                 $emailDepto = MAIL_DEPTO_CS;
                 $nombreDepto = "Ciencias Sociales";
             }

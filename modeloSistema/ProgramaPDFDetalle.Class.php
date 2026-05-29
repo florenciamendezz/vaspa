@@ -396,6 +396,13 @@ class ProgramaPDFDetalle {
                 if (!$conexion->query($sqlLegacy)) throw new Exception("Error updating Legacy program: " . $conexion->error);
             }
 
+            // 3. Insertar en programa_devoluciones para el historial
+            $idUsuario = isset($_SESSION['usuario']) ? intval($_SESSION['usuario']->id) : 0;
+            $rolEscaped = $conexion->real_escape_string($rol);
+            $sqlDev = "INSERT INTO programa_devoluciones (id_programa_pdf, id_usuario, rol_revisor, fecha, comentario, leido, resuelto)
+                       VALUES ({$this->id}, {$idUsuario}, '{$rolEscaped}', NOW(), '{$comentarioEscaped}', 0, 0)";
+            if (!$conexion->query($sqlDev)) throw new Exception("Error inserting devolucion: " . $conexion->error);
+
             $conexion->commit();
             $conexion->autocommit(TRUE);
             

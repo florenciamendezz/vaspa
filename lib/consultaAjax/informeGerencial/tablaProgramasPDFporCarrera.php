@@ -119,8 +119,10 @@ if (isset($_POST['codCarrera']) && isset($_POST['anio'])){
         $emailUsuarioLog = $_SESSION['usuario']->email;
     }
     
-    $tipoInforme = "Reporte Carreras (Carrera: {$codCarrera}, Año: {$anio})";
-    LogInforme::guardarLog($idUsuarioLog, $emailUsuarioLog, $tipoInforme, $print);
+    if (isset($codCarrera) && isset($anio)) {
+        $tipoInforme = "Reporte Carreras (Carrera: {$codCarrera}, Año: {$anio})";
+        LogInforme::guardarLog($idUsuarioLog, $emailUsuarioLog, $tipoInforme, $print);
+    }
     // --- FIN LOGGING ---
     
     echo $print;

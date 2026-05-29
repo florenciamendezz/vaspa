@@ -207,9 +207,9 @@ class UsuarioSesion {
 
     public function buscarUsuarioBd() {
 
-        /* Buscar usuario en la BD */
+        /* Buscar usuario en la BD (traemos también el nombre para mostrarlo correctamente) */
         $this->datos = BDConexion::getInstancia()->query(""
-                . "SELECT id "
+                . "SELECT id, nombre "
                 . "FROM " . Constantes::BD_USERS . ".usuario "
                 . "WHERE email = '{$this->email}' ");
 
@@ -217,7 +217,13 @@ class UsuarioSesion {
             throw new Exception(BDConexion::getInstancia()->error, BDConexion::getInstancia()->errno);
         }
 
-        return $this->datos->fetch_assoc()['id'];
+        $row = $this->datos->fetch_assoc();
+        if ($row) {
+            // Sobreescribir el nombre con el registrado en la BD, no el que viene de Google
+            $this->nombre = $row['nombre'];
+            return $row['id'];
+        }
+        return null;
     }
 
     /**
@@ -347,6 +353,7 @@ class ControlAcceso {
     static function requierePermiso($permiso_) {
         if (!self::verificaPermiso($permiso_, $_SESSION['usuario'])) {
             header("Location: " . Constantes::HOMEURL);
+            exit;
         }
     }
 
@@ -361,14 +368,16 @@ class ControlAcceso {
      * 
      */
     static function verificaPermiso($permiso_) {
-        $Usuario = $_SESSION['usuario'];
-        if ($Usuario == null) {
+        $Usuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : null;
+        if ($Usuario == null || !isset($Usuario->roles) || !is_array($Usuario->roles)) {
             return false;
         }
         foreach ($Usuario->roles as $Rol) {
-            foreach ($Rol->permisos as $Permiso) {
-                if ($permiso_ == $Permiso->nombre) {
-                    return true;
+            if (isset($Rol->permisos) && is_array($Rol->permisos)) {
+                foreach ($Rol->permisos as $Permiso) {
+                    if ($permiso_ == $Permiso->nombre) {
+                        return true;
+                    }
                 }
             }
         }
@@ -384,6 +393,7 @@ class ControlAcceso {
     static function verificaLogin() {
         if (!isset($_SESSION['usuario']) || (!is_a($_SESSION['usuario'], "UsuarioSesion"))) {
             header("Location: " . Constantes::HOMEURL);
+            exit;
         }
     }
 
@@ -427,31 +437,42 @@ class ControlAcceso {
         
         // Obtenemos el primer Rol del Usuario, por ahora se considera que un usuario solo puede tener un solo rol
         // Se debe modificar el ABM USUARIOS en caso de que sea asi
-        if ($_SESSION['usuario'] != ""){
+        if (isset($_SESSION['usuario']) && $_SESSION['usuario'] != ""){
             $Usuario = $_SESSION['usuario'];
-            // Obtenemos el nombre del ROL del usuario
-            $rol = $Usuario->roles[0]->nombre;
+            
+            if (isset($Usuario->roles) && is_array($Usuario->roles) && count($Usuario->roles) > 0) {
+                // Obtenemos el nombre del ROL del usuario
+                $rol = $Usuario->roles[0]->nombre;
 
-            // De acuerdo al ROL del Usuario lo derivamos a su pantalla principal.
-            if ($rol == PermisosSistema::ROL_ADMIN){
-                $this->ubicacion = Constantes::HOMEAUTH;
-                header("Location: {$this->ubicacion}");
-            }
-            if ($rol == PermisosSistema::ROL_VINCULACION_ACADEMICA){
-                $this->ubicacion = Constantes::HOME_VA;
-                header("Location: {$this->ubicacion}");
-            }
-            if ($rol == PermisosSistema::ROL_PROFESOR){
-                $this->ubicacion = Constantes::HOME_PROF;
-                header("Location: {$this->ubicacion}");
-            }
-            if ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO){
-                $this->ubicacion = Constantes::HOME_DPTO;
-                header("Location: {$this->ubicacion}");
-            }
-            if ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA){
-                $this->ubicacion = Constantes::HOME_DPTO;
-                header("Location: {$this->ubicacion}");
+                // De acuerdo al ROL del Usuario lo derivamos a su pantalla principal.
+                if ($rol == PermisosSistema::ROL_ADMIN){
+                    $this->ubicacion = Constantes::HOME_INICIO;
+                    header("Location: {$this->ubicacion}");
+                    exit;
+                }
+                if ($rol == PermisosSistema::ROL_VINCULACION_ACADEMICA){
+                    $this->ubicacion = Constantes::HOME_INICIO;
+                    header("Location: {$this->ubicacion}");
+                    exit;
+                }
+                if ($rol == PermisosSistema::ROL_PROFESOR){
+                    $this->ubicacion = Constantes::HOME_INICIO;
+                    header("Location: {$this->ubicacion}");
+                    exit;
+                }
+                if ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO){
+                    $this->ubicacion = Constantes::HOME_INICIO;
+                    header("Location: {$this->ubicacion}");
+                    exit;
+                }
+                if ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA){
+                    $this->ubicacion = Constantes::HOME_INICIO;
+                    header("Location: {$this->ubicacion}");
+                    exit;
+                }
+            } else {
+                header("Location: " . Constantes::HOMEURL);
+                exit;
             }
         }
         

@@ -34,7 +34,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $resultado = $programa->actualizarArchivo($idAsignatura, $anio, $nombreArchivo);
 
             if ($resultado) {
-                echo "<script>alert('Programa actualizado correctamente.'); window.location.href = '../vista/asignaturasDeProfesor.php';</script>";
+                // Marcar devoluciones previas como resueltas
+                $conexion = BDConexionSistema::getInstancia();
+                $progExistente = ProgramaPDFDetalle::obtenerPorAsignaturaYAnio($idAsignatura, $anio);
+                if ($progExistente) {
+                    $idPdf = intval($progExistente->getId());
+                    $idLegacy = intval($progExistente->getProgramaLegacyId());
+                    $sqlMarkResolved = "UPDATE programa_devoluciones SET resuelto = 1 
+                                        WHERE (id_programa_pdf = {$idPdf}" . ($idLegacy ? " OR id_programa = {$idLegacy}" : "") . ") AND resuelto = 0";
+                    $conexion->query($sqlMarkResolved);
+                }
+                echo "<script>alert('Programa actualizado correctamente.'); window.location.href = '../vista/inicio.php';</script>";
             } else {
                 echo "<script>alert('Error al actualizar en la base de datos.'); window.history.back();</script>";
             }
@@ -45,6 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         echo "<script>alert('Debe seleccionar un archivo.'); window.history.back();</script>";
     }
 } else {
-    header("Location: ../vista/asignaturasDeProfesor.php");
+    header("Location: ../vista/inicio.php");
 }
 ?>

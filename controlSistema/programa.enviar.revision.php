@@ -68,6 +68,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['idPrograma'])) {
     $resultado = $programa->enviarAlSiguiente();
 
     if ($resultado) {
+        // Marcar devoluciones previas como resueltas si envía el Profesor
+        if ($rolNombre == 'Profesor') {
+            $idPdf = intval($programa->getId());
+            $idLegacy = intval($programa->getProgramaLegacyId());
+            $sqlMarkResolved = "UPDATE programa_devoluciones SET resuelto = 1 
+                                WHERE (id_programa_pdf = {$idPdf}" . ($idLegacy ? " OR id_programa = {$idLegacy}" : "") . ") AND resuelto = 0";
+            BDConexionSistema::getInstancia()->query($sqlMarkResolved);
+        }
+
         // Intentar enviar notificación si existe la librería
         $mailLib = '../lib/notificacionesMail/notificacionCircuitoVaspa.php';
         if (file_exists($mailLib)) {
@@ -91,13 +100,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['idPrograma'])) {
             }
         }
         
-        $redirectUrl = ($rolNombre == 'Profesor') ? '../vista/asignaturasDeProfesor.php' : '../vista/revisar.programas.php';
+        $redirectUrl = '../vista/inicio.php';
         echo "<script>alert('Programa enviado a la siguiente etapa de revisión correctamente.'); window.location.href = '{$redirectUrl}';</script>";
     } else {
         echo "<script>alert('Error al actualizar el estado en el circuito.'); window.history.back();</script>";
     }
 
 } else {
-    header("Location: ../vista/revisar.programas.php");
+    header("Location: ../vista/inicio.php");
 }
 ?>

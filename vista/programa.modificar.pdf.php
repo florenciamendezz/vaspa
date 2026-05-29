@@ -25,6 +25,11 @@ if (!$ProgramaPDF) {
      exit;
 }
 
+$conexion = BDConexionSistema::getInstancia();
+$idPdf = intval($ProgramaPDF->getId());
+$idLegacy = intval($ProgramaPDF->getProgramaLegacyId());
+$sqlMarkRead = "UPDATE programa_devoluciones SET leido = 1 WHERE (id_programa_pdf = {$idPdf}" . ($idLegacy ? " OR id_programa = {$idLegacy}" : "") . ") AND leido = 0";
+$conexion->query($sqlMarkRead);
 ?>
 <!DOCTYPE html>
 <html>
