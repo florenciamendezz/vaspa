@@ -1,17 +1,17 @@
+<?php
+header("Location: app/index.php");
+?>
 <!DOCTYPE html>
-<!--
-To change this license header, choose License Headers in Project Properties.
-To change this template file, choose Tools | Templates
-and open the template in the editor.
--->
-<html>
-    <head>
-        <meta charset="ISO-8859-1">
-        <title></title>
-    </head>
-    <body>
-        <?php
-        // put your code here
-        ?>
-    </body>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0;url=app/index.php">
+    <title>Redireccionando...</title>
+    <script type="text/javascript">
+        window.location.href = "app/index.php";
+    </script>
+</head>
+<body>
+    <p>Si no es redirigido automáticamente, haga clic <a href="app/index.php">aquí</a>.</p>
+</body>
 </html>

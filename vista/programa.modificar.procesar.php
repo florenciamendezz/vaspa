@@ -31,7 +31,12 @@ $consulta = $ManejadorPrograma->modificacion($DatosFormulario, $idProgramaActual
                     <h3>Modificar Programa</h3>
                 </div>
                 <div class="card-body">
-                    <?php if ($consulta) { ?>
+                    <?php if ($consulta) { 
+                        require_once '../modeloSistema/BDConexionSistema.Class.php';
+                        $conexion = BDConexionSistema::getInstancia();
+                        $sqlMarkResolved = "UPDATE programa_devoluciones SET resuelto = 1 WHERE id_programa = '{$idProgramaActual}' AND resuelto = 0";
+                        $conexion->query($sqlMarkResolved);
+                    ?>
                         <div class="alert alert-success" role="alert">
                             Los datos del Programa se han guardado con &eacute;xito.
                         </div>

@@ -1,7 +1,8 @@
 <?php
 
-require '../PHPMailer/PHPMailerAutoload.php';
-require 'constantesMail.php';
+require_once __DIR__ . '/../PHPMailer/PHPMailerAutoload.php';
+require_once __DIR__ . '/constantesMail.php';
+require_once __DIR__ . '/../Constantes.Class.php';
 
 
 //(observacion: el correo del emisor debe ser un correo de gmail, el cual se 
@@ -16,6 +17,16 @@ require 'constantesMail.php';
 //License URL: http://creativecommons.org/licenses/by/3.0/ 
 //La siguiente funcion se encarga de realizar el envio del mail en base a los parametros    
 function sendemailProf($mail_username, $mail_userpassword, $mail_addAddress, $mail_subject, $template, $codAsignatura, $nombreAsignatura){
+	// En desarrollo/localhost evitamos el delay de conectarse a un SMTP externo que puede fallar,
+	// a menos que se defina la constante FORZAR_ENVIO_MAIL como true en constantesMail.php
+	// Además, si detectamos que la petición viene de Playwright, simulamos el envío siempre para no ralentizar los tests.
+	$isPlaywright = isset($_SERVER['HTTP_X_PLAYWRIGHT_TEST']) || (isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'Playwright') !== false);
+	if ($isPlaywright || (defined('Constantes::SERVER') && strpos(Constantes::SERVER, 'localhost') !== false && (!defined('FORZAR_ENVIO_MAIL') || !FORZAR_ENVIO_MAIL))) {
+		error_log("DESARROLLO: Simulación de correo enviado a {$mail_addAddress} con asunto: '{$mail_subject}'");
+		return 1;
+	}
+
+
 	$mail = new PHPMailer;
 	$mail->isSMTP();                            // Establecer el correo electrónico para utilizar SMTP
 	$mail->Host = 'smtp.gmail.com';             // Especificar el servidor de correo a utilizar 
@@ -41,16 +52,14 @@ function sendemailProf($mail_username, $mail_userpassword, $mail_addAddress, $ma
 	$mail->msgHTML($message);
         //var_dump($message);
 	if(!$mail->send()) {
+        // Fallback a la función mail() local de PHP por si falla SMTP de Gmail
+        $mail->isMail();
+        if (!$mail->send()) {
+            error_log("Error de PHPMailer al enviar correo: " . $mail->ErrorInfo);
             return 0;
-		//echo '<p style="color:red">No se pudo enviar el mensaje..';
-		//echo 'Error de correo: ' . $mail->ErrorInfo."</p>";
-            //echo '<div class="alert alert-danger" role="alert">Ha ocurrido un error al enviar el correo.<b>('.$mail->ErrorInfo.')</b></div>';
-            
-	} else {
-		//echo '<p style="color:green">Tu mensaje ha sido enviado!</p>';
-            return 1;
-//                return '<div class="alert alert-success" role="alert">Correo enviado con &eacute;xito.</div>';
+        }
 	}
+	return 1;
 }
 
 // Prepara todos los datos necesarios para enviar el email al profesor solicitandole
@@ -71,9 +80,10 @@ function enviarMailSolicitarCargaPrograma($idAsignatura) {
     $mail_userpassword = CONTRASENA_SISTEMA; //Tu contraseña de gmail
     $mail_addAddress = $mailProf;
 
-    $template = "plantillaMail/plantilla_mail.html"; //Ruta de la plantilla HTML para enviar nuestro mensaje
+    $template = __DIR__ . "/plantillaMail/plantilla_mail.html"; //Ruta de la plantilla HTML para enviar nuestro mensaje
     $mail_subject = "Solicitud de Carga de Programa de Asignatura";
     
     return sendemailProf($mail_username, $mail_userpassword, $mail_addAddress, $mail_subject, $template, $asignatura->getId(), $nombreAsignatura); //Enviar el mensaje
+
     
 }

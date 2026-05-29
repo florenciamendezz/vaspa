@@ -40,4 +40,8 @@ class Constantes {
     const BD_SCHEMA = "bdgef_vaspa";
     const BD_USERS = "bdgef_vaspa";
     
+    // constante que almacena la direccion del nuevo panel de inicio unificado
+    const HOME_INICIO = "http://localhost/vaspa/vista/inicio.php";
+    const HOME_SISTEMA = "http://localhost/vaspa/vista/inicio.php";
+    
 }

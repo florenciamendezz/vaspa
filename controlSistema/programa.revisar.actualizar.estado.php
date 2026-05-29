@@ -183,6 +183,14 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST"){
 
     // chqueamos que se haya realizado correctamente el update
     if (BDConexionSistema::getInstancia()->affected_rows == 1) {
+        // Guardar comentario en el historial de devoluciones
+        $idUsuario = intval($Usuario->id);
+        $comentarioEscaped = BDConexionSistema::getInstancia()->real_escape_string($comentario);
+        $rolEscaped = BDConexionSistema::getInstancia()->real_escape_string($rol);
+        $sqlDevolucion = "INSERT INTO programa_devoluciones (id_programa, id_usuario, rol_revisor, fecha, comentario, leido, resuelto) 
+                          VALUES ('{$idPrograma}', {$idUsuario}, '{$rolEscaped}', NOW(), '{$comentarioEscaped}', 0, 0)";
+        BDConexionSistema::getInstancia()->query($sqlDevolucion);
+
         // se actualizo
         $_SESSION['mensajeRevisarPrograma'] = '<div class="alert alert-success alert-dismissible fade show text-center" role="alert">
             El programa de '.$datosAsig.' <b>fue Desaprobado</b>.

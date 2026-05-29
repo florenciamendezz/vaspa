@@ -59,7 +59,7 @@ if (isset($UsuarioSes->roles[0])) {
         </a>
     <?php } else {
         ?>
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="../vista/inicio.php">
             <img src="../lib/img/VASPA_isotipo.png" width="40" height="30" class="d-inline-block align-top" alt="">
             VASPA
         </a> 
@@ -117,6 +117,13 @@ if (isset($UsuarioSes->roles[0])) {
                             </a>
                         <?php } ?>
 
+                        <?php if ($perfil == PermisosSistema::ROL_ADMIN || $perfil == PermisosSistema::ROL_VINCULACION_ACADEMICA) { ?>
+                            <a class = "nav-link" href = "../vista/monitoreo.circuito.php">
+                                <span class = "oi oi-pulse" />
+                                Monitoreo del Circuito
+                            </a>
+                        <?php } ?>
+
                         <?php if (ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_GENERAR_INFORME_GERENCIAL)) { ?>
                             <a class = "nav-link" href = "../vista/informeGerencial.programas.php">
                                 <span class = "oi oi-bar-chart" />
@@ -164,7 +171,14 @@ if (isset($UsuarioSes->roles[0])) {
                     </a>
                 </li>                
             <?php } ?>
-
+            <?php if ($perfil == PermisosSistema::ROL_PROFESOR) { ?>
+                <li class="nav-item">
+                    <a class="nav-link" href="../vista/asignaturasDeProfesor.php">
+                        <span class="oi oi-book" />
+                        Mis Asignaturas
+                    </a>
+                </li>
+            <?php } ?>
             
 
 

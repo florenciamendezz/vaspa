@@ -14,9 +14,11 @@ class Asignatura {
     protected $id;
     protected $nombre;
     protected $idDepartamento;
+    protected $idEscuela;
     protected $contenidosMinimos;
     protected $idProfesor;
     protected $horasSemanales;
+    protected $es_institucional;
     private $query;
 
     /**
@@ -46,16 +48,22 @@ class Asignatura {
     }
 
     function recuperaObjeto($id) {
+        if (is_numeric($id)) {
+            $id = str_pad($id, 4, '0', STR_PAD_LEFT);
+        }
         $this->id = $id;
 
         $this->query = "SELECT * FROM ASIGNATURA WHERE id = '{$this->id}'";
 
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);
 
-        $this->datos = $this->datos->fetch_assoc();
-
-        foreach ($this->datos as $atributo => $valor) {
-            $this->{$atributo} = $valor;
+        if ($this->datos) {
+            $this->datos = $this->datos->fetch_assoc();
+            if (is_array($this->datos)) {
+                foreach ($this->datos as $atributo => $valor) {
+                    $this->{$atributo} = $valor;
+                }
+            }
         }
         unset($this->query);
         unset($this->datos);
@@ -69,12 +77,28 @@ class Asignatura {
         $this->horasSemanales = $horasSemanales;
     }
     
+    function getEsInstitucional() {
+        return $this->es_institucional;
+    }
+
+    function setEsInstitucional($es_institucional) {
+        $this->es_institucional = $es_institucional;
+    }
+    
     function getIdDepartamento() {
         return $this->idDepartamento;
     }
 
     function setIdDepartamento($idDepartamento) {
         $this->idDepartamento = $idDepartamento;
+    }
+
+    function getIdEscuela() {
+        return $this->idEscuela;
+    }
+
+    function setIdEscuela($idEscuela) {
+        $this->idEscuela = $idEscuela;
     }
 
     function getId() {

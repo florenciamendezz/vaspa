@@ -1,3 +1,4 @@
+<?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include_once '../../ControlAcceso.Class.php';
@@ -114,8 +115,10 @@ if (isset($_POST['idProfesor']) && isset($_POST['anio'])){
         $emailUsuarioLog = $_SESSION['usuario']->email;
     }
     
-    $tipoInforme = "Reporte Profesor (Profesor ID: {$idProfesor}, Año: {$anio})";
-    LogInforme::guardarLog($idUsuarioLog, $emailUsuarioLog, $tipoInforme, $print);
+    if (isset($idProfesor) && isset($anio)) {
+        $tipoInforme = "Reporte Profesor (Profesor ID: {$idProfesor}, Año: {$anio})";
+        LogInforme::guardarLog($idUsuarioLog, $emailUsuarioLog, $tipoInforme, $print);
+    }
     // --- FIN LOGGING ---
 
     echo $print;
