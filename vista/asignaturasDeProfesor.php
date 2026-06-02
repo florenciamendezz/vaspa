@@ -33,51 +33,43 @@ if (!$resultado) {
 if (!$mostrarError){ 
     $asignaturas = $profesor->obtenerAsignaturasDePlanVigente();
     
-    // Además, obtenemos TODAS las asignaturas del sistema
-    $sqlTodas = "SELECT DISTINCT a.* FROM ASIGNATURA a ORDER BY a.nombre ASC";
-    $resultadoTodas = BDConexionSistema::getInstancia()->query($sqlTodas);
-    $todasAsignaturas = array();
-    if ($resultadoTodas && $resultadoTodas->num_rows > 0) {
-        while ($fila = $resultadoTodas->fetch_assoc()) {
-            $asigTemp = new Asignatura($fila['id']);
-            if ($asigTemp->getId()) {
-                $todasAsignaturas[] = $asigTemp;
-            }
-        }
-    }
-    
-    // Obtenemos TODAS las carreras del sistema
-    $sqlCarreras = "SELECT * FROM CARRERA ORDER BY nombre ASC";
-    $resultadoCarreras = BDConexionSistema::getInstancia()->query($sqlCarreras);
+    // Obtenemos solo las carreras correspondientes a las asignaturas del profesor en planes vigentes
     $todasCarreras = array();
-    if ($resultadoCarreras && $resultadoCarreras->num_rows > 0) {
-        while ($filaCarrera = $resultadoCarreras->fetch_assoc()) {
-            $todasCarreras[] = $filaCarrera;
-        }
-    }
-    
-    // Construir mapa asignatura -> lista de carreras (puede haber varias)
-    $sqlRel = "SELECT c.id AS carreraID, c.nombre AS carrera, a.id AS asignaturaID, a.nombre AS asignatura, p.id AS plan "
-            . "FROM carrera c "
-            . "JOIN plan p ON p.idCarrera = c.id "
-            . "JOIN plan_asignatura pa ON pa.idPlan = p.id "
-            . "JOIN asignatura a ON a.id = pa.idAsignatura "
-            . "ORDER BY c.nombre";
-    $resultadoRel = BDConexionSistema::getInstancia()->query($sqlRel);
+    $carrerasIdsUnicos = array();
     $asignaturaCarrera = array();
-    if ($resultadoRel && $resultadoRel->num_rows > 0) {
-        while ($r = $resultadoRel->fetch_assoc()) {
-            $aid = $r['asignaturaID'];
-            $cname = $r['carrera'];
-            if (!isset($asignaturaCarrera[$aid])) {
-                $asignaturaCarrera[$aid] = $cname;
-            } else {
-                // evitar duplicados
-                if (strpos($asignaturaCarrera[$aid], $cname) === false) {
-                    $asignaturaCarrera[$aid] .= ', ' . $cname;
+    
+    if ($asignaturas) {
+        foreach ($asignaturas as $Asignatura) {
+            $carreras = $Asignatura->getCarreras();
+            if ($carreras) {
+                foreach ($carreras as $c) {
+                    // Cargar en la lista de carreras del filtro (sin repetir)
+                    if (!in_array($c->getId(), $carrerasIdsUnicos)) {
+                        $carrerasIdsUnicos[] = $c->getId();
+                        $todasCarreras[] = array(
+                            'id' => $c->getId(),
+                            'nombre' => $c->getNombre()
+                        );
+                    }
+                    
+                    // Cargar en el mapa de asignaturas para el JavaScript del filtro
+                    $aid = $Asignatura->getId();
+                    $cname = $c->getNombre();
+                    if (!isset($asignaturaCarrera[$aid])) {
+                        $asignaturaCarrera[$aid] = $cname;
+                    } else {
+                        if (strpos($asignaturaCarrera[$aid], $cname) === false) {
+                            $asignaturaCarrera[$aid] .= ', ' . $cname;
+                        }
+                    }
                 }
             }
         }
+        
+        // Ordenar alfabéticamente las carreras por nombre
+        usort($todasCarreras, function($a, $b) {
+            return strcmp($a['nombre'], $b['nombre']);
+        });
     }
 }
 
@@ -159,9 +151,9 @@ if (!$mostrarError){
                     <?php
                     } else {
                         //var_dump($asignaturas);
-                        if (empty($todasAsignaturas)){ ?>
+                        if (empty($asignaturas)){ ?>
                             <div class="alert alert-warning text-center" role="alert">
-                                No hay asignaturas en el sistema.
+                                No tienes asignaturas asignadas en planes de estudio vigentes.
                             </div>
                         <?php    
                         } else { ?>
@@ -174,7 +166,7 @@ if (!$mostrarError){
                             <th>Vigencia</th>
                             <th>Gestionar Programa</th>
                         </tr>
-                        <?php foreach ($todasAsignaturas as $Asignatura) { 
+                        <?php foreach ($asignaturas as $Asignatura) { 
                                 $carreras = $Asignatura->getCarreras();
                                 $idsCarreras = [];
                                 $nombresCarreras = [];

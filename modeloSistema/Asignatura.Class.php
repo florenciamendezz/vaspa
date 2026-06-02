@@ -138,7 +138,8 @@ class Asignatura {
      * @return Carrera[]
      */
     function getCarreras() {
-        $this->query = "SELECT DISTINCT carrera.id, carrera.nombre FROM asignatura JOIN plan_asignatura JOIN plan JOIN carrera WHERE asignatura.id = plan_asignatura.idAsignatura AND plan_asignatura.idPlan = plan.id AND plan.idCarrera = carrera.id AND asignatura.id = '{$this->id}'";
+        $anioActual = date("Y");
+        $this->query = "SELECT DISTINCT carrera.id, carrera.nombre FROM asignatura JOIN plan_asignatura JOIN plan JOIN carrera WHERE asignatura.id = plan_asignatura.idAsignatura AND plan_asignatura.idPlan = plan.id AND plan.idCarrera = carrera.id AND asignatura.id = '{$this->id}' AND ((plan.anio_inicio <= '{$anioActual}' AND plan.anio_fin >= '{$anioActual}') OR (plan.anio_inicio <= '{$anioActual}' AND plan.anio_fin IS NULL))";
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);
 
         $Carreras = NULL;
