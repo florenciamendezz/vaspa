@@ -42,19 +42,23 @@ $nombreUsuario = $Usuario->nombre;
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 
         <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Informe Gerencial de Programas</title>
+        
+        <!-- Google Fonts Outfit y Estilos Premium -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
 
         <?php include_once '../gui/navbar.php'; ?>
 
         <div class="container">
-            <div class="card">
-                <div class="card-header">
+            <div class="card card-premium">
+                <div class="card-header card-header-premium">
 
-                    <h3>Informe Gerencial de Programas</h3>
+                    <h3 class="mb-0">Informe Gerencial de Programas</h3>
                 </div>
                 <div class="card-body">
-                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <ul class="nav nav-tabs nav-tabs-premium" id="myTab" role="tablist">
                         <li class="nav-item">
                           <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Por Carrera</a>
                         </li>

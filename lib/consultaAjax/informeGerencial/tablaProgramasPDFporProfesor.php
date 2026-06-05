@@ -26,9 +26,10 @@ if (isset($_POST['idProfesor']) && isset($_POST['anio'])){
     $cantProgDisponible = 0; // variable contador para saber la cantidad de programas disponibles.
     $cantProgNoDisponible = 0;
     if ($datos->num_rows > 0){
-        $print .= '<table class="table table-hover table-sm" id="tablaAsignaturasProf">
+        $print .= '<div class="table-responsive table-premium mt-3">
+                    <table class="table table-hover table-striped mb-0" id="tablaAsignaturasProf">
                         <thead>
-                            <tr class="table-info">
+                            <tr>
                                 <th>C&oacute;digo Plan</th>
                                 <th>C&oacute;digo Asignatura</th>
                                 <th>Asignatura</th>
@@ -79,12 +80,12 @@ if (isset($_POST['idProfesor']) && isset($_POST['anio'])){
         }
         
         $print .= '</tbody>';
-        $print .= '</table>';
+        $print .= '</table></div>';
         
         // agregamos boton para permitir ver el grafico estadistico en un modal
         $print = '<div class="row justify-content-md-center">
-                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal2">
-                                    Ver Gr&aacute;fico
+                                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#myModal2">
+                                    <span class="oi oi-pie-chart"></span> Ver Gr&aacute;fico
                                 </button>
                             </div>
                             <br>'.$print;

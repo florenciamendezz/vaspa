@@ -28,10 +28,10 @@ if (isset($_POST['codCarrera']) && isset($_POST['anio'])){
                 $cantProgDisponible = -1;
                 $cantProgNoDisponible = -1;
     } else {
-        $asignaturas = $plan->getAsignaturas();
-        $print .= '<table class="table table-hover table-sm" id="tablaAsignaturas">
+        $print .= '<div class="table-responsive table-premium mt-3">
+                    <table class="table table-hover table-striped mb-0" id="tablaAsignaturas">
                         <thead>
-                            <tr class="table-info">
+                            <tr>
                                 <th>C&oacute;digo</th>
                                 <th>Asignatura</th>
                                 <th>Profesor Responsable</th>
@@ -86,11 +86,11 @@ if (isset($_POST['codCarrera']) && isset($_POST['anio'])){
             
         }
         $print .= '</tbody>';
-        $print .= '</table>';
+        $print .= '</table></div>';
         
         $print = '<div class="row justify-content-md-center">
-                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal1">
-                                    Ver Gr&aacute;fico
+                                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#myModal1">
+                                    <span class="oi oi-pie-chart"></span> Ver Gr&aacute;fico
                                 </button>
                             </div>
                             <br>'.$print;
