@@ -595,8 +595,8 @@ if ($rol == PermisosSistema::ROL_PROFESOR) {
             ];
         }
     }
-} elseif ($rol == PermisosSistema::ROL_VINCULACION_ACADEMICA || $rol == PermisosSistema::ROL_ADMIN) {
-    // Vinculación Académica o Administrador (tienen los mismos privilegios de revisión)
+} elseif ($rol == PermisosSistema::ROL_VINCULACION_ACADEMICA) {
+    // Vinculación Académica (tiene privilegios de revisión de acreditación y firmas)
     $sqlPDF = "SELECT DISTINCT ppd.id as idProgramaPDF, ppd.anio, ppd.fecha_carga, ppd.aprobado_escuela, ppd.en_revision, ppd.aprobado_va, ppd.aprobado_depto, ppd.aprobado_va_firma, ppd.fue_desaprobado, a.id as idAsignatura, a.nombre as nombreAsignatura
                FROM programa_pdf_detalle ppd
                JOIN asignatura a ON ppd.id_asignatura = a.id
