@@ -7,7 +7,6 @@ $ManejadorCarrera = new ManejadorCarrera();
 $Carreras = $ManejadorCarrera->getColeccion();
 ?>
 
-<html>
     <head>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="../lib/bootstrap-4.1.1-dist/css/bootstrap.css" />
@@ -18,16 +17,18 @@ $Carreras = $ManejadorCarrera->getColeccion();
         <script type="text/javascript" src="../lib/datatable/jquery.dataTables.min.js"></script>
         <script type="text/javascript" src="../lib/datatable/dataTables.bootstrap4.min.js"></script>      
         <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Carreras</title>
-
+        
+        <!-- Google Fonts Outfit y Estilos Premium -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
 
         <?php include_once '../gui/navbar.php'; ?>
 
         <div class="container">
-            <div class="card">
-                <div class="card-header">
-
+            <div class="card card-premium">
+                <div class="card-header card-header-premium">
                     <h3>Carreras</h3>
                 </div>
                 <div class="card-body">
@@ -38,14 +39,15 @@ $Carreras = $ManejadorCarrera->getColeccion();
                             </button>
                         </a>
                     </p>
-                    <table class="table table-hover table-sm" id="tablaCarreras">
-                        <thead>
-                            <tr class="table-info">
-                                <th>C&oacute;digo de Carrera</th>
-                                <th>Nombre</th>
-                                <th>Opciones</th>
-                            </tr>
-                        </thead>
+                    <div class="table-responsive">
+                        <table class="table table-premium" id="tablaCarreras">
+                            <thead>
+                                <tr>
+                                    <th>C&oacute;digo de Carrera</th>
+                                    <th>Nombre</th>
+                                    <th>Opciones</th>
+                                </tr>
+                            </thead>
                         <tbody>
                             <tr>
                                 <?php foreach ($Carreras as $Carrera) { ?>
@@ -72,7 +74,8 @@ $Carreras = $ManejadorCarrera->getColeccion();
                                 </tr>
                             <?php } ?>
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

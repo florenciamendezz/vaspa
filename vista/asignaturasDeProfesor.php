@@ -84,41 +84,12 @@ if (!$mostrarError){
         <script type="text/javascript" src="../lib/JQuery/jquery-3.3.1.js"></script>
         <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>        
         <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Mis Asignaturas</title>
-        <style type="text/css">
-            .btn-outline-purple {
-                color: #3a2166;
-                background-color: transparent;
-                background-image: none;
-                border-color: #3a2166;
-            }
-
-            .btn-outline-purple:hover {
-                color: #fff;
-                background-color: #3a2166;
-                border-color: #3a2166;
-            }
-
-            .btn-outline-purple:focus, .btn-outline-purple.focus {
-                box-shadow: 0 0 0 0.2rem rgba(145, 109, 208, 1);
-            }
-
-            .btn-outline-purple.disabled, .btn-outline-purple:disabled {
-                color: #3a2166;
-                background-color: transparent;
-            }
-
-            .btn-outline-purple:not(:disabled):not(.disabled):active, .btn-outline-purple:not(:disabled):not(.disabled).active,
-            .show > .btn-outline-purple.dropdown-toggle {
-                color: #fff;
-                background-color: #3a2166;
-                border-color: #3a2166;
-            }
-
-            .btn-outline-purple:not(:disabled):not(.disabled):active:focus, .btn-outline-purple:not(:disabled):not(.disabled).active:focus,
-            .show > .btn-outline-purple.dropdown-toggle:focus {
-                box-shadow: 0 0 0 0.2rem rgba(145, 109, 208, 1);
-            }
-        </style>
+        
+        <!-- Google Fonts Outfit -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        
+        <!-- Estilos Premium comunes -->
+        <link rel="stylesheet" href="../lib/css/premium.css" />
 
     </head>
     <body>
@@ -126,9 +97,8 @@ if (!$mostrarError){
         <?php include_once '../gui/navbar.php';   ?>
 
         <div class="container">
-            <div class="card">
-                <div class="card-header">
-
+            <div class="card card-premium">
+                <div class="card-header card-header-premium">
                     <h3>Mis Asignaturas</h3>
                 </div>
                 <div class="card-body">
@@ -156,16 +126,20 @@ if (!$mostrarError){
                             </div>
                         <?php    
                         } else { ?>
-                            <table class="table table-hover table-sm">
-                        <tr class="table-info">
-                            <th>C&oacute;digo de Asignatura</th>
-                            <th>Nombre</th>
-                            <th>Plan de Estudios</th>
-                            <th>Carreras</th>
-                            <th>Estado del programa</th>
-                            <th>Vigencia</th>
-                            <th>Gestionar Programa</th>
-                        </tr>
+                            <div class="table-responsive">
+                                <table class="table table-premium">
+                                    <thead>
+                                        <tr>
+                                            <th>C&oacute;digo de Asignatura</th>
+                                            <th>Nombre</th>
+                                            <th>Plan de Estudios</th>
+                                            <th>Carreras</th>
+                                            <th>Estado del programa</th>
+                                            <th>Vigencia</th>
+                                            <th>Gestionar Programa</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
                         <?php foreach ($asignaturas as $Asignatura) { 
                                 $carreras = $Asignatura->getCarreras();
                                 $idsCarreras = [];
@@ -296,7 +270,9 @@ if (!$mostrarError){
                              </td>
                              </tr>
                         <?php } ?>
-                    </table>
+                                    </tbody>
+                                </table>
+                            </div>
                     <?php    
                         }
                     }
