@@ -74,16 +74,17 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
     $html .= '<br>';
     
     if ($resultadoAsignaturas && $resultadoAsignaturas->num_rows > 0) {
-        $html .= '<table class="table table-hover table-sm" id="tablaEstadoGeneral">
-                    <thead>
-                        <tr class="table-info">
-                            <th>Asignatura</th>
-                            <th>Estado</th>
-                            <th>Ubicación Actual</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>';
+        $html .= '<div class="table-responsive">
+                    <table class="table table-premium" id="tablaEstadoGeneral">
+                        <thead>
+                            <tr>
+                                <th>Asignatura</th>
+                                <th>Estado</th>
+                                <th>Ubicación Actual</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>';
         
         while ($asignatura = $resultadoAsignaturas->fetch_assoc()) {
             $data = getLatestProgramData($asignatura['id']);
@@ -124,7 +125,7 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
             $html .= '<td>'.$acciones.'</td>';
             $html .= '</tr>';
         }
-        $html .= '</tbody></table>';
+        $html .= '</tbody></table></div>';
     } else {
         $html .= '<div class="alert alert-warning alert-dismissible fade show text-center" role="alert">No hay asignaturas en el plan.</div>';
     }
@@ -161,16 +162,17 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
         }
         
         if ($countP1 > 0) {
-            $html .= '<table class="table table-hover table-sm" id="tablaPendientes1">
-                        <thead>
-                            <tr class="table-info">
-                                <th>Asignatura</th>
-                                <th>Año</th>
-                                <th>Fecha de Carga</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>'.$rowsP1.'</tbody></table>';
+            $html .= '<div class="table-responsive">
+                        <table class="table table-premium" id="tablaPendientes1">
+                            <thead>
+                                <tr>
+                                    <th>Asignatura</th>
+                                    <th>Año</th>
+                                    <th>Fecha de Carga</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>'.$rowsP1.'</tbody></table></div>';
         } else {
             $html .= '<div class="alert alert-success text-center" role="alert">No tenés programas pendientes de acreditación.</div>';
         }
@@ -202,16 +204,17 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
         }
         
         if ($countP2 > 0) {
-            $html .= '<table class="table table-hover table-sm" id="tablaPendientes2">
-                        <thead>
-                            <tr class="table-info">
-                                <th>Asignatura</th>
-                                <th>Año</th>
-                                <th>Fecha de Carga</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>'.$rowsP2.'</tbody></table>';
+            $html .= '<div class="table-responsive">
+                        <table class="table table-premium" id="tablaPendientes2">
+                            <thead>
+                                <tr>
+                                    <th>Asignatura</th>
+                                    <th>Año</th>
+                                    <th>Fecha de Carga</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>'.$rowsP2.'</tbody></table></div>';
         } else {
             $html .= '<div class="alert alert-success text-center" role="alert">No tenés programas pendientes de firma final.</div>';
         }
@@ -266,16 +269,17 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
         }
         
         if ($countP > 0) {
-            $html .= '<table class="table table-hover table-sm" id="tablaPendientes">
-                        <thead>
-                            <tr class="table-info">
-                                <th>Asignatura</th>
-                                <th>Año</th>
-                                <th>Fecha de Carga</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>'.$rowsP.'</tbody></table>';
+            $html .= '<div class="table-responsive">
+                        <table class="table table-premium" id="tablaPendientes">
+                            <thead>
+                                <tr>
+                                    <th>Asignatura</th>
+                                    <th>Año</th>
+                                    <th>Fecha de Carga</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>'.$rowsP.'</tbody></table></div>';
         } else {
             $html .= '<div class="alert alert-success text-center" role="alert">No tenés programas pendientes de revisión en tu bandeja.</div>';
         }
@@ -342,17 +346,18 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
     }
     
     if ($countA > 0) {
-        $html .= '<table class="table table-hover table-sm" id="tablaProgramaAprobados">
-                    <thead>
-                        <tr class="table-info">
-                            <th>Asignatura</th>
-                            <th>Año</th>
-                            <th>Fecha de Carga</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>'.$rowsA.'</tbody></table>';
+        $html .= '<div class="table-responsive">
+                    <table class="table table-premium" id="tablaProgramaAprobados">
+                        <thead>
+                            <tr>
+                                <th>Asignatura</th>
+                                <th>Año</th>
+                                <th>Fecha de Carga</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>'.$rowsA.'</tbody></table></div>';
     } else {
         $html .= '<div class="alert alert-warning alert-dismissible fade show text-center" role="alert">No hay programas aprobados.</div>';
     }
@@ -388,16 +393,17 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
     }
     
     if ($countD > 0) {
-        $html .= '<table class="table table-hover table-sm" id="tablaProgramaDesaprobados">
-                    <thead>
-                        <tr class="table-info">
-                            <th>Asignatura</th>
-                            <th>Año</th>
-                            <th>Fecha de Carga</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>'.$rowsD.'</tbody></table>';
+        $html .= '<div class="table-responsive">
+                    <table class="table table-premium" id="tablaProgramaDesaprobados">
+                        <thead>
+                            <tr>
+                                <th>Asignatura</th>
+                                <th>Año</th>
+                                <th>Fecha de Carga</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>'.$rowsD.'</tbody></table></div>';
     } else {
         $html .= '<div class="alert alert-warning alert-dismissible fade show text-center" role="alert">No hay programas devueltos / desaprobados.</div>';
     }
