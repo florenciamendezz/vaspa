@@ -93,9 +93,9 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                     <hr>
 
                     <div class="row">
-                        <div class="col-md-7 mb-4">                                
+                        <div class="col-md-12 mb-4">                                
                             <form action="visualizar.programa.listar.php" method="post"> 
-                                <div class="card card-premium h-100">
+                                <div class="card card-premium">
                                     
                                     <div class="card-header card-header-premium">
                                         <h5 class="mb-0"><span class="oi oi-magnifying-glass mr-2"></span> Visualizar Programa de Asignatura</h5>
@@ -125,15 +125,17 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                                 </div>
                             </form>
                         </div>
-                        
-                        <div class="col-md-5 mb-4">
-                            <div class="card card-premium h-100">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <div class="card card-premium">
                                 <div class="card-header card-header-premium">
                                     <h5 class="card-title mb-0"><span class="oi oi-account-login mr-2"></span> Ingreso al Sistema</h5>
                                 </div>
-                                <div class="card-body text-dark d-flex flex-column justify-content-between">
+                                <div class="card-body text-dark">
                                     <p class="card-text">Si usted es un Profesor, empleado de Vinculaci&oacute;n Acad&eacute;mica o Director de Departamento y desea realizar operaciones en el Sistema, por favor presione el siguiente bot&oacute;n.</p>
-                                    <div class="mt-4">
+                                    <div class="mt-3">
                                         <div id="okgoogle" class="g-signin2" onclick="ClickLogin()" data-onsuccess="onSignIn" title="Acceder al <?= Constantes::NOMBRE_SISTEMA; ?>"></div>
                                     </div>
                                 </div>
