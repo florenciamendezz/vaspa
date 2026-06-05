@@ -34,9 +34,10 @@ if (isset($_POST['codCarrera'])){
             // Solo se tienen en cuenta los programas cuya vigencia contengan el anio actual
 
             $html = '<hr>
-                            <table class="table table-hover table-sm" id="tablaAsignaturas">
+                            <div class="table-responsive table-premium mt-3">
+                            <table class="table table-hover table-striped mb-0" id="tablaAsignaturas">
                             <thead>
-                                <tr class="table-info">
+                                <tr>
                                     <!-- <th>A&ntilde;o</th> -->
                                     <!-- <th>Cuatr.</th> -->
                                     <th>C&oacute;digo</th>
@@ -139,7 +140,7 @@ if (isset($_POST['codCarrera'])){
             }
 
             $html .= '</tbody>'
-                    . '</table>';
+                    . '</table></div>';
 
         echo $html;
 
