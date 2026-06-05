@@ -25,4 +25,4 @@ define('CONTRASENA_PROF', 'qkybvowecyfxdzok');
 define('MAIL_ESCUELA', 'luzgarai40@gmail.com');
 
 // Define si se fuerza el envio real en desarrollo/localhost
-define('FORZAR_ENVIO_MAIL', true);
+define('FORZAR_ENVIO_MAIL', false);

@@ -14,6 +14,7 @@ class Plan {
     protected $anio_inicio;
     protected $idCarrera;
     protected $anio_fin;
+    protected $estado;
     private $query;
 
     /**
@@ -30,6 +31,7 @@ class Plan {
             $this->setAnio_inicio($datos['anio_inicio']);
             $this->setIdCarrera($datos['idCarrera']);
             $this->setAnio_fin($datos['anio_fin']);
+            $this->setEstado(isset($datos['estado']) ? $datos['estado'] : 'borrador');
         } else {
             //Sino viene un nuevo Objeto, lo recupero (para Modificar)
             if (isset($id)) {
@@ -75,6 +77,10 @@ class Plan {
         return $this->anio_fin;
     }
 
+    function getEstado() {
+        return $this->estado;
+    }
+
     function setId($id) {
         $this->id = $id;
     }
@@ -86,6 +92,11 @@ class Plan {
     function setAnio_fin($anio_fin) {
         $this->anio_fin = $anio_fin;
     }
+
+    function setEstado($estado) {
+        $this->estado = $estado;
+    }
+
     function getAnio_inicio() {
         return $this->anio_inicio;
     }

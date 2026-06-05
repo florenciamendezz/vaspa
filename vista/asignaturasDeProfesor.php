@@ -150,8 +150,7 @@ if (!$mostrarError){
                         </div>
                     <?php
                     } else {
-                        //var_dump($asignaturas);
-                        if (empty($asignaturas)){ ?>
+                        //var_dump($asignaturas);                        if (empty($asignaturas)){ ?>
                             <div class="alert alert-warning text-center" role="alert">
                                 No tienes asignaturas asignadas en planes de estudio vigentes.
                             </div>
@@ -161,6 +160,7 @@ if (!$mostrarError){
                         <tr class="table-info">
                             <th>C&oacute;digo de Asignatura</th>
                             <th>Nombre</th>
+                            <th>Plan de Estudios</th>
                             <th>Carreras</th>
                             <th>Estado del programa</th>
                             <th>Vigencia</th>
@@ -177,7 +177,7 @@ if (!$mostrarError){
                                     }
                                 }
                                 $dataCarreras = implode(',', $idsCarreras);
-                            ?>                            <tr class="fila-asignatura" data-carreras="<?= $dataCarreras ?>">
+                            ?>                            <tr class="fila-asignatura" data-carreras="<?= $dataCarreras ?>">
                             <td><?= $Asignatura->getId(); ?></td>
                             <td>
                                 <?= htmlspecialchars($Asignatura->getNombre()); ?>
@@ -190,6 +190,9 @@ if (!$mostrarError){
                                         <?= nl2br(htmlspecialchars($programaDetalle->getComentarioDesaprobacion())); ?>
                                     </div>
                                 <?php } ?>
+                            </td>
+                            <td>
+                                <span class="badge badge-info"><?= htmlspecialchars($Asignatura->getIdPlan()); ?> (Inicio: <?= htmlspecialchars($Asignatura->getAnioInicioPlan()); ?>)</span>
                             </td>
                             <td>
                                 <?php

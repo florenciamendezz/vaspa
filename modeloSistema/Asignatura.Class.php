@@ -129,6 +129,34 @@ class Asignatura {
         $this->contenidosMinimos = $contenidosMinimos;
     }
 
+    protected $idPlan;
+    protected $anioInicioPlan;
+    protected $anioFinPlan;
+
+    function getIdPlan() {
+        return $this->idPlan;
+    }
+
+    function setIdPlan($idPlan) {
+        $this->idPlan = $idPlan;
+    }
+
+    function getAnioInicioPlan() {
+        return $this->anioInicioPlan;
+    }
+
+    function setAnioInicioPlan($anioInicioPlan) {
+        $this->anioInicioPlan = $anioInicioPlan;
+    }
+
+    function getAnioFinPlan() {
+        return $this->anioFinPlan;
+    }
+
+    function setAnioFinPlan($anioFinPlan) {
+        $this->anioFinPlan = $anioFinPlan;
+    }
+
     function setIdProfesor($idProfesor) {
         $this->idProfesor = $idProfesor;
     }
