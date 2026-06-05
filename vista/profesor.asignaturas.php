@@ -23,25 +23,30 @@ $asignaturas = $ManejadorAsignatura->getAsignaturasSegunProfesor($idProfesor);
         <script type="text/javascript" src="../lib/JQuery/jquery-3.3.1.js"></script>
         <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>
         <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Asignaturas de Profesor</title>
+        
+        <!-- Google Fonts Outfit y Estilos Premium -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <p></p>
-            <div class="card">
-                <div class="card-header">
-                    <h3>Asignaturas del Profesor: <span class="text-info"><?= $profesor->getApellido();?> <?= $profesor->getNombre();?></span> </h3>
+            <div class="card card-premium">
+                <div class="card-header card-header-premium">
+                    <h3>Asignaturas del Profesor: <span style="color: #60a5fa; font-weight: 600;"><?= $profesor->getApellido();?> <?= $profesor->getNombre();?></span></h3>
                 </div>
                 <div class="card-body">
                 
-                    <table class="table table-hover table-sm text-center" id="tablaPlanes">
-                        <thead>
-                            <tr class="table-info">
-                                <th>C&oacute;digo</th>
-                                <th>Nombre</th>
-                                <th>Horas Semanales</th>
-                            </tr>
-                        </thead>
+                    <div class="table-responsive">
+                        <table class="table table-premium text-center" id="tablaPlanes">
+                            <thead>
+                                <tr>
+                                    <th>C&oacute;digo</th>
+                                    <th>Nombre</th>
+                                    <th>Horas Semanales</th>
+                                </tr>
+                            </thead>
                         <tbody>
                                 
                                 <?php
@@ -66,7 +71,8 @@ $asignaturas = $ManejadorAsignatura->getAsignaturasSegunProfesor($idProfesor);
                                 <?php } }?>
                                     
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
                     
                     <div class="card-footer text-center">
                         <a href="profesores.php">
