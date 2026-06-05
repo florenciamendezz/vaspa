@@ -446,7 +446,7 @@ class ControlAcceso {
 
                 // De acuerdo al ROL del Usuario lo derivamos a su pantalla principal.
                 if ($rol == PermisosSistema::ROL_ADMIN){
-                    $this->ubicacion = Constantes::HOME_INICIO;
+                    $this->ubicacion = Constantes::HOMEAUTH;
                     header("Location: {$this->ubicacion}");
                     exit;
                 }
