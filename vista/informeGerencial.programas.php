@@ -94,28 +94,6 @@ $nombreUsuario = $Usuario->nombre;
                             
 <!--                            <div ><div id="piechart" ></div><br></div>-->
                             <!-- Modal para mostrar el grafico de torta resumiendo la disponibilidad de los programas -->
-                            <div class="modal fade bd-example-modal-lg" id="myModal1" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                              <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-                                <div class="modal-content">
-                                  <div class="modal-header">
-                                      <h5 class="modal-title" id="exampleModalCenterTitle"><span id="titleProgCarrera"></span></h5>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                      <span aria-hidden="true">&times;</span>
-                                    </button>
-                                  </div>
-                                  <div class="modal-body">
-                                    <!--<div class="row justify-content-md-center" id="piechart" style="width: 900px; height: 500px;"></div>-->
-                                  <!--<div id="piechart" style="width: 900px; height: 500px;"></div>-->
-                                  <div id="piechart" ></div>
-                                  </div>
-                                  <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-
                             <div id="tablaProgramasAsignaturas">
                                 <div class="alert alert-info" role="alert">
                                     Para obtener el <b>informe Gerencial de Programas por Carreras</b>, seleccione una carrera y a continuaci&oacute;n
@@ -150,26 +128,6 @@ $nombreUsuario = $Usuario->nombre;
                             </div>
                             <br>
                             
-                            <!-- Modal para mostrar el grafico de torta resumiendo la disponibilidad de los programas -->
-                            <div class="modal fade bd-example-modal-lg" id="myModal2" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                              <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-                                <div class="modal-content">
-                                  <div class="modal-header">
-                                      <h5 class="modal-title" id="exampleModalCenterTitle"><span id="titleProgProf"></span></h5>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                      <span aria-hidden="true">&times;</span>
-                                    </button>
-                                  </div>
-                                  <div class="modal-body">
-                                    <div class="row justify-content-md-center" id="piechart2"></div>
-                                  </div>
-                                  <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
                             <div id="tablaProgramasAsignaturasProf">
                                 <div class="alert alert-info" role="alert">
                                     Para obtener el <b>informe Gerencial de Programas por Profesor responsable</b>, seleccione el profesor y a continuaci&oacute;n
@@ -183,6 +141,47 @@ $nombreUsuario = $Usuario->nombre;
 
                 </div>
             </div>
+        </div>
+
+        <!-- Modales de Gráficos (Ubicados aquí al final del body para solucionar el Stacking Context) -->
+        <!-- Modal para mostrar el grafico de torta resumiendo la disponibilidad de los programas (Por Carrera) -->
+        <div class="modal fade bd-example-modal-lg" id="myModal1" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalCenterTitle"><span id="titleProgCarrera"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div id="piechart"></div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal para mostrar el grafico de torta resumiendo la disponibilidad de los programas (Por Profesor) -->
+        <div class="modal fade bd-example-modal-lg" id="myModal2" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalCenterTitle"><span id="titleProgProf"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div class="row justify-content-md-center" id="piechart2"></div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <?php include_once '../gui/footer.php'; ?>
