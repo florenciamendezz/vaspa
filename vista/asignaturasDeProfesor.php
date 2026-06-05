@@ -170,10 +170,15 @@ if (!$mostrarError){
                             </td>
                             <td>
                                 <?php
-                                if (!empty($nombresCarreras)) {
-                                    echo implode("<br>", $nombresCarreras);
-                                } else {
+                                if (empty($nombresCarreras)) {
                                     echo "-";
+                                } elseif (count($nombresCarreras) <= 2) {
+                                    echo htmlspecialchars(implode(", ", $nombresCarreras));
+                                } else {
+                                    echo htmlspecialchars($nombresCarreras[0] . ", " . $nombresCarreras[1]);
+                                    $restantes = count($nombresCarreras) - 2;
+                                    $todosTexto = htmlspecialchars(implode(", ", $nombresCarreras));
+                                    echo ' <span class="badge badge-info ml-1 px-2 py-1" style="cursor: pointer; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); font-size: 0.75rem; font-weight: 600;" data-toggle="tooltip" data-placement="top" title="' . $todosTexto . '">+' . $restantes . ' más</span>';
                                 }
                                 ?>
                             </td>
@@ -284,6 +289,7 @@ if (!$mostrarError){
         <?php include_once '../gui/footer.php'; ?>
         <script>
             $(document).ready(function() {
+                $('[data-toggle="tooltip"]').tooltip();
                 $('#filtroCarrera').on('change', function() {
                     var carreraId = $(this).val();
                     if (carreraId === "") {
