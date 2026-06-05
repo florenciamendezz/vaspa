@@ -33,6 +33,27 @@ if (!$resultado) {
 if (!$mostrarError){ 
     $asignaturas = $profesor->obtenerAsignaturasDePlanVigente();
     
+    // Agrupamos las asignaturas duplicadas por plan en un arreglo único
+    $asignaturasAgrupadas = array();
+    if ($asignaturas) {
+        foreach ($asignaturas as $Asignatura) {
+            $idAsig = $Asignatura->getId();
+            if (!isset($asignaturasAgrupadas[$idAsig])) {
+                $asignaturasAgrupadas[$idAsig] = array(
+                    'objeto' => $Asignatura,
+                    'planes' => array()
+                );
+            }
+            $planInfo = array(
+                'id' => $Asignatura->getIdPlan(),
+                'inicio' => $Asignatura->getAnioInicioPlan()
+            );
+            if (!in_array($planInfo, $asignaturasAgrupadas[$idAsig]['planes'])) {
+                $asignaturasAgrupadas[$idAsig]['planes'][] = $planInfo;
+            }
+        }
+    }
+    
     // Obtenemos solo las carreras correspondientes a las asignaturas del profesor en planes vigentes
     $todasCarreras = array();
     $carrerasIdsUnicos = array();
@@ -140,7 +161,8 @@ if (!$mostrarError){
                                         </tr>
                                     </thead>
                                     <tbody>
-                        <?php foreach ($asignaturas as $Asignatura) { 
+                        <?php foreach ($asignaturasAgrupadas as $item) { 
+                                $Asignatura = $item['objeto']; 
                                 $carreras = $Asignatura->getCarreras();
                                 $idsCarreras = [];
                                 $nombresCarreras = [];
@@ -166,7 +188,11 @@ if (!$mostrarError){
                                 <?php } ?>
                             </td>
                             <td>
-                                <span class="badge badge-info"><?= htmlspecialchars($Asignatura->getIdPlan()); ?> (Inicio: <?= htmlspecialchars($Asignatura->getAnioInicioPlan()); ?>)</span>
+                                <?php 
+                                foreach ($item['planes'] as $p) {
+                                    echo '<span class="badge badge-info mb-1 mr-1 d-inline-block">' . htmlspecialchars($p['id']) . ' (Inicio: ' . htmlspecialchars($p['inicio']) . ')</span> ';
+                                }
+                                ?>
                             </td>
                             <td>
                                 <?php
