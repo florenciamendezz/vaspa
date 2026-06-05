@@ -28,6 +28,7 @@ if (isset($_POST['codCarrera']) && isset($_POST['anio'])){
                 $cantProgDisponible = -1;
                 $cantProgNoDisponible = -1;
     } else {
+        $asignaturas = $plan->getAsignaturas();
         $print .= '<div class="table-responsive table-premium mt-3">
                     <table class="table table-hover table-striped mb-0" id="tablaAsignaturas">
                         <thead>
