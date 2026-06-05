@@ -170,16 +170,20 @@ if ($circuito == 'estandar') {
       <link rel="stylesheet" href="../lib/open-iconic-master/font/css/open-iconic-bootstrap.css" />
       <link rel="stylesheet" href="../lib/bootstrap-4.1.1-dist/css/bootstrap.css" />
       <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Revisar Programa PDF</title>
+      
+      <!-- Google Fonts Outfit y Estilos Premium -->
+      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+      <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container-fluid px-4 py-3">
             <div class="row">
                 <div class="col-md-12">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white border-bottom-0 pt-4">
-                            <h3 class="card-title text-center text-dark">
-                                Revisar Programa de <span class="text-primary font-weight-bold"><?= htmlspecialchars($asignatura->getNombre().' - '.$asignatura->getId())?></span> (Año <?= $programaPDF->getAnio() ?>)
+                    <div class="card card-premium shadow-sm">
+                        <div class="card-header card-header-premium border-bottom-0 pt-4">
+                            <h3 class="card-title text-center text-white m-0">
+                                Revisar Programa de <span class="font-weight-bold" style="color: #60a5fa;"><?= htmlspecialchars($asignatura->getNombre().' - '.$asignatura->getId())?></span> (Año <?= $programaPDF->getAnio() ?>)
                             </h3>
                         </div>
                         <div class="card-body">
@@ -266,95 +270,6 @@ if ($circuito == 'estandar') {
                                     </div>
                                 <?php } ?>
                             </div>
-
-                            <!-- Modal Subir PDF Firmado -->
-                            <div class="modal fade" id="modalSubirFirmado" tabindex="-1" role="dialog" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered" role="document">
-                                    <div class="modal-content shadow-lg">
-                                        <div class="modal-header bg-success text-white">
-                                            <h5 class="modal-title font-weight-bold"><span class="oi oi-cloud-upload"></span> Subir Programa PDF Firmado</h5>
-                                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <form action="../controlSistema/programa.actualizar.pdf.php" method="POST" enctype="multipart/form-data">
-                                            <div class="modal-body text-left">
-                                                <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
-                                                <div class="form-group">
-                                                    <label for="archivoPdf" class="font-weight-bold">Seleccionar archivo PDF firmado:</label>
-                                                    <input type="file" class="form-control-file" id="archivoPdf" name="archivoPdf" accept=".pdf" required>
-                                                    <small class="form-text text-muted">Subí el PDF que cuenta con tu firma digital o escaneada.</small>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                                <button type="submit" class="btn btn-success">Subir Archivo Firmado</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Modal Desaprobar -->
-                            <div class="modal fade" id="modalDesaprobar" tabindex="-1" role="dialog" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered" role="document">
-                                    <div class="modal-content shadow-lg">
-                                        <div class="modal-header bg-danger text-white">
-                                            <h5 class="modal-title font-weight-bold"><span class="oi oi-warning"></span> ¿Desaprobar y Devolver el programa?</h5>
-                                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <form action="../controlSistema/programa.revisar.actualizar.estado.pdf.php" method="POST">
-                                            <div class="modal-body text-left">
-                                                <div class="form-group">
-                                                    <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
-                                                    <label for="comentario" class="font-weight-bold">Comentarios/Observaciones de Devolución:</label>
-                                                    <textarea class="form-control" id="comentario" rows="5" name="comentario" placeholder="Escribí los motivos del rechazo y las correcciones solicitadas..." required></textarea>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">No, cancelar</button>
-                                                <button type="submit" class="btn btn-danger" name="desaprobarPrograma">Sí, devolver con comentario</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Modal Aprobación Final -->
-                            <div class="modal fade" id="modalAprobarFinal" tabindex="-1" role="dialog" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered" role="document">
-                                    <div class="modal-content shadow-lg">
-                                        <div class="modal-header bg-success text-white">
-                                            <h5 class="modal-title font-weight-bold"><span class="oi oi-circle-check"></span> Confirmar Aprobación Final</h5>
-                                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <form action="../controlSistema/programa.revisar.actualizar.estado.pdf.php" method="POST">
-                                            <div class="modal-body text-left">
-                                                <p style="font-size: 1.1rem;">
-                                                    ¿Estás seguro de confirmar la aprobación final de esta asignatura? Esto finalizará el circuito y el programa quedará oficialmente aprobado.
-                                                </p>
-                                                <p class="text-muted small">
-                                                    Se enviará una notificación automática por correo electrónico al profesor informándole sobre la aprobación final y adjuntando el enlace de descarga del PDF.
-                                                </p>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
-                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                                <button type="submit" class="btn btn-success" name="aprobarPrograma">Sí, confirmar aprobación</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Formulario oculto para avanzar el circuito -->
-                            <form id="formEnviarSiguiente" action="../controlSistema/programa.enviar.revision.php" method="POST" style="display:none;">
-                                <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
-                            </form>
 
                             <hr>
                             
@@ -443,6 +358,95 @@ if ($circuito == 'estandar') {
                 </div>
             </div>
         </div>
+
+        <!-- Modal Subir PDF Firmado -->
+        <div class="modal fade" id="modalSubirFirmado" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content shadow-lg">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title font-weight-bold"><span class="oi oi-cloud-upload"></span> Subir Programa PDF Firmado</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form action="../controlSistema/programa.actualizar.pdf.php" method="POST" enctype="multipart/form-data">
+                        <div class="modal-body text-left">
+                            <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
+                            <div class="form-group">
+                                <label for="archivoPdf" class="font-weight-bold">Seleccionar archivo PDF firmado:</label>
+                                <input type="file" class="form-control-file" id="archivoPdf" name="archivoPdf" accept=".pdf" required>
+                                <small class="form-text text-muted">Subí el PDF que cuenta con tu firma digital o escaneada.</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success">Subir Archivo Firmado</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Desaprobar -->
+        <div class="modal fade" id="modalDesaprobar" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content shadow-lg">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title font-weight-bold"><span class="oi oi-warning"></span> ¿Desaprobar y Devolver el programa?</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form action="../controlSistema/programa.revisar.actualizar.estado.pdf.php" method="POST">
+                        <div class="modal-body text-left">
+                            <div class="form-group">
+                                <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
+                                <label for="comentario" class="font-weight-bold">Comentarios/Observaciones de Devolución:</label>
+                                <textarea class="form-control" id="comentario" rows="5" name="comentario" placeholder="Escribí los motivos del rechazo y las correcciones solicitadas..." required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">No, cancelar</button>
+                            <button type="submit" class="btn btn-danger" name="desaprobarPrograma">Sí, devolver con comentario</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Aprobación Final -->
+        <div class="modal fade" id="modalAprobarFinal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content shadow-lg">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title font-weight-bold"><span class="oi oi-circle-check"></span> Confirmar Aprobación Final</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form action="../controlSistema/programa.revisar.actualizar.estado.pdf.php" method="POST">
+                        <div class="modal-body text-left">
+                            <p style="font-size: 1.1rem;">
+                                ¿Estás seguro de confirmar la aprobación final de esta asignatura? Esto finalizará el circuito y el programa quedará oficialmente aprobado.
+                            </p>
+                            <p class="text-muted small">
+                                Se enviará una notificación automática por correo electrónico al profesor informándole sobre la aprobación final y adjuntando el enlace de descarga del PDF.
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success" name="aprobarPrograma">Sí, confirmar aprobación</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario oculto para avanzar el circuito -->
+        <form id="formEnviarSiguiente" action="../controlSistema/programa.enviar.revision.php" method="POST" style="display:none;">
+            <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
+        </form>
         
         <script type="text/javascript">
             function enviarAlSiguiente() {
