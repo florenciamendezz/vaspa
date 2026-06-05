@@ -49,9 +49,8 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                 </a>
             </div>
         </nav>
-               
-        <div class="container">
-            <div class="card card-premium">
+                       <div class="container py-4">
+            <div class="card card-premium mb-4">
                 <div class="card-header card-header-premium">
                     <h3 class="mb-0"><?php echo Constantes::NOMBRE_SISTEMA; ?> - Bienvenida</h3>
                 </div>
@@ -60,7 +59,7 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                     <?php
                             // VERIFICAMOS SI ESTA SETEADO EL USUARIO EN LA SESION Y SI ESTA VACIO (CADENA VACIA) PARA MOSTRAR EL MENSAJE QUE NO ES UN USUARIO REGISTRADO EN EL SISTEMA
                             if (isset($_SESSION['usuario']) && $_SESSION['usuario'] == "") {
-
+ 
                                 echo '<p><div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
                                         <span class="oi oi-warning"></span> Usuario No Autenticado.
                                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -70,69 +69,61 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                                 session_destroy(); // destruimos la session para evitar que vuelva a mostrar el alert (de todos modos al actualizar la pagina le pide reenvio de formulario)
                             }
                     ?>
-                    <p>Estimado usuario: Bienvenido al <b>Sistema</b> para la <b>V</b>isualizaci&oacute;n
+                    <p class="lead">Estimado usuario: Bienvenido al <b>Sistema</b> para la <b>V</b>isualizaci&oacute;n
                         <b>A</b>dministraci&oacute;n y <b>S</b>eguimiento de <b>P</b>rogramas de 
                         <b>A</b>signaturas <b>(VASPA)</b>,
                         una aplicaci&oacute;n desarrollada en la UARG - UNPA.</p>  
-                    <hr>
-
-                    <div class="row">
-                        <div class="col-md-12 mb-3">                                
-                            <form action="visualizar.programa.listar.php" method="post"> 
-                                <div class="card card-premium">
-                                    
-                                    <div class="card-header card-header-premium">
-                                        <h5 class="mb-0">Visualizar Programa de Asignatura</h5>
-                                        <p class="mb-0 mt-2 text-white" style="opacity: 0.85;">
-                                            Seleccione A&ntilde;o y Carrera.
-                                        </p>
-                                    </div>
-                                    
-                                    <div class="card-body">
-                                        <div class="form-group">
-                                            <label for="selectAnio">A&ntilde;o</label>
-                                            <br>
-                                            <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="anio" id="selectAnio" title="Seleccione un a&ntilde;o" required="" data-size="7">
-                                                <?php for ($i = date('Y'); $i >= 2011; $i--) { ?>
-                                                    <option value="<?= $i; ?>"><?= $i; ?></option>
-                                                <?php } ?>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="selectCarrera">Carrera</label>
-                                            <br>
-                                            <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="idCarrera" id="selectCarrera" title="Seleccione una carrera" required="" data-size="7">
-                                            </select>
-                                        </div>
-                                        <div id="programasAsignaturas"></div>
-                                    </div>
-                                    
-<!--                                    <div class="card-footer">
-                                        <button type="submit" class="btn btn-outline-success">
-                                            <span class="oi oi-check"></span> Confirmar
-                                        </button>
-                                    </div>-->
-                                    </div>
-                            </form>
-                    </div>
-                        
-
                 </div>
+            </div>
 
-                <div class="row">
-                    <div class="col-12">
+            <div class="row">
+                <div class="col-md-7 mb-4">                                
+                    <form action="visualizar.programa.listar.php" method="post"> 
                         <div class="card card-premium h-100">
+                            
                             <div class="card-header card-header-premium">
-                                <h5 class="card-title mb-0">Ingreso al Sistema</h5>
+                                <h5 class="mb-0"><span class="oi oi-magnifying-glass mr-2"></span> Visualizar Programa de Asignatura</h5>
+                                <p class="mb-0 mt-2 text-white" style="opacity: 0.85;">
+                                    Seleccione A&ntilde;o y Carrera.
+                                </p>
                             </div>
+                            
                             <div class="card-body">
-                                <p class="card-text">Si usted es un Profesor, empleado de Vinculaci&oacute;n Acad&eacute;mica o Director de Departamento y desea realizar operaciones en el Sistema, por favor presione el siguiente bot&oacute;n.</p>
+                                <div class="form-group">
+                                    <label for="selectAnio">A&ntilde;o</label>
+                                    <br>
+                                    <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="anio" id="selectAnio" title="Seleccione un a&ntilde;o" required="" data-size="7">
+                                        <?php for ($i = date('Y'); $i >= 2011; $i--) { ?>
+                                            <option value="<?= $i; ?>"><?= $i; ?></option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="selectCarrera">Carrera</label>
+                                    <br>
+                                    <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="idCarrera" id="selectCarrera" title="Seleccione una carrera" required="" data-size="7">
+                                    </select>
+                                </div>
+                                <div id="programasAsignaturas"></div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="col-md-5 mb-4">
+                    <div class="card card-premium h-100">
+                        <div class="card-header card-header-premium">
+                            <h5 class="card-title mb-0"><span class="oi oi-account-login mr-2"></span> Ingreso al Sistema</h5>
+                        </div>
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <p class="card-text">Si usted es un Profesor, empleado de Vinculaci&oacute;n Acad&eacute;mica o Director de Departamento y desea realizar operaciones en el Sistema, por favor presione el siguiente bot&oacute;n.</p>
+                            <div class="mt-3">
                                 <div id="okgoogle" class="g-signin2" onclick="ClickLogin()" data-onsuccess="onSignIn" title="Acceder al <?= Constantes::NOMBRE_SISTEMA; ?>"></div>
                             </div>
                         </div>
                     </div>
                 </div>
-
+            </div>
                 <!-- 
                 ========================================================================
                 [INICIO: ACCESO RÁPIDO PARA PRUEBAS Y DESARROLLO]
