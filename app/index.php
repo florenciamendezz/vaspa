@@ -66,7 +66,7 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
             </div>
         </nav>
                
-        <div class="container py-4">
+        <div class="container py-2">
             <div class="card card-welcome">
                 <div class="card-welcome-header">
                     <h3 class="mb-0 font-weight-bold"><?php echo Constantes::NOMBRE_SISTEMA; ?> - Bienvenida</h3>
