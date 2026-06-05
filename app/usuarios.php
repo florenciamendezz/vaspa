@@ -17,6 +17,10 @@ $ColeccionUsuarios = new ColeccionUsuarios();
         <script type="text/javascript" src="../lib/datatable/jquery.dataTables.min.js"></script>
         <script type="text/javascript" src="../lib/datatable/dataTables.bootstrap4.min.js"></script>
         <title><?= Constantes::NOMBRE_SISTEMA; ?> - Usuarios</title>
+        
+        <!-- Google Fonts Outfit y Estilos Premium -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
 
@@ -24,26 +28,27 @@ $ColeccionUsuarios = new ColeccionUsuarios();
 
         <div class="container">
 
-            <div class="card">
-                <div class="card-header">
-                    <h3>Usuarios</h3>
+            <div class="card card-premium">
+                <div class="card-header card-header-premium">
+                    <h3 class="mb-0">Usuarios</h3>
                 </div>
                 <div class="card-body">
                     <p>
                         <a href="usuario.crear.php">
-                        <button type="button" class="btn btn-success">
+                        <button type="button" class="btn btn-outline-success">
                             <span class="oi oi-plus"></span> Nuevo Usuario
                         </button>
                     </a>
                     </p>
-                    <table class="table table-hover table-sm" id="tablaUsuarios">
-                        <thead>
-                        <tr class="table-info">
-                            <th>Usuario</th>
-                            <th>Opciones</th>
-                        </tr>
-                        </thead>
-                        <tbody>
+                    <div class="table-responsive table-premium">
+                        <table class="table table-hover table-striped mb-0" id="tablaUsuarios">
+                            <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Opciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
                         <tr>
                             <?php foreach ($ColeccionUsuarios->getUsuarios() as $Usuario) {
                                 ?>
@@ -66,6 +71,7 @@ $ColeccionUsuarios = new ColeccionUsuarios();
                         <?php } ?>
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
         </div>

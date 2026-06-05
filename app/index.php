@@ -34,6 +34,10 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
         <script type="text/javascript" src="../lib/quicksearch/jquery.quicksearch.js"></script>
 
         <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Bienvenida</title>
+        
+        <!-- Google Fonts Outfit y Estilos Premium -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
         
@@ -47,9 +51,9 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
         </nav>
                
         <div class="container">
-            <div class="card">
-                <div class="card-header">
-                    <h3><?php echo Constantes::NOMBRE_SISTEMA; ?> - Bienvenida</h3>
+            <div class="card card-premium">
+                <div class="card-header card-header-premium">
+                    <h3 class="mb-0"><?php echo Constantes::NOMBRE_SISTEMA; ?> - Bienvenida</h3>
                 </div>
 
                 <div class="card-body">
@@ -73,13 +77,13 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                     <hr>
 
                     <div class="row">
-                        <div class="col-md-12 mb-1">                                
+                        <div class="col-md-12 mb-3">                                
                             <form action="visualizar.programa.listar.php" method="post"> 
-                                <div class="card">
+                                <div class="card card-premium">
                                     
-                                    <div class="card-header">
-                                        <h5>Visualizar Programa de Asignatura</h5>
-                                        <p>
+                                    <div class="card-header card-header-premium">
+                                        <h5 class="mb-0">Visualizar Programa de Asignatura</h5>
+                                        <p class="mb-0 mt-2 text-white" style="opacity: 0.85;">
                                             Seleccione A&ntilde;o y Carrera.
                                         </p>
                                     </div>
@@ -117,9 +121,11 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
 
                 <div class="row">
                     <div class="col-12">
-                        <div class="card h-100">
+                        <div class="card card-premium h-100">
+                            <div class="card-header card-header-premium">
+                                <h5 class="card-title mb-0">Ingreso al Sistema</h5>
+                            </div>
                             <div class="card-body">
-                                <h5 class="card-title">Ingreso al Sistema</h5>
                                 <p class="card-text">Si usted es un Profesor, empleado de Vinculaci&oacute;n Acad&eacute;mica o Director de Departamento y desea realizar operaciones en el Sistema, por favor presione el siguiente bot&oacute;n.</p>
                                 <div id="okgoogle" class="g-signin2" onclick="ClickLogin()" data-onsuccess="onSignIn" title="Acceder al <?= Constantes::NOMBRE_SISTEMA; ?>"></div>
                             </div>
