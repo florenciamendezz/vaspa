@@ -46,6 +46,235 @@ $nombreUsuario = $Usuario->nombre;
         <!-- Google Fonts Outfit y Estilos Premium -->
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="../lib/css/premium.css" />
+        
+        <style>
+            /* Contenedor del Dashboard */
+            .dashboard-container {
+                margin-top: 1.5rem;
+            }
+            /* Grid de KPIs */
+            .kpi-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+                gap: 1rem;
+                margin-bottom: 2rem;
+            }
+            /* Tarjeta KPI */
+            .kpi-card {
+                background: white;
+                border-radius: 12px;
+                padding: 1.25rem 0.5rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+                border: 1px solid #f1f5f9;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+            .kpi-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            }
+            .kpi-icon-wrapper {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 0.6rem;
+                flex-shrink: 0;
+            }
+            .kpi-details {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+            .kpi-value {
+                font-size: 1.5rem;
+                font-weight: 800;
+                line-height: 1.2;
+                color: #0f172a;
+            }
+            .kpi-title {
+                font-size: 0.7rem;
+                font-weight: 600;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                margin-top: 0.35rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                width: 100%;
+            }
+            /* Colores de KPIs con borde superior */
+            .kpi-total { border-top: 4px solid #3b82f6; }
+            .kpi-total .kpi-icon-wrapper { background: #eff6ff; color: #3b82f6; }
+            
+            .kpi-cargados { border-top: 4px solid #06b6d4; }
+            .kpi-cargados .kpi-icon-wrapper { background: #ecfeff; color: #06b6d4; }
+            
+            .kpi-sin-pdf { border-top: 4px solid #64748b; }
+            .kpi-sin-pdf .kpi-icon-wrapper { background: #f8fafc; color: #64748b; }
+            
+            .kpi-aprobados { border-top: 4px solid #10b981; }
+            .kpi-aprobados .kpi-icon-wrapper { background: #ecfdf5; color: #10b981; }
+            
+            .kpi-revision { border-top: 4px solid #6366f1; }
+            .kpi-revision .kpi-icon-wrapper { background: #f5f3ff; color: #6366f1; }
+            
+            .kpi-devueltos { border-top: 4px solid #f59e0b; }
+            .kpi-devueltos .kpi-icon-wrapper { background: #fffbeb; color: #f59e0b; }
+            
+            .kpi-retrasados { border-top: 4px solid #ef4444; }
+            .kpi-retrasados .kpi-icon-wrapper { background: #fef2f2; color: #ef4444; }
+            
+            /* Gráficos */
+            .charts-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 1.5rem;
+                margin-bottom: 2rem;
+            }
+            .chart-col {
+                flex: 1 1 300px;
+                background: white;
+                border-radius: 14px;
+                padding: 1.5rem;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                border: 1px solid #f1f5f9;
+                min-height: 340px;
+            }
+            .chart-title {
+                font-size: 0.95rem;
+                font-weight: 700;
+                color: #1e293b;
+                margin-bottom: 1rem;
+                border-bottom: 1px solid #f1f5f9;
+                padding-bottom: 0.5rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            /* Sección de Alertas */
+            .alerts-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 1.5rem;
+                margin-bottom: 2rem;
+            }
+            .alert-card {
+                flex: 1 1 300px;
+                background: white;
+                border-radius: 12px;
+                border: 1px solid #f1f5f9;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+                overflow: hidden;
+            }
+            .alert-card-header {
+                padding: 0.75rem 1.25rem;
+                font-weight: 700;
+                font-size: 0.9rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .alert-card-body {
+                padding: 1rem 1.25rem;
+                max-height: 250px;
+                overflow-y: auto;
+            }
+            .alert-danger-premium {
+                border-left: 4px solid #ef4444;
+            }
+            .alert-danger-premium .alert-card-header {
+                background: #fef2f2;
+                color: #b91c1c;
+            }
+            .alert-warning-premium {
+                border-left: 4px solid #f59e0b;
+            }
+            .alert-warning-premium .alert-card-header {
+                background: #fffbeb;
+                color: #b45309;
+            }
+            .alert-info-premium {
+                border-left: 4px solid #64748b;
+            }
+            .alert-info-premium .alert-card-header {
+                background: #f8fafc;
+                color: #475569;
+            }
+            .alert-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            .alert-item {
+                padding: 0.6rem 0;
+                border-bottom: 1px solid #f1f5f9;
+                font-size: 0.85rem;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+            .alert-item-header {
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+                font-weight: 600;
+            }
+            .alert-item-desc {
+                font-size: 0.75rem;
+                color: #64748b;
+                font-style: italic;
+            }
+            .alert-item:last-child {
+                border-bottom: none;
+            }
+            /* Barra de progreso de avance */
+            .progress-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                height: 100%;
+                padding: 1rem 0;
+            }
+            .progress-stat {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                margin-bottom: 0.75rem;
+            }
+            .progress-stat-val {
+                font-size: 2.2rem;
+                font-weight: 800;
+                color: #0f172a;
+            }
+            .progress-bar-premium {
+                height: 14px;
+                border-radius: 7px;
+                background-color: #f1f5f9;
+                overflow: hidden;
+                margin-bottom: 1rem;
+            }
+            .progress-bar-fill {
+                height: 100%;
+                border-radius: 7px;
+                background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%);
+                transition: width 0.6s ease;
+            }
+            .progress-details {
+                font-size: 0.8rem;
+                color: #64748b;
+                display: flex;
+                justify-content: space-between;
+            }
+        </style>
     </head>
     <body>
 
@@ -143,53 +372,17 @@ $nombreUsuario = $Usuario->nombre;
             </div>
         </div>
 
-        <!-- Modales de Gráficos (Ubicados aquí al final del body para solucionar el Stacking Context) -->
-        <!-- Modal para mostrar el grafico de torta resumiendo la disponibilidad de los programas (Por Carrera) -->
-        <div class="modal fade bd-example-modal-lg" id="myModal1" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                  <h5 class="modal-title" id="exampleModalCenterTitle"><span id="titleProgCarrera"></span></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <div id="piechart"></div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Modal para mostrar el grafico de torta resumiendo la disponibilidad de los programas (Por Profesor) -->
-        <div class="modal fade bd-example-modal-lg" id="myModal2" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                  <h5 class="modal-title" id="exampleModalCenterTitle"><span id="titleProgProf"></span></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <div class="row justify-content-md-center" id="piechart2"></div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <?php include_once '../gui/footer.php'; ?>
         
      <script>
          //PROGRAMAS SEGUN CARRERA
             $(document).ready(function(){
-                  $('#carrera').change(function () {
+                   $('.selectpicker').selectpicker({
+                       noneResultsText: 'No se encontraron resultados'
+                   });
+                   $('#carrera').change(function () {
                     var codCarrera = $('#carrera').val();
                     //alert(codCarrera);
                     $.ajax({
@@ -198,8 +391,7 @@ $nombreUsuario = $Usuario->nombre;
                       data: {'codCarrera': codCarrera}
                     })
                     .done(function(anios){
-                      $(".selectpicker").selectpicker(); 
-                      $('#anio').html(anios).selectpicker('refresh');
+                       $('#anio').html(anios).selectpicker('refresh');
                       //$('#tablaProgramasAsignaturas').empty();
                     })
                     .fail(function(){
@@ -334,8 +526,7 @@ $nombreUsuario = $Usuario->nombre;
                       data: {'idProfesor': idProfesor}
                     })
                     .done(function(anios){
-                      $(".selectpicker").selectpicker(); 
-                      $('#anioProf').html(anios).selectpicker('refresh');
+                       $('#anioProf').html(anios).selectpicker('refresh');
                     })
                     .fail(function(){
                       alert('Hubo un error al cargar los anios.')

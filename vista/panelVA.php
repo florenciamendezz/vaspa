@@ -56,7 +56,7 @@ $nombreUsuario = $Usuario->nombre;
                                 <div class="row justify-content-center">
                                     <div class="col-sm-5">
                                     <label for="carrera">Carrera</label>
-                                    <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una Carrera" data-none-results-text="No se encontraron resultados" data-size="7">
+                                    <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una Carrera" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
                                         <?php if (!empty($carreras)){
                                                     
                                                         foreach ($carreras as $carrera) {

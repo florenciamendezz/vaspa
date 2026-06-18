@@ -924,24 +924,23 @@ if ($rol == PermisosSistema::ROL_PROFESOR) {
             flex-direction: column;
             align-items: center;
             position: relative;
-            z-index: 2;
             flex: 1;
         }
         .stepper-item::before {
             position: absolute;
             content: "";
-            border-bottom: 2px solid #10b981;
+            border-bottom: 2px solid #cbd5e1;
             width: 100%;
             top: 10px;
             left: -50%;
-            z-index: -1;
+            z-index: 1;
         }
         .stepper-item:first-child::before {
             content: none;
         }
         .step-counter {
             position: relative;
-            z-index: 5;
+            z-index: 3;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -1050,15 +1049,16 @@ if ($rol == PermisosSistema::ROL_PROFESOR) {
                                         <span class="badge <?= $item['claseEstado']; ?> px-2.5 py-1" style="border-radius: 6px; font-weight: 600; font-size: 0.75rem;">
                                             <?= htmlspecialchars($item['estado']); ?>
                                         </span>
-                                        <span class="text-muted" style="font-size: 0.8rem;">Cód: <?= htmlspecialchars($item['id']); ?></span>
-                                        <span class="text-muted" style="font-size: 0.8rem; margin-left: auto;">Año: <?= htmlspecialchars($item['anio']); ?></span>
+                                        <span class="text-muted" style="font-size: 0.8rem; font-weight: 500;">
+                                            Cód: <?= htmlspecialchars($item['id']); ?> <span class="mx-1.5 text-muted-light">•</span> Año: <?= htmlspecialchars($item['anio']); ?>
+                                        </span>
                                     </div>
                                     
                                     <h5 class="nombre-asignatura mb-2"><?= htmlspecialchars($item['nombre']); ?></h5>
                                     
                                     <div class="d-flex flex-wrap" style="gap: 8px;">
                                         <span class="detail-tag">
-                                            <span class="oi oi-book mr-1.5" style="font-size: 0.75rem;"></span>
+                                            <span class="oi oi-book mr-2" style="font-size: 0.75rem;"></span>
                                             <?php 
                                             $carrerasArr = $item['carreras'];
                                             if (empty($carrerasArr)) {
@@ -1093,28 +1093,28 @@ if ($rol == PermisosSistema::ROL_PROFESOR) {
                                 <div class="text-lg-right min-width-button" style="align-self: center; min-width: 170px;">
                                     <?php if ($item['accion'] == 'Modificar Borrador' || $item['accion'] == 'Corregir Programa'): ?>
                                         <a href="<?= $item['link']; ?>" class="btn-premium-action btn-premium-warning btn-block mb-2">
-                                            <span class="oi oi-pencil mr-1.5"></span> <?= htmlspecialchars($item['accion']); ?>
+                                            <span class="oi oi-pencil mr-2"></span> <?= htmlspecialchars($item['accion']); ?>
                                         </a>
                                         <?php if ($item['estado'] == 'Borrador'): ?>
                                             <button type="button" class="btn-premium-action btn-premium-primary btn-block text-white" onclick="enviarARevisionDirecto(<?= $item['original_id']; ?>)">
-                                                <span class="oi oi-share mr-1.5"></span> Enviar a Revisión
+                                                <span class="oi oi-share mr-2"></span> Enviar a Revisión
                                             </button>
                                         <?php endif; ?>
                                     <?php elseif ($item['accion'] == 'Subir Programa'): ?>
                                         <a href="<?= $item['link']; ?>" class="btn-premium-action btn-premium-success btn-block">
-                                            <span class="oi oi-plus mr-1.5"></span> <?= htmlspecialchars($item['accion']); ?>
+                                            <span class="oi oi-plus mr-2"></span> <?= htmlspecialchars($item['accion']); ?>
                                         </a>
                                     <?php elseif ($item['accion'] == 'Enviar a Vinculación' || $item['accion'] == 'Enviar a Departamento' || $item['accion'] == 'Enviar a VA (Firma Final)'): ?>
                                         <a href="<?= $item['link']; ?>" class="btn-premium-action btn-premium-warning btn-block text-white">
-                                            <span class="oi oi-share mr-1.5"></span> <?= htmlspecialchars($item['accion']); ?>
+                                            <span class="oi oi-share mr-2"></span> <?= htmlspecialchars($item['accion']); ?>
                                         </a>
                                     <?php elseif ($item['accion'] == 'Confirmar Firma Final'): ?>
                                         <a href="<?= $item['link']; ?>" class="btn-premium-action btn-premium-success btn-block">
-                                            <span class="oi oi-check mr-1.5"></span> <?= htmlspecialchars($item['accion']); ?>
+                                            <span class="oi oi-check mr-2"></span> <?= htmlspecialchars($item['accion']); ?>
                                         </a>
                                     <?php else: ?>
                                         <a href="<?= $item['link']; ?>" class="btn-premium-action btn-premium-primary btn-block">
-                                            <span class="oi oi-check mr-1.5"></span> <?= htmlspecialchars($item['accion']); ?>
+                                            <span class="oi oi-check mr-2"></span> <?= htmlspecialchars($item['accion']); ?>
                                         </a>
                                     <?php endif; ?>
                                 </div>

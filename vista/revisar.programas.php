@@ -180,7 +180,7 @@ function obtenerProgramasAsignaturasRecientes($query) {
                     <div class="row justify-content-md-center">
                         <div class="col-sm-5">
                             <label for="carrera">Carrera</label>
-                            <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione Carrera" data-none-results-text="No se encontraron resultados" data-size="5">
+                            <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione Carrera" data-none-results-text="No se encontraron resultados" data-size="5" data-container="body">
                                 <?php
                                 if (!empty($carreras)) {
                                     

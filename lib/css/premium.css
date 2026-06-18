@@ -13,7 +13,8 @@ body {
     backdrop-filter: blur(10px);
     margin-top: 2rem;
     margin-bottom: 2rem;
-    overflow: hidden;
+    /* overflow: visible para que los dropdowns (selectpicker) no queden recortados */
+    overflow: visible;
 }
 
 .card-header-premium {
@@ -21,6 +22,9 @@ body {
     color: white;
     border-bottom: none;
     padding: 1.5rem 2rem;
+    /* Bordes redondeados solo arriba para compensar que el card no tiene overflow hidden */
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
 }
 
 .card-header-premium h3 {
@@ -116,4 +120,19 @@ body {
     border-radius: 10px;
     padding: 1rem;
     margin-bottom: 1.5rem;
+}
+
+/* ── Fix: dropdown de bootstrap-select no queda recortado por ningún contenedor ── */
+.bootstrap-select .dropdown-menu {
+    z-index: 9999 !important;
+}
+
+.bootstrap-select.open,
+.bootstrap-select.show {
+    z-index: 9999 !important;
+}
+
+/* El botón del selectpicker hereda la fuente premium */
+.bootstrap-select > .dropdown-toggle {
+    font-family: 'Outfit', sans-serif;
 }
