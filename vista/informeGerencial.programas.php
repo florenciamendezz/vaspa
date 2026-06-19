@@ -436,25 +436,87 @@ $nombreUsuario = $Usuario->nombre;
                                             title: tituloExcel,
                                             text: 'Generar Excel',
                                             filename: nombreArchivo,
-                                            messageTop: function() {
-                                                var total = $('.kpi-total .kpi-value').text() || '0';
-                                                var cargados = $('.kpi-cargados .kpi-value').text() || '0';
-                                                var sinPdf = $('.kpi-sin-pdf .kpi-value').text() || '0';
-                                                var aprobados = $('.kpi-aprobados .kpi-value').text() || '0';
-                                                var revision = $('.kpi-revision .kpi-value').text() || '0';
-                                                var devueltos = $('.kpi-devueltos .kpi-value').text() || '0';
-                                                var retrasados = $('.kpi-retrasados .kpi-value').text() || '0';
-                                                var avance = $('.progress-stat-val').first().text() || '0%';
-                                                return 'RESUMEN EJECUTIVO DE METRICAS:\n' +
-                                                       'Total Asignaturas: ' + total + ' | ' +
-                                                       'Programas Cargados (Avance): ' + cargados + ' (' + avance + ') | ' +
-                                                       'Programas Faltantes (Sin PDF): ' + sinPdf + '\n' +
-                                                       'Programas Aprobados: ' + aprobados + ' | ' +
-                                                       'Programas en Revision: ' + revision + ' | ' +
-                                                       'Programas Devueltos: ' + devueltos + ' | ' +
-                                                       'Programas Retrasados: ' + retrasados + '\n\n' +
-                                                       'Usuario Emisor: ' + emisor + ' | Fecha de Emision: ' + jsDate + '\n' +
-                                                       'Descripcion: Detalle de disponibilidad de programas PDF en el Sistema VASPA.';
+                                            customize: function(xlsx) {
+                                                var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                                                
+                                                // Capturar KPIs del Dashboard
+                                                var kpis = {
+                                                    total: $('.kpi-total .kpi-value').text() || '0',
+                                                    cargados: $('.kpi-cargados .kpi-value').text() || '0',
+                                                    sinPdf: $('.kpi-sin-pdf .kpi-value').text() || '0',
+                                                    aprobados: $('.kpi-aprobados .kpi-value').text() || '0',
+                                                    revision: $('.kpi-revision .kpi-value').text() || '0',
+                                                    devueltos: $('.kpi-devueltos .kpi-value').text() || '0',
+                                                    retrasados: $('.kpi-retrasados .kpi-value').text() || '0',
+                                                    avance: $('.progress-stat-val').first().text() || '0%'
+                                                };
+                                                
+                                                // Helper para escapar XML
+                                                function escapeXml(unsafe) {
+                                                    return unsafe.replace(/[<>&'"]/g, function (c) {
+                                                        switch (c) {
+                                                            case '<': return '&lt;';
+                                                            case '>': return '&gt;';
+                                                            case '&': return '&amp;';
+                                                            case '\'': return '&apos;';
+                                                            case '"': return '&quot;';
+                                                        }
+                                                    });
+                                                }
+                                                
+                                                var carreraInfo = 'Carrera: ' + carrera + '  |  Año: ' + anio;
+                                                
+                                                // 1. Desplazar filas existentes hacia abajo (dejando espacio para 6 filas)
+                                                var numRowsToInsert = 6;
+                                                $('row', sheet).each(function() {
+                                                    var attr = $(this).attr('r');
+                                                    var ind = parseInt(attr);
+                                                    $(this).attr("r", ind + numRowsToInsert);
+                                                });
+                                                
+                                                // 2. Desplazar referencias de celda
+                                                $('row c', sheet).each(function() {
+                                                    var attr = $(this).attr('r');
+                                                    var pre = attr.substring(0, 1);
+                                                    var ind = parseInt(attr.substring(1));
+                                                    $(this).attr("r", pre + (ind + numRowsToInsert));
+                                                });
+                                                
+                                                // 3. Crear las nuevas filas
+                                                var newRows = '';
+                                                // Fila 1: Título Principal
+                                                newRows += '<row r="1">' +
+                                                           '<c t="inlineStr" r="A1" s="51"><is><t>SISTEMA VASPA - INFORME GERENCIAL DE PROGRAMAS</t></is></c>' +
+                                                           '</row>';
+                                                // Fila 2: Información del Filtro
+                                                newRows += '<row r="2">' +
+                                                           '<c t="inlineStr" r="A2" s="2"><is><t>' + escapeXml(carreraInfo) + '</t></is></c>' +
+                                                           '</row>';
+                                                // Fila 3: Metadatos
+                                                newRows += '<row r="3">' +
+                                                           '<c t="inlineStr" r="A3" s="3"><is><t>Usuario Emisor: ' + escapeXml(emisor) + '  |  Fecha de Emisión: ' + escapeXml(jsDate) + '</t></is></c>' +
+                                                           '</row>';
+                                                // Fila 4: Espaciador
+                                                newRows += '<row r="4"></row>';
+                                                // Fila 5: Encabezados de KPIs (Estilo uniformizado con el Dashboard)
+                                                newRows += '<row r="5">' +
+                                                           '<c t="inlineStr" r="A5" s="2"><is><t>Total Asignaturas</t></is></c>' +
+                                                           '<c t="inlineStr" r="B5" s="2"><is><t>Con PDF (Avance)</t></is></c>' +
+                                                           '<c t="inlineStr" r="C5" s="2"><is><t>Sin PDF</t></is></c>' +
+                                                           '<c t="inlineStr" r="D5" s="2"><is><t>Aprobados</t></is></c>' +
+                                                           '<c t="inlineStr" r="E5" s="2"><is><t>En Revisión / Dev. / Retr.</t></is></c>' +
+                                                           '</row>';
+                                                // Fila 6: Valores de KPIs
+                                                newRows += '<row r="6">' +
+                                                           '<c t="inlineStr" r="A6"><is><t>' + escapeXml(kpis.total) + '</t></is></c>' +
+                                                           '<c t="inlineStr" r="B6"><is><t>' + escapeXml(kpis.cargados + ' (' + kpis.avance + ')') + '</t></is></c>' +
+                                                           '<c t="inlineStr" r="C6"><is><t>' + escapeXml(kpis.sinPdf) + '</t></is></c>' +
+                                                           '<c t="inlineStr" r="D6"><is><t>' + escapeXml(kpis.aprobados) + '</t></is></c>' +
+                                                           '<c t="inlineStr" r="E6"><is><t>' + escapeXml(kpis.revision + ' / ' + kpis.devueltos + ' / ' + kpis.retrasados) + '</t></is></c>' +
+                                                           '</row>';
+                                                
+                                                // 4. Prepend en sheetData
+                                                $('sheetData', sheet).prepend(newRows);
                                             }
                                         },
                                         {
@@ -490,32 +552,86 @@ $nombreUsuario = $Usuario->nombre;
 							margin: [0, 5, 0, 5]
 						};
 						
-						// Tabla de KPIs
+						// Tabla de KPIs (Estilo Grid del Dashboard)
 						var summaryTable = {
 							table: {
-								widths: ['*', '*', '*', '*', '*', '*', '*', '*'],
+								widths: ['*', '*', '*', '*'],
 								body: [
 									[
-										{ text: 'Total Asig.', fillColor: '#0f172a', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'Con PDF', fillColor: '#0284c7', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'Avance', fillColor: '#0284c7', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'Sin PDF', fillColor: '#64748b', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'Aprobados', fillColor: '#10b981', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'En Revisión', fillColor: '#3b82f6', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'Devueltos', fillColor: '#f59e0b', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'Retrasados', fillColor: '#ef4444', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 }
+										{
+											stack: [
+												{ text: 'TOTAL ASIGNATURAS', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisTotal, fontSize: 14, color: '#3b82f6', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										},
+										{
+											stack: [
+												{ text: 'CON PDF', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisCargados, fontSize: 14, color: '#06b6d4', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										},
+										{
+											stack: [
+												{ text: 'PROGRESO (AVANCE)', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: avance, fontSize: 14, color: '#06b6d4', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										},
+										{
+											stack: [
+												{ text: 'SIN PDF (FALTANTES)', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisSinPdf, fontSize: 14, color: '#64748b', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										}
 									],
 									[
-										{ text: kpisTotal, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: kpisCargados, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: avance, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: kpisSinPdf, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: kpisAprobados, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: kpisRevision, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: kpisDevueltos, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: kpisRetrasados, alignment: 'center', bold: true, fontSize: 10 }
+										{
+											stack: [
+												{ text: 'APROBADOS', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisAprobados, fontSize: 14, color: '#10b981', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										},
+										{
+											stack: [
+												{ text: 'EN REVISIÓN', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisRevision, fontSize: 14, color: '#6366f1', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										},
+										{
+											stack: [
+												{ text: 'DEVUELTOS', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisDevueltos, fontSize: 14, color: '#f59e0b', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										},
+										{
+											stack: [
+												{ text: 'RETRASADOS', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisRetrasados, fontSize: 14, color: '#ef4444', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										}
 									]
 								]
+							},
+							layout: {
+								hLineWidth: function (i, node) { return 1; },
+								vLineWidth: function (i, node) { return 1; },
+								hLineColor: function (i, node) { return '#cbd5e1'; },
+								vLineColor: function (i, node) { return '#cbd5e1'; }
 							},
 							margin: [0, 0, 0, 15]
 						};
@@ -665,25 +781,87 @@ $nombreUsuario = $Usuario->nombre;
                                             title: tituloExcel,
                                             text: 'Generar Excel',
                                             filename: nombreArchivo,
-                                            messageTop: function() {
-                                                var total = $('.kpi-total .kpi-value').text() || '0';
-                                                var cargados = $('.kpi-cargados .kpi-value').text() || '0';
-                                                var sinPdf = $('.kpi-sin-pdf .kpi-value').text() || '0';
-                                                var aprobados = $('.kpi-aprobados .kpi-value').text() || '0';
-                                                var revision = $('.kpi-revision .kpi-value').text() || '0';
-                                                var devueltos = $('.kpi-devueltos .kpi-value').text() || '0';
-                                                var retrasados = $('.kpi-retrasados .kpi-value').text() || '0';
-                                                var avance = $('.progress-stat-val').first().text() || '0%';
-                                                return 'RESUMEN EJECUTIVO DE METRICAS:\n' +
-                                                       'Total Asignaturas: ' + total + ' | ' +
-                                                       'Programas Cargados (Avance): ' + cargados + ' (' + avance + ') | ' +
-                                                       'Programas Faltantes (Sin PDF): ' + sinPdf + '\n' +
-                                                       'Programas Aprobados: ' + aprobados + ' | ' +
-                                                       'Programas en Revision: ' + revision + ' | ' +
-                                                       'Programas Devueltos: ' + devueltos + ' | ' +
-                                                       'Programas Retrasados: ' + retrasados + '\n\n' +
-                                                       'Usuario Emisor: ' + emisor + ' | Fecha de Emision: ' + jsDate + '\n' +
-                                                       'Descripcion: Detalle de disponibilidad de programas PDF en el Sistema VASPA.';
+                                            customize: function(xlsx) {
+                                                var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                                                
+                                                // Capturar KPIs del Dashboard
+                                                var kpis = {
+                                                    total: $('.kpi-total .kpi-value').text() || '0',
+                                                    cargados: $('.kpi-cargados .kpi-value').text() || '0',
+                                                    sinPdf: $('.kpi-sin-pdf .kpi-value').text() || '0',
+                                                    aprobados: $('.kpi-aprobados .kpi-value').text() || '0',
+                                                    revision: $('.kpi-revision .kpi-value').text() || '0',
+                                                    devueltos: $('.kpi-devueltos .kpi-value').text() || '0',
+                                                    retrasados: $('.kpi-retrasados .kpi-value').text() || '0',
+                                                    avance: $('.progress-stat-val').first().text() || '0%'
+                                                };
+                                                
+                                                // Helper para escapar XML
+                                                function escapeXml(unsafe) {
+                                                    return unsafe.replace(/[<>&'"]/g, function (c) {
+                                                        switch (c) {
+                                                            case '<': return '&lt;';
+                                                            case '>': return '&gt;';
+                                                            case '&': return '&amp;';
+                                                            case '\'': return '&apos;';
+                                                            case '"': return '&quot;';
+                                                        }
+                                                    });
+                                                }
+                                                
+                                                var profesorInfo = 'Profesor: ' + profesor + '  |  Año: ' + anio;
+                                                
+                                                // 1. Desplazar filas existentes hacia abajo (dejando espacio para 6 filas)
+                                                var numRowsToInsert = 6;
+                                                $('row', sheet).each(function() {
+                                                    var attr = $(this).attr('r');
+                                                    var ind = parseInt(attr);
+                                                    $(this).attr("r", ind + numRowsToInsert);
+                                                });
+                                                
+                                                // 2. Desplazar referencias de celda
+                                                $('row c', sheet).each(function() {
+                                                    var attr = $(this).attr('r');
+                                                    var pre = attr.substring(0, 1);
+                                                    var ind = parseInt(attr.substring(1));
+                                                    $(this).attr("r", pre + (ind + numRowsToInsert));
+                                                });
+                                                
+                                                // 3. Crear las nuevas filas
+                                                var newRows = '';
+                                                // Fila 1: Título Principal
+                                                newRows += '<row r="1">' +
+                                                           '<c t="inlineStr" r="A1" s="51"><is><t>SISTEMA VASPA - INFORME GERENCIAL DE PROGRAMAS</t></is></c>' +
+                                                           '</row>';
+                                                // Fila 2: Información del Filtro
+                                                newRows += '<row r="2">' +
+                                                           '<c t="inlineStr" r="A2" s="2"><is><t>' + escapeXml(profesorInfo) + '</t></is></c>' +
+                                                           '</row>';
+                                                // Fila 3: Metadatos
+                                                newRows += '<row r="3">' +
+                                                           '<c t="inlineStr" r="A3" s="3"><is><t>Usuario Emisor: ' + escapeXml(emisor) + '  |  Fecha de Emisión: ' + escapeXml(jsDate) + '</t></is></c>' +
+                                                           '</row>';
+                                                // Fila 4: Espaciador
+                                                newRows += '<row r="4"></row>';
+                                                // Fila 5: Encabezados de KPIs (Estilo uniformizado con el Dashboard)
+                                                newRows += '<row r="5">' +
+                                                           '<c t="inlineStr" r="A5" s="2"><is><t>Total Asignaturas</t></is></c>' +
+                                                           '<c t="inlineStr" r="B5" s="2"><is><t>Con PDF (Avance)</t></is></c>' +
+                                                           '<c t="inlineStr" r="C5" s="2"><is><t>Sin PDF</t></is></c>' +
+                                                           '<c t="inlineStr" r="D5" s="2"><is><t>Aprobados</t></is></c>' +
+                                                           '<c t="inlineStr" r="E5" s="2"><is><t>En Revisión / Dev. / Retr.</t></is></c>' +
+                                                           '</row>';
+                                                // Fila 6: Valores de KPIs
+                                                newRows += '<row r="6">' +
+                                                           '<c t="inlineStr" r="A6"><is><t>' + escapeXml(kpis.total) + '</t></is></c>' +
+                                                           '<c t="inlineStr" r="B6"><is><t>' + escapeXml(kpis.cargados + ' (' + kpis.avance + ')') + '</t></is></c>' +
+                                                           '<c t="inlineStr" r="C6"><is><t>' + escapeXml(kpis.sinPdf) + '</t></is></c>' +
+                                                           '<c t="inlineStr" r="D6"><is><t>' + escapeXml(kpis.aprobados) + '</t></is></c>' +
+                                                           '<c t="inlineStr" r="E6"><is><t>' + escapeXml(kpis.revision + ' / ' + kpis.devueltos + ' / ' + kpis.retrasados) + '</t></is></c>' +
+                                                           '</row>';
+                                                
+                                                // 4. Prepend en sheetData
+                                                $('sheetData', sheet).prepend(newRows);
                                             }
                                         },
                                         {
@@ -719,32 +897,86 @@ $nombreUsuario = $Usuario->nombre;
 							margin: [0, 5, 0, 5]
 						};
 						
-						// Tabla de KPIs
+						// Tabla de KPIs (Estilo Grid del Dashboard)
 						var summaryTable = {
 							table: {
-								widths: ['*', '*', '*', '*', '*', '*', '*', '*'],
+								widths: ['*', '*', '*', '*'],
 								body: [
 									[
-										{ text: 'Total Asig.', fillColor: '#0f172a', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'Con PDF', fillColor: '#0284c7', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'Avance', fillColor: '#0284c7', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'Sin PDF', fillColor: '#64748b', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'Aprobados', fillColor: '#10b981', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'En Revisión', fillColor: '#3b82f6', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'Devueltos', fillColor: '#f59e0b', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 },
-										{ text: 'Retrasados', fillColor: '#ef4444', color: '#ffffff', bold: true, alignment: 'center', fontSize: 8 }
+										{
+											stack: [
+												{ text: 'TOTAL ASIGNATURAS', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisTotal, fontSize: 14, color: '#3b82f6', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										},
+										{
+											stack: [
+												{ text: 'CON PDF', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisCargados, fontSize: 14, color: '#06b6d4', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										},
+										{
+											stack: [
+												{ text: 'PROGRESO (AVANCE)', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: avance, fontSize: 14, color: '#06b6d4', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										},
+										{
+											stack: [
+												{ text: 'SIN PDF (FALTANTES)', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisSinPdf, fontSize: 14, color: '#64748b', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										}
 									],
 									[
-										{ text: kpisTotal, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: kpisCargados, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: avance, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: kpisSinPdf, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: kpisAprobados, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: kpisRevision, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: kpisDevueltos, alignment: 'center', bold: true, fontSize: 10 },
-										{ text: kpisRetrasados, alignment: 'center', bold: true, fontSize: 10 }
+										{
+											stack: [
+												{ text: 'APROBADOS', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisAprobados, fontSize: 14, color: '#10b981', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										},
+										{
+											stack: [
+												{ text: 'EN REVISIÓN', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisRevision, fontSize: 14, color: '#6366f1', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										},
+										{
+											stack: [
+												{ text: 'DEVUELTOS', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisDevueltos, fontSize: 14, color: '#f59e0b', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										},
+										{
+											stack: [
+												{ text: 'RETRASADOS', fontSize: 7, color: '#64748b', bold: true, alignment: 'center' },
+												{ text: kpisRetrasados, fontSize: 14, color: '#ef4444', bold: true, alignment: 'center', margin: [0, 4, 0, 0] }
+											],
+											fillColor: '#f8fafc',
+											margin: [5, 8, 5, 8]
+										}
 									]
 								]
+							},
+							layout: {
+								hLineWidth: function (i, node) { return 1; },
+								vLineWidth: function (i, node) { return 1; },
+								hLineColor: function (i, node) { return '#cbd5e1'; },
+								vLineColor: function (i, node) { return '#cbd5e1'; }
 							},
 							margin: [0, 0, 0, 15]
 						};
