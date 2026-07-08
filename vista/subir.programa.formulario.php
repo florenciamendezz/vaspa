@@ -74,7 +74,7 @@ if (!is_dir($directorio)){
                         <div class="row">
                             <div class="col-md-3">
                                 <p><label for="selectAnio">A&ntilde;o</label>
-                                    <select class="selectpicker" data-live-search="true" data-width="100%" name="anio" id="selectAnio" title="Seleccione un a&ntilde;o" required="" liveSearchStyle='contains' data-none-results-text="No se encontraron resultados" autofocus="" data-size="7">
+                                    <select class="selectpicker" data-live-search="true" data-width="100%" name="anio" id="selectAnio" title="Seleccione un a&ntilde;o" required="" liveSearchStyle='contains' data-none-results-text="No se encontraron resultados" autofocus="" data-size="7" data-container="body">
                                      <?php for ($i=date('Y'); $i>=2011; $i--) { ?>
                                         <option value="<?= $i; ?>"><?= $i; ?></option>
                                     <?php } ?>
@@ -84,14 +84,14 @@ if (!is_dir($directorio)){
 
                             <div class="col-md-4">
                                 <p><label for="carrera">Carrera</label>
-                                    <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una carrera" data-none-results-text="No se encontraron resultados" data-size="7">
+                                    <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una carrera" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
                                     </select>
                                 </p>
                             </div>
 
                             <div class="col-md-5">
                                 <p><label for="asignatura">Asignatura</label>
-                                    <select id="asignatura" name="asignatura" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una asignatura" data-none-results-text="No se encontraron resultados" data-size="7">
+                                    <select id="asignatura" name="asignatura" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una asignatura" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
                                     </select></p>
                             </div>
                         </div>

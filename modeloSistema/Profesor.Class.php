@@ -144,9 +144,10 @@ class Profesor {
         //La constante __DIR__ retorna la ruta absoluta del directorio donde se encuentra el fichero que la está utilizando. Y dirname() retorna el directorio padre, en combinación dirname(__DIR__) nos retornaría la ruta absoluta del directorio padre donde se encuentra el fichero que la está usando.
         
         // obtenemos las asignaturas en donde es responsable el profesor
-        $this->query = "SELECT * "
-                . "FROM asignatura "
-                . "WHERE idProfesor = '{$this->id}'";
+        $this->query = "SELECT a.* "
+                . "FROM asignatura a "
+                . "INNER JOIN asignatura_responsable ar ON a.id = ar.idAsignatura "
+                . "WHERE ar.idProfesor = '{$this->id}'";
                 
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);
         
@@ -172,19 +173,24 @@ class Profesor {
     function obtenerAsignaturasDePlanVigente(){
         // importamos la clase Asignatura
         include_once __DIR__.'/Asignatura.Class.php';
-        //La constante __DIR__ retorna la ruta absoluta del directorio donde se encuentra el fichero que la está utilizando. Y dirname() retorna el directorio padre, en combinación dirname(__DIR__) nos retornaría la ruta absoluta del directorio padre donde se encuentra el fichero que la está usando.
         
         $anioActual = date("Y"); // anio actual tomado del servidor
         
-        // obtenemos las asignaturas que forman parte de una revision de Plan vigente 
-        // en donde es responsable el profesor        
-        $this->query = "SELECT DISTINCT a.id, a.nombre, a.idDepartamento, a.idProfesor 
-        FROM ((profesor p INNER JOIN asignatura a ON p.id = a.idProfesor) 
-        INNER JOIN (SELECT idPlan, anio_inicio, anio_fin, idAsignatura, idCarrera FROM 
-        plan p INNER JOIN plan_asignatura pa ON p.id = pa.idPlan) ap ON a.id = ap.idAsignatura)
-        WHERE p.id = '{$this->id}' AND ((anio_inicio <= '{$anioActual}' AND anio_fin >= '{$anioActual}') OR (anio_inicio <= '{$anioActual}' AND anio_fin IS NULL))";
+        // Obtenemos las asignaturas vigentes y el plan correspondiente (o materias sin plan asociado) que estén activas en la carrera
+        $this->query = "SELECT DISTINCT a.*, pl.id AS idPlan, pl.anio_inicio AS anioInicioPlan, pl.anio_fin AS anioFinPlan 
+        FROM profesor p 
+        INNER JOIN asignatura_responsable ar ON p.id = ar.idProfesor 
+        INNER JOIN asignatura a ON ar.idAsignatura = a.id
+        INNER JOIN carrera_asignatura ca ON a.id = ca.idAsignatura AND ca.activo = 1
+        LEFT JOIN plan_asignatura pa ON a.id = pa.idAsignatura
+        LEFT JOIN plan pl ON pa.idPlan = pl.id
+        WHERE p.id = '{$this->id}' 
+          AND (
+               pl.id IS NULL 
+               OR ((pl.anio_inicio <= '{$anioActual}' AND (pl.anio_fin >= '{$anioActual}' OR pl.anio_fin IS NULL)))
+          )
+        ORDER BY a.nombre ASC, pl.id ASC";
             
-                
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);
         
         // validamos el resultado de la query (si retorna false -> Ocurrio un error en la BD) Lanzamos una Excepcion informando el Error
@@ -195,8 +201,15 @@ class Profesor {
         $asignaturas = NULL;
         
         if ($this->datos->num_rows > 0) {
-            for ($x = 0; $x < $this->datos->num_rows; $x++) {
-                $asignaturas[] = $this->datos->fetch_object("Asignatura"); // creamos objeto
+            while ($row = $this->datos->fetch_assoc()) {
+                // Instanciamos el objeto Asignatura con sus datos base
+                $asigObj = new Asignatura($row['id']);
+                // Seteamos las propiedades dinámicas del plan
+                $asigObj->setIdPlan($row['idPlan']);
+                $asigObj->setAnioInicioPlan($row['anioInicioPlan']);
+                $asigObj->setAnioFinPlan($row['anioFinPlan']);
+                
+                $asignaturas[] = $asigObj;
             }
         }
 

@@ -11,15 +11,19 @@ session_destroy();
         <script type="text/javascript" src="../lib/JQuery/jquery-3.3.1.js"></script>
         <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>        
         <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Salir del Sistema</title>
+        
+        <!-- Google Fonts Outfit y Estilos Premium -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
 
         <?php include_once '../gui/navbar.php'; ?>
 
         <div class="container">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Salir del Sistema</h3>
+            <div class="card card-premium">
+                <div class="card-header card-header-premium">
+                    <h3 class="mb-0">Salir del Sistema</h3>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-success" role="alert">
@@ -35,15 +39,15 @@ session_destroy();
                     <hr />
                     <h5 class="card-text">Opciones</h5>
                     <a href="index.php">
-                        <button type="button" class="btn btn-primary">
+                        <button type="button" class="btn btn-outline-primary">
                             <span class="oi oi-account-login"></span> Volver a Ingresar
                         </button></a>
                     <a href="http://www.gmail.com">
-                        <button type="button" class="btn btn-primary">
+                        <button type="button" class="btn btn-outline-primary">
                             <span class="oi oi-inbox"></span> Ir a e-mail
                         </button></a>
                     <a href="http://www.uarg.unpa.edu.ar" target="_blank">
-                        <button type="button" class="btn btn-primary">
+                        <button type="button" class="btn btn-outline-primary">
                             <span class="oi oi-globe"></span> Ir a Portal UARG
                         </button></a>
                 </div>

@@ -37,6 +37,9 @@ $nombreUsuario = $Usuario->nombre;
       
       <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Bienvenida</title>
       
+      <!-- Google Fonts Outfit y Estilos Premium -->
+      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+      <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
         <?php include_once '../gui/navbar.php'; ?>
@@ -44,16 +47,16 @@ $nombreUsuario = $Usuario->nombre;
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="text-center">Estados de los Programas de Asignaturas</h3>
+                    <div class="card card-premium">
+                        <div class="card-header card-header-premium">
+                            <h3 class="text-center mb-0">Estados de los Programas de Asignaturas</h3>
                         </div>
                         <div class="card-body">
                             <div id="codigoPlan"></div>
                                 <div class="row justify-content-center">
                                     <div class="col-sm-5">
                                     <label for="carrera">Carrera</label>
-                                    <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una Carrera" data-none-results-text="No se encontraron resultados" data-size="7">
+                                    <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una Carrera" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
                                         <?php if (!empty($carreras)){
                                                     
                                                         foreach ($carreras as $carrera) {

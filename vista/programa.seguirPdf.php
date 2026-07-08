@@ -41,7 +41,7 @@ $Carreras = $ManejadorCarrera->getColeccion();
                         <div class="form-group">
                             <label for="selectAnio">A&ntilde;o</label>
                             <br>
-                            <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="anio" id="selectAnio" title="Seleccione un a&ntilde;o" required="" data-size="5">
+                            <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="anio" id="selectAnio" title="Seleccione un a&ntilde;o" required="" data-size="5" data-container="body">
                                  <?php for ($i=date('Y'); $i>=date('Y')-2 ; $i--) { ?>
                                     <option value="<?= $i; ?>"><?= $i; ?></option>
                                 <?php } ?>
@@ -50,7 +50,7 @@ $Carreras = $ManejadorCarrera->getColeccion();
                         <div class="form-group">
                             <label for="selectCarrera">Carrera</label>
                             <br>
-                            <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="idCarrera" id="selectCarrera" title="Seleccione una carrera" required="" data-size="5">
+                            <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="idCarrera" id="selectCarrera" title="Seleccione una carrera" required="" data-size="5" data-container="body">
                             </select>
                         
                         </div>

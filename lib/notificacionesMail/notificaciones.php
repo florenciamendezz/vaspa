@@ -64,12 +64,16 @@ function sendemailProf($mail_username, $mail_userpassword, $mail_addAddress, $ma
 
 // Prepara todos los datos necesarios para enviar el email al profesor solicitandole
 // que carge el programa de la asignatura para el anio actual
-function enviarMailSolicitarCargaPrograma($idAsignatura) {
+function enviarMailSolicitarCargaPrograma($idAsignatura, $idProfesor = null) {
     include_once '../../modeloSistema/Asignatura.Class.php';
-    //include_once '../../modeloSistema/Asignatura.Class.php';
     include_once '../../modeloSistema/Profesor.Class.php';
     $asignatura = new Asignatura($idAsignatura);
-    $profesor = new Profesor($asignatura->getIdProfesor());
+    
+    if ($idProfesor === null) {
+        $idProfesor = $asignatura->getIdProfesor();
+    }
+    
+    $profesor = new Profesor($idProfesor);
 
     $mailProf = $profesor->getEmail();
     $nombreAsignatura = $asignatura->getNombre();
@@ -84,6 +88,5 @@ function enviarMailSolicitarCargaPrograma($idAsignatura) {
     $mail_subject = "Solicitud de Carga de Programa de Asignatura";
     
     return sendemailProf($mail_username, $mail_userpassword, $mail_addAddress, $mail_subject, $template, $asignatura->getId(), $nombreAsignatura); //Enviar el mensaje
-
-    
 }
+

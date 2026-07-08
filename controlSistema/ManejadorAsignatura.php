@@ -61,9 +61,13 @@ class ManejadorAsignatura {
             if ($this->chequearInexistencia($Asignatura->getId())) {
                 $this->query = "INSERT INTO ASIGNATURA "
                         . "VALUES ('{$Asignatura->getId()}', '{$Asignatura->getNombre()}', '{$Asignatura->getIdDepartamento()}' , "
-                        . "'{$Asignatura->getContenidosMinimos()}', '{$Asignatura->getIdProfesor()}', '{$Asignatura->getHorasSemanales()}' )";
+                        . "'{$Asignatura->getContenidosMinimos()}', '{$Asignatura->getHorasSemanales()}' )";
                 $consulta = BDConexionSistema::getInstancia()->query($this->query);
                 if ($consulta) {
+                    if (isset($datos['idProfesor']) && !empty($datos['idProfesor'])) {
+                        $idProf = intval($datos['idProfesor']);
+                        BDConexionSistema::getInstancia()->query("INSERT INTO asignatura_responsable (idAsignatura, idProfesor) VALUES ('{$Asignatura->getId()}', {$idProf})");
+                    }
                     return true;
                 } else {
                     return false;
@@ -112,8 +116,7 @@ class ManejadorAsignatura {
                         . "SET nombre = '{$Asignatura->getNombre()}', "
                         . "idDepartamento = '{$Asignatura->getIdDepartamento()}' , "
                         . "contenidosMinimos = '{$Asignatura->getContenidosMinimos()}' , "
-                        . "idProfesor = '{$Asignatura->getIdProfesor()}', "
-                        . "horasSemanales = '{$Asignatura->getHorasSemanales()}'"
+                        . "horasSemanales = '{$Asignatura->getHorasSemanales()}' "
                         . "WHERE id = '{$id_}'";
             } else {
                 if ($this->chequearInexistencia($Asignatura->getId())) {
@@ -122,8 +125,7 @@ class ManejadorAsignatura {
                             . "nombre = '{$Asignatura->getNombre()}', "
                             . "idDepartamento = '{$Asignatura->getIdDepartamento()}' , "
                             . "contenidosMinimos = '{$Asignatura->getContenidosMinimos()}' , "
-                            . "idProfesor = '{$Asignatura->getIdProfesor()}', "
-                            . "horasSemanales = '{$Asignatura->getHorasSemanales()}'"
+                            . "horasSemanales = '{$Asignatura->getHorasSemanales()}' "
                             . "WHERE id = '{$id_}'";
                 } else {
                     throw new Exception("El c&oacute;digo  " . $Asignatura->getId() . " ya corresponde a una Asignatura en la Base de Datos");
@@ -131,6 +133,14 @@ class ManejadorAsignatura {
             }
             $consulta = BDConexionSistema::getInstancia()->query($this->query);
             if ($consulta) {
+                if (isset($datos['idProfesor'])) {
+                    $db = BDConexionSistema::getInstancia();
+                    $db->query("DELETE FROM asignatura_responsable WHERE idAsignatura = '{$Asignatura->getId()}'");
+                    if (!empty($datos['idProfesor'])) {
+                        $idProf = intval($datos['idProfesor']);
+                        $db->query("INSERT INTO asignatura_responsable (idAsignatura, idProfesor) VALUES ('{$Asignatura->getId()}', {$idProf})");
+                    }
+                }
                 return true;
             } else {
                 return false;
@@ -221,7 +231,7 @@ class ManejadorAsignatura {
         $asignaturas = NULL;
         if (!empty($this->coleccion)){
             foreach ($this->coleccion as $asignatura) {
-                if ($asignatura->getIdProfesor() == $idProfesor){
+                if ($asignatura->esResponsable($idProfesor)){
                     $asignaturas[] = $asignatura;
                 }
             }
@@ -231,13 +241,15 @@ class ManejadorAsignatura {
     
     function getIDsProfesoresResponsables(){
         $profesores = [];
-        $this->query = "SELECT DISTINCT idProfesor FROM ASIGNATURA";
+        $this->query = "SELECT DISTINCT idProfesor FROM asignatura_responsable";
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);
 
-        for ($x = 0; $x < $this->datos->num_rows; $x++) {
-            $result = $this->datos->fetch_array();
-            $profesor = new Profesor($result['idProfesor']);
-            array_push($profesores, $profesor);
+        if ($this->datos && $this->datos->num_rows > 0) {
+            for ($x = 0; $x < $this->datos->num_rows; $x++) {
+                $result = $this->datos->fetch_array();
+                $profesor = new Profesor($result['idProfesor']);
+                array_push($profesores, $profesor);
+            }
         }
         return $profesores;
     }

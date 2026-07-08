@@ -45,15 +45,19 @@ $Carreras = $ManejadorCarrera->getColeccion();
         <script src="../lib/bootbox/bootbox.js"></script>
         <script src="../lib/bootbox/bootbox.locales.js"></script>
         <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Modificar Plan</title>
+        
+        <!-- Google Fonts Outfit y Estilos Premium -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="plan.modificar.procesar.php" method="post"> 
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Modificar Revisi&oacute;n de Plan: <span class="text-info"><?= $Plan->getId(); ?></span></h3>
-                        <p>
+                <div class="card card-premium">
+                    <div class="card-header card-header-premium">
+                        <h3>Modificar Revisi&oacute;n de Plan: <span style="color: #60a5fa; font-weight: 600;"><?= $Plan->getId(); ?></span></h3>
+                        <p class="mb-0 mt-2 text-white" style="opacity: 0.85;">
                             Complete los campos a continuaci&oacute;n. 
                             Luego, presione el bot&oacute;n <b>Confirmar</b>.<br />
                             Si desea cancelar, presione el bot&oacute;n <b>Cancelar</b>.

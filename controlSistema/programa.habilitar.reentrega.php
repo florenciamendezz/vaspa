@@ -29,20 +29,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if (file_exists('../lib/notificacionesMail/notificacionCircuitoVaspa.php')) {
                     include_once '../lib/notificacionesMail/notificacionCircuitoVaspa.php';
                     if (class_exists('notificacionCircuitoVaspa')) {
-                        // Obtener el email del profesor responsable
+                        // Obtener los emails de los profesores responsables
                         $conexion = BDConexionSistema::getInstancia();
                         $sqlProf = "SELECT p.email FROM profesor p 
-                                    JOIN asignatura a ON p.id = a.idProfesor 
-                                    WHERE a.id = '" . $conexion->real_escape_string($idAsignatura) . "'";
+                                    JOIN asignatura_responsable ar ON p.id = ar.idProfesor 
+                                    WHERE ar.idAsignatura = '" . $conexion->real_escape_string($idAsignatura) . "'";
                         $resProf = $conexion->query($sqlProf);
-                        $emailDocente = "";
+                        $emailsDocentes = [];
                         if ($resProf && $resProf->num_rows > 0) {
-                            $rowProf = $resProf->fetch_assoc();
-                            $emailDocente = $rowProf['email'];
+                            while ($rowProf = $resProf->fetch_assoc()) {
+                                if (!empty($rowProf['email'])) {
+                                    $emailsDocentes[] = $rowProf['email'];
+                                }
+                            }
                         }
                         
-                        if (!empty($emailDocente)) {
-                            notificacionCircuitoVaspa::notificarReentregaHabilitada($idAsignatura, $anio, $emailDocente);
+                        if (!empty($emailsDocentes)) {
+                            foreach ($emailsDocentes as $emailDocente) {
+                                notificacionCircuitoVaspa::notificarReentregaHabilitada($idAsignatura, $anio, $emailDocente);
+                            }
                         }
                     }
                 }

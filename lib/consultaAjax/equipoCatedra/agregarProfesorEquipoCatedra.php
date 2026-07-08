@@ -17,7 +17,7 @@ if (isset($_POST['idProfesor']) && isset($_POST['idAsignatura']) && isset($_POST
     
     $asignatura = new Asignatura($idAsignatura);
     
-    if ($asignatura->getIdProfesor() == $idProfesor && $rol == "teoria"){
+    if ($asignatura->esResponsable($idProfesor) && $rol == "teoria"){
         $mensaje = '<div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
                         El Profesor <strong>'.$profesor->getApellido().', '.$profesor->getNombre().'</strong> al ser responsable de la asignatura, ya incluido est&aacute; en la Teor&iacute;a.
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">

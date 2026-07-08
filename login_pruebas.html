@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>VASPA - Panel de Login de Pruebas</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      max-width: 650px;
+      margin: 50px auto;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      background-color: #fff;
+    }
+    h2 {
+      text-align: center;
+      color: #1a73e8;
+      margin-bottom: 5px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #5f6368;
+      margin-bottom: 25px;
+      font-size: 14px;
+    }
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 14px 20px;
+      margin: 12px 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-sizing: border-box;
+      transition: transform 0.1s, filter 0.2s;
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn:hover {
+      filter: brightness(0.9);
+    }
+    .role-profesor { background-color: #34a853; }
+    .role-escuela { background-color: #117a8b; }
+    .role-depto-cne { background-color: #e67e22; }
+    .role-depto-cs { background-color: #d35400; }
+    .role-va { background-color: #6f42c1; }
+    .role-admin { background-color: #ea4335; }
+    .email-label {
+      font-size: 12px;
+      font-weight: normal;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+  <h2>VASPA</h2>
+  <div class="subtitle">Panel de Acceso Rápido para Pruebas de Desarrollo</div>
+
+  <form id="loginForm" method="POST" action="app/index.php">
+    <input type="hidden" name="email" id="emailInput">
+    <input type="hidden" name="nombre" id="nombreInput">
+  </form>
+
+  <script>
+    function login(email, nombre) {
+      document.getElementById('emailInput').value = email;
+      document.getElementById('nombreInput').value = nombre;
+      document.getElementById('loginForm').submit();
+    }
+  </script>
+
+  <button class="btn role-profesor" onclick="login('accesoriosperlados@gmail.com', 'Profesor Sandra Casas')">
+    <span>➔ Ingresar como Profesor (Sandra Casas)</span>
+    <span class="email-label">accesoriosperlados@gmail.com</span>
+  </button>
+
+  <button class="btn role-profesor" style="background-color: #2b7a43;" onclick="login('esstefaniamendez+profesor@gmail.com', 'Profesor Albert Sofia')">
+    <span>➔ Ingresar como Profesor (Albert Sofia)</span>
+    <span class="email-label">esstefaniamendez+profesor@gmail.com</span>
+  </button>
+
+
+
+  <button class="btn role-escuela" onclick="login('luzgarai40@gmail.com', 'Director de Escuela')">
+    <span>➔ Ingresar como Director de Escuela</span>
+    <span class="email-label">luzgarai40@gmail.com</span>
+  </button>
+
+  <button class="btn role-depto-cne" onclick="login('estiloperladoaccesorios@gmail.com', 'Director Depto Cs Naturales y Exactas')">
+    <span>➔ Ingresar como Director Depto. Cs. Naturales y Exactas</span>
+    <span class="email-label">estiloperladoaccesorios@gmail.com</span>
+  </button>
+
+  <button class="btn role-depto-cs" onclick="login('garaiestefi@gmail.com', 'Director Depto Cs Sociales')">
+    <span>➔ Ingresar como Director Depto. Cs. Sociales</span>
+    <span class="email-label">garaiestefi@gmail.com</span>
+  </button>
+
+  <button class="btn role-va" onclick="login('esstefaniamendez@gmail.com', 'Vinculación Académica')">
+    <span>➔ Ingresar como Vinculación Académica</span>
+    <span class="email-label">esstefaniamendez@gmail.com</span>
+  </button>
+
+  <button class="btn role-admin" onclick="login('luzmariagaraigarai@gmail.com', 'Administrador')">
+    <span>➔ Ingresar como Administrador</span>
+    <span class="email-label">luzmariagaraigarai@gmail.com</span>
+  </button>
+</body>
+</html>

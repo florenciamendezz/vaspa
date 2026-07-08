@@ -83,17 +83,18 @@ function obtenerProgramasAsignaturasRecientes($query) {
     if ($resultado !== false){
         if ($resultado->num_rows > 0) {
             // Creamos la tabla donde presentaremos la info
-            $html .= '<table class="table table-hover table-sm" id="tablaPrograma">
-                        <thead>
-                            <tr class="table-info">
-                                <th>Programa de</th>
-                                <th>C&oacute;digo</th>
-                                <th>Vigencia</th>
-                                <th>Fecha de Carga</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>';
+            $html .= '<div class="table-responsive">
+                        <table class="table table-premium" id="tablaPrograma">
+                            <thead>
+                                <tr>
+                                    <th>Programa de</th>
+                                    <th>C&oacute;digo</th>
+                                    <th>Vigencia</th>
+                                    <th>Fecha de Carga</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>';
             for ($x = 0; $x < $resultado->num_rows; $x++) {
                 
                 $fila = $resultado->fetch_assoc();
@@ -120,8 +121,9 @@ function obtenerProgramasAsignaturasRecientes($query) {
 
             }
             // cerramos etiquetas de la tabla
-            $html .= '</tbody>';
-            $html .= '</table>';
+            $html .= '</tbody>
+                        </table>
+                      </div>';
             $html .= '<div class="alert alert-info">Mostrando los '.min(20, $resultado->num_rows).' programas más recientes.</div>';
         } else { // No hay registros --> Mostramos mensaje 
             $html .= '<div class="alert alert-warning alert-dismissible fade show text-center" role="alert">
@@ -156,7 +158,11 @@ function obtenerProgramasAsignaturasRecientes($query) {
         <script type="text/javascript" src="../lib/datatable/jquery.dataTables.min.js"></script>
         <script type="text/javascript" src="../lib/datatable/dataTables.bootstrap4.min.js"></script>
         <link rel="stylesheet" href="../lib/open-iconic-master/font/css/open-iconic-bootstrap.css" />
-           <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Revisar Programas</title>
+        <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Revisar Programas</title>
+        
+        <!-- Google Fonts Outfit y Estilos Premium -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
 
@@ -164,9 +170,9 @@ function obtenerProgramasAsignaturasRecientes($query) {
 
         <div class="container">
 
-            <div class="card">
-                <div class="card-header">
-                    <h3>Revisar Programa - <span class="text-info">Programas de asignaturas</span></h3>
+            <div class="card card-premium">
+                <div class="card-header card-header-premium">
+                    <h3>Revisar Programa - <span style="opacity: 0.85; font-size: 0.9em; font-weight: 500;">Programas de asignaturas</span></h3>
                 </div>
                 <div class="card-body">
                     
@@ -174,7 +180,7 @@ function obtenerProgramasAsignaturasRecientes($query) {
                     <div class="row justify-content-md-center">
                         <div class="col-sm-5">
                             <label for="carrera">Carrera</label>
-                            <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione Carrera" data-none-results-text="No se encontraron resultados" data-size="5">
+                            <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione Carrera" data-none-results-text="No se encontraron resultados" data-size="5" data-container="body">
                                 <?php
                                 if (!empty($carreras)) {
                                     

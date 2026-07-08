@@ -35,14 +35,18 @@ $planes = $ManejadorPlan->getPlanesSegunCarrera($codigoCarrera);
         <script type="text/javascript" src="../lib/JQuery/jquery-3.3.1.js"></script>
         <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>
         <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Planes de Carrera</title>
+        
+        <!-- Google Fonts Outfit y Estilos Premium -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <p></p>
-            <div class="card">
-                <div class="card-header">
-                    <h3>Planes de Estudio de <span class="text-info"><?= $carrera->getId();?> - <?= $carrera->getNombre();?></span> </h3>
+            <div class="card card-premium">
+                <div class="card-header card-header-premium">
+                    <h3>Planes de Estudio de <span style="color: #60a5fa; font-weight: 600;"><?= $carrera->getId();?> - <?= $carrera->getNombre();?></span></h3>
                 </div>
                 <div class="card-body">
                     <p>
@@ -53,15 +57,16 @@ $planes = $ManejadorPlan->getPlanesSegunCarrera($codigoCarrera);
                         </a>
                     </p>
                   
-                    <table class="table table-hover table-sm text-center" id="tablaPlanes">
-                        <thead>
-                            <tr class="table-info">
-                                <th>C&oacute;digo del Plan</th>
-                                <th>Año de Inicio</th>
-                                <th>Año de Fin</th>
-                                <th>Opciones</th>
-                            </tr>
-                        </thead>
+                    <div class="table-responsive">
+                        <table class="table table-premium text-center" id="tablaPlanes">
+                            <thead>
+                                <tr>
+                                    <th>C&oacute;digo del Plan</th>
+                                    <th>Año de Inicio</th>
+                                    <th>Año de Fin</th>
+                                    <th>Opciones</th>
+                                </tr>
+                            </thead>
                         <tbody>
                                 
                                 <?php
@@ -103,7 +108,8 @@ $planes = $ManejadorPlan->getPlanesSegunCarrera($codigoCarrera);
                                 <?php } }?>
                                     
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
                     
 
                     <div class="card-footer text-center">

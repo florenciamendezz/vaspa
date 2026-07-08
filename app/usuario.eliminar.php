@@ -13,14 +13,18 @@ $Usuario = new Usuario($id);
         <script type="text/javascript" src="../lib/JQuery/jquery-3.3.1.js"></script>
         <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>
         <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Eliminar Usuario</title>
+        
+        <!-- Google Fonts Outfit y Estilos Premium -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="usuario.eliminar.procesar.php" method="post">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Eliminar Usuario</h3>
+                <div class="card card-premium">
+                    <div class="card-header card-header-premium">
+                        <h3 class="mb-0">Eliminar Usuario</h3>
                     </div>
                     <div class="card-body">
                         <p class="alert alert-warning ">

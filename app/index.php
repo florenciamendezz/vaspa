@@ -34,22 +34,85 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
         <script type="text/javascript" src="../lib/quicksearch/jquery.quicksearch.js"></script>
 
         <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Bienvenida</title>
+        
+        <!-- Google Fonts Outfit y Estilos Premium -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../lib/css/premium.css" />
+        <style>
+            .card-welcome {
+                background: rgba(255, 255, 255, 0.95);
+                border: 1px solid rgba(0, 0, 0, 0.08);
+                border-radius: 16px;
+                box-shadow: 0 10px 30px -10 rgba(0, 0, 0, 0.1);
+                font-family: 'Outfit', sans-serif;
+            }
+            .card-welcome-header {
+                background: linear-gradient(135deg, #1e293b, #0f172a);
+                color: #ffffff;
+                border-top-left-radius: 15px;
+                border-top-right-radius: 15px;
+                padding: 1.5rem 2rem;
+            }
+            /* Estilos premium para Navbar y Footer específicos */
+            .navbar-premium {
+                background-color: #0f172a !important;
+                font-family: 'Outfit', sans-serif;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                padding: 0.6rem 1.5rem;
+            }
+            .navbar-premium .container {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .navbar-premium .navbar-brand {
+                font-weight: 700;
+                font-size: 1.35rem;
+                letter-spacing: -0.02em;
+                color: #f8fafc !important;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .footer-premium {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+                font-family: 'Outfit', sans-serif;
+                border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+                color: #94a3b8 !important;
+                height: 55px;
+                line-height: 53px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+                font-size: 0.9rem;
+                font-weight: 500;
+            }
+            .footer-premium img {
+                filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.4));
+            }
+        </style>
     </head>
     <body>
         
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="container navbar-dark bg-dark align-items-start">
+        <nav class="navbar navbar-expand-lg navbar-dark navbar-premium">
+            <div class="container align-items-center">
                 <a class="navbar-brand" href="#">
-                    <img src="../lib/img/VASPA_isotipo.png" width="40" height="35" class="d-inline-block align-top" alt="">
+                    <img src="../lib/img/VASPA_isotipo.png" width="40" height="30" class="d-inline-block align-top" alt="">
                     &nbsp;&nbsp;<?php echo Constantes::NOMBRE_SISTEMA; ?>
                 </a>
             </div>
         </nav>
                
-        <div class="container">
-            <div class="card">
-                <div class="card-header">
-                    <h3><?php echo Constantes::NOMBRE_SISTEMA; ?> - Bienvenida</h3>
+        <div class="container py-2">
+            <div class="card card-welcome">
+                <div class="card-welcome-header">
+                    <h3 class="mb-0 font-weight-bold"><?php echo Constantes::NOMBRE_SISTEMA; ?> - Bienvenida</h3>
                 </div>
 
                 <div class="card-body">
@@ -73,59 +136,55 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                     <hr>
 
                     <div class="row">
-                        <div class="col-md-12 mb-1">                                
+                        <div class="col-md-12 mb-4">                                
                             <form action="visualizar.programa.listar.php" method="post"> 
-                                <div class="card">
+                                <div class="card card-premium">
                                     
-                                    <div class="card-header">
-                                        <h5>Visualizar Programa de Asignatura</h5>
-                                        <p>
+                                    <div class="card-header card-header-premium">
+                                        <h5 class="mb-0"><span class="oi oi-magnifying-glass mr-2"></span> Visualizar Programa de Asignatura</h5>
+                                        <p class="mb-0 mt-2 text-white" style="opacity: 0.85;">
                                             Seleccione A&ntilde;o y Carrera.
                                         </p>
                                     </div>
                                     
-                                    <div class="card-body">
+                                    <div class="card-body text-dark">
                                         <div class="form-group">
-                                            <label for="selectAnio">A&ntilde;o</label>
+                                            <label for="selectAnio" class="font-weight-bold">A&ntilde;o</label>
                                             <br>
-                                            <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="anio" id="selectAnio" title="Seleccione un a&ntilde;o" required="" data-size="7">
+                                            <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="anio" id="selectAnio" title="Seleccione un a&ntilde;o" required="" data-size="7" data-container="body">
                                                 <?php for ($i = date('Y'); $i >= 2011; $i--) { ?>
                                                     <option value="<?= $i; ?>"><?= $i; ?></option>
                                                 <?php } ?>
                                             </select>
                                         </div>
                                         <div class="form-group">
-                                            <label for="selectCarrera">Carrera</label>
+                                            <label for="selectCarrera" class="font-weight-bold">Carrera</label>
                                             <br>
-                                            <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="idCarrera" id="selectCarrera" title="Seleccione una carrera" required="" data-size="7">
+                                            <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="idCarrera" id="selectCarrera" title="Seleccione una carrera" required="" data-size="7" data-container="body">
                                             </select>
                                         </div>
                                         <div id="programasAsignaturas"></div>
                                     </div>
-                                    
-<!--                                    <div class="card-footer">
-                                        <button type="submit" class="btn btn-outline-success">
-                                            <span class="oi oi-check"></span> Confirmar
-                                        </button>
-                                    </div>-->
-                                    </div>
+                                </div>
                             </form>
+                        </div>
                     </div>
-                        
 
-                </div>
-
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">Ingreso al Sistema</h5>
-                                <p class="card-text">Si usted es un Profesor, empleado de Vinculaci&oacute;n Acad&eacute;mica o Director de Departamento y desea realizar operaciones en el Sistema, por favor presione el siguiente bot&oacute;n.</p>
-                                <div id="okgoogle" class="g-signin2" onclick="ClickLogin()" data-onsuccess="onSignIn" title="Acceder al <?= Constantes::NOMBRE_SISTEMA; ?>"></div>
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <div class="card card-premium">
+                                <div class="card-header card-header-premium">
+                                    <h5 class="card-title mb-0"><span class="oi oi-account-login mr-2"></span> Ingreso al Sistema</h5>
+                                </div>
+                                <div class="card-body text-dark">
+                                    <p class="card-text">Si usted es un Profesor, empleado de Vinculaci&oacute;n Acad&eacute;mica o Director de Departamento y desea realizar operaciones en el Sistema, por favor presione el siguiente bot&oacute;n.</p>
+                                    <div class="mt-3">
+                                        <div id="okgoogle" class="g-signin2" onclick="ClickLogin()" data-onsuccess="onSignIn" title="Acceder al <?= Constantes::NOMBRE_SISTEMA; ?>"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
                 <!-- 
                 ========================================================================
@@ -203,19 +262,26 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
         </div>
     </div>
         
-         <footer class="footer">
+         <footer class="footer footer-premium">
             <?php echo Constantes::NOMBRE_SISTEMA; ?> 
             <img src="../lib/img/VASPA_isotipo.png" width="25" height="20"  alt="">
              UNPA-UARG
         </footer>
         
         <script type="text/javascript">$('.selectpicker').selectpicker({
-            noneResultsText: 'No se encontraron resultados'});
+            noneResultsText: 'No se encontraron resultados',
+            container: 'body'
+        });
         </script>
                 
         <script>
             $(document).ready(function(){
-                // actualiza la lista carreras
+                // Corrección del Stacking Context para modales de Bootstrap
+                $(document).on('show.bs.modal', '.modal', function () {
+                    $(this).appendTo('body');
+                });
+
+                  // actualiza la lista carreras
                   $('#selectAnio').change(function () {
                     var anio = $('#selectAnio').val();
                     //alert(anio);
@@ -225,8 +291,10 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                       data: {'anio': anio}
                     })
                     .done(function(carreras){
-                      $(".selectpicker").selectpicker(); 
-                      $('#selectCarrera').html(carreras).selectpicker('refresh');
+                      $('#selectCarrera').html(carreras).selectpicker('destroy').selectpicker({
+                          noneResultsText: 'No se encontraron resultados',
+                          container: 'body'
+                      });
                     })
                     .fail(function(){
                       alert('Hubo un error al cargar las asignaturas')
@@ -256,7 +324,9 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
               });
     </script>
     
-
+ 
     
     </body>
+</html>
+  </body>
 </html>

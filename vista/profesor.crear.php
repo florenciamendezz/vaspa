@@ -33,23 +33,27 @@ if (isset($_SESSION["usuarioNombre"]) && isset($_SESSION["usuarioEmail"]) && iss
         <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>
         <script type="text/javascript" src="../lib/js/soloTexto.js"></script>
         <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Crear Profesor</title>
+        
+        <!-- Google Fonts Outfit y Estilos Premium -->
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="profesor.crear.procesar.php" method="post"> 
-                <div class="card">
-                    <div class="card-header">
+                <div class="card card-premium">
+                    <div class="card-header card-header-premium">
                         <h3>Alta de Profesor</h3>
                         <?php if ($seteado) {?>
-                            <div class="alert alert-info alert-dismissible fade show text-center" role="alert">
+                            <div class="alert alert-info alert-dismissible fade show text-center" role="alert" style="color: #1e293b; background-color: #e2e8f0; border-color: #cbd5e1;">
                                 Como elegiste profesor, es redirigido al alta de profesor, para completar los datos.
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <button type="button" class="close text-dark" data-dismiss="alert" aria-label="Close">
                                   <span aria-hidden="true">&times;</span>
                                 </button>
                             </div>
                         <?php } ?>
-                        <p>
+                        <p class="mb-0 mt-2 text-white" style="opacity: 0.85;">
                             Complete los campos a continuaci&oacute;n. 
                             Luego, presione el bot&oacute;n <b>Confirmar</b>.<br />
                             Si desea cancelar, presione el bot&oacute;n <b>Cancelar</b>.

@@ -349,13 +349,15 @@ class ManejadorProfesor {
     
     function getProfesoresResponsables(){
         $profesores = [];
-        $this->query = "SELECT DISTINCT idProfesor FROM ASIGNATURA";
+        $this->query = "SELECT DISTINCT idProfesor FROM asignatura_responsable";
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);
 
-        for ($x = 0; $x < $this->datos->num_rows; $x++) {
-            $result = $this->datos->fetch_array();
-            $profesor = new Profesor($result['idProfesor']);
-            array_push($profesores, $profesor);
+        if ($this->datos && $this->datos->num_rows > 0) {
+            for ($x = 0; $x < $this->datos->num_rows; $x++) {
+                $result = $this->datos->fetch_array();
+                $profesor = new Profesor($result['idProfesor']);
+                array_push($profesores, $profesor);
+            }
         }
         return $profesores;
     }
