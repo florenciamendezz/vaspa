@@ -106,15 +106,20 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
                 $estaAprobadoTotal = ($data['origen'] == 'pdf') ? ($data['aprobadoVaFirma'] == 1) : ($data['aprobadoVa'] == 1 && $data['aprobadoDepto'] == 1 && $data['aprobadoEscuela'] == 1);
                 
                 // Acciones
-                if ($estaAprobadoTotal) {
-                    if ($data['origen'] == 'pdf') {
-                        $acciones = '<a title="Descargar Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=pdf" class="btn btn-outline-primary btn-sm" download><span class="oi oi-data-transfer-download"></span> Descargar</a>';
-                    } else {
-                        $acciones = '<a title="Descargar Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=legacy" class="btn btn-outline-primary btn-sm"><span class="oi oi-data-transfer-download"></span> Descargar</a>';
-                    }
-                } else {
+                $acciones = '';
+                if (!$estaAprobadoTotal) {
                     $link = ($data['origen'] == 'pdf') ? "revisar.programa.pdf.php?id=".$data['id'] : "revisar.programa.php?id=".$data['id'];
-                    $acciones = '<a title="Ver detalles" href="'.$link.'" class="btn btn-outline-info btn-sm"><span class="oi oi-eye"></span> Ver Ficha</a>';
+                    $acciones = '<a title="Ver detalles" href="'.$link.'" class="btn btn-outline-info btn-sm mr-2"><span class="oi oi-eye"></span> Ver Ficha</a>';
+                }
+                
+                if (!empty($data['ruta_archivo'])) {
+                    if ($data['origen'] == 'pdf') {
+                        $acciones .= '<a title="Ver Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=pdf" class="btn btn-outline-success btn-sm mr-1" target="_blank"><span class="oi oi-eye"></span> Ver</a>'
+                                  . '<a title="Descargar Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=pdf" class="btn btn-outline-primary btn-sm" download><span class="oi oi-data-transfer-download"></span> Descargar</a>';
+                    } else {
+                        $acciones .= '<a title="Ver Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=legacy" class="btn btn-outline-success btn-sm mr-1" target="_blank"><span class="oi oi-eye"></span> Ver</a>'
+                                  . '<a title="Descargar Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=legacy" class="btn btn-outline-primary btn-sm"><span class="oi oi-data-transfer-download"></span> Descargar</a>';
+                    }
                 }
             }
             
@@ -316,15 +321,19 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
                     $rowsA .= '<td><span class="badge '.$info['badgeClass'].'">'.$info['estado'].'</span></td>';
 
                     $acciones = '';
-                    if ($estaAprobadoTotal) {
-                         if ($data['origen'] == 'pdf') {
-                            $acciones .= '<a title="Descargar Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=pdf" class="btn btn-outline-primary btn-sm" download><span class="oi oi-data-transfer-download"></span> Descargar</a>';
-                        } else {
-                            $acciones .= '<a title="Descargar Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=legacy" class="btn btn-outline-primary btn-sm"><span class="oi oi-data-transfer-download"></span> Descargar</a>';
-                        }
-                    } else {
+                    if (!$estaAprobadoTotal) {
                         $link = ($data['origen'] == 'pdf') ? "revisar.programa.pdf.php?id=".$data['id'] : "revisar.programa.php?id=".$data['id'];
-                        $acciones .= '<a title="Ver Ficha" href="'.$link.'" class="btn btn-outline-info btn-sm"><span class="oi oi-eye"></span> Ver Ficha</a>';
+                        $acciones .= '<a title="Ver Ficha" href="'.$link.'" class="btn btn-outline-info btn-sm mr-2"><span class="oi oi-eye"></span> Ver Ficha</a>';
+                    }
+
+                    if (!empty($data['ruta_archivo'])) {
+                        if ($data['origen'] == 'pdf') {
+                            $acciones .= '<a title="Ver Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=pdf" class="btn btn-outline-success btn-sm mr-1" target="_blank"><span class="oi oi-eye"></span> Ver</a>'
+                                       . '<a title="Descargar Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=pdf" class="btn btn-outline-primary btn-sm" download><span class="oi oi-data-transfer-download"></span> Descargar</a>';
+                        } else {
+                            $acciones .= '<a title="Ver Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=legacy" class="btn btn-outline-success btn-sm mr-1" target="_blank"><span class="oi oi-eye"></span> Ver</a>'
+                                       . '<a title="Descargar Programa" href="programa.descargarPDF.php?id='.$data['id'].'&tipo=legacy" class="btn btn-outline-primary btn-sm" download><span class="oi oi-data-transfer-download"></span> Descargar</a>';
+                        }
                     }
 
                     // Quien subió el último archivo firmado
