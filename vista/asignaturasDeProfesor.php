@@ -144,7 +144,7 @@ if (!$mostrarError){
                         </div>
                     <?php
                     } else {
-                        //var_dump($asignaturas);                        if (empty($asignaturas)){ ?>
+                        if (empty($asignaturas)){ ?>
                             <div class="alert alert-warning text-center" role="alert">
                                 No tienes asignaturas asignadas en planes de estudio vigentes.
                             </div>
@@ -215,7 +215,8 @@ if (!$mostrarError){
                                  $btnModificarHabilitado = '<a title="Reemplazar PDF" class="btn btn-outline-warning btn-sm" href="programa.crear.php?id='.$Asignatura->getId().'" role="button"><span class="oi oi-pencil"></span></a>&nbsp;';
                                  $btnModificarDeshabilitado = '<button type="button" title="Reemplazar PDF" class="btn btn-outline-warning btn-sm" disabled><span class="oi oi-pencil"></span></button>&nbsp;';
                                  
-                                 $btnDescargarDeshabilitado = '<button type="button" class="btn btn-outline-info btn-sm" disabled title="Descargar PDF"><span class="oi oi-document"></span></button>';
+                                 $btnVerDeshabilitado = '<button type="button" class="btn btn-outline-info btn-sm mr-1" disabled title="Ver PDF"><span class="oi oi-eye"></span></button>';
+                                 $btnDescargarDeshabilitado = '<button type="button" class="btn btn-outline-primary btn-sm" disabled title="Descargar PDF"><span class="oi oi-data-transfer-download"></span></button>';
                                  
                                  $botones = '';
                                  if (is_null($programaDetalle)) {
@@ -225,6 +226,7 @@ if (!$mostrarError){
                                      $botones = $btnNuevoHabilitado
                                                 . $btnModificarDeshabilitado
                                                 . $btnEnviarDeshabilitado
+                                                . $btnVerDeshabilitado
                                                 . $btnDescargarDeshabilitado;
                                  } else {
                                      $estadoReal = $programaDetalle->obtenerEstadoActual();
@@ -255,7 +257,8 @@ if (!$mostrarError){
                                      $btnEnviarHabilitado = '<button type="button" title="Enviar a Revisión" class="btn btn-outline-purple btn-sm" onclick="enviarARevision('.$programaDetalle->getId().')"><span class="oi oi-share"></span></button>&nbsp;';
                                      $btnEnviarDeshabilitado = '<button type="button" title="Enviar a Revisión" class="btn btn-outline-purple btn-sm" disabled><span class="oi oi-share"></span></button>&nbsp;';
                                      
-                                     $btnDescargarHabilitado = '<a title="Descargar PDF" class="btn btn-outline-info btn-sm" href="programa.descargarPDF.php?id='.$programaDetalle->getId().'&tipo=pdf" role="button" target="_blank"><span class="oi oi-document"></span></a>';
+                                     $btnVerHabilitado = '<a title="Ver PDF" class="btn btn-outline-info btn-sm mr-1" href="programa.descargarPDF.php?id='.$programaDetalle->getId().'&tipo=pdf" role="button" target="_blank"><span class="oi oi-eye"></span></a>';
+                                     $btnDescargarHabilitado = '<a title="Descargar PDF" class="btn btn-outline-primary btn-sm" href="programa.descargarPDF.php?id='.$programaDetalle->getId().'&tipo=pdf" role="button" download><span class="oi oi-data-transfer-download"></span></a>';
                                      
                                      // Asignar botones según estado actual del circuito
                                      switch ($estadoReal) {
@@ -263,18 +266,21 @@ if (!$mostrarError){
                                              $botones = $btnNuevoDeshabilitado
                                                         . $btnModificarHabilitado
                                                         . $btnEnviarHabilitado
+                                                        . $btnVerHabilitado
                                                         . $btnDescargarHabilitado;
                                              break;
                                          case "Devuelto al Profesor":
                                              $botones = $btnNuevoDeshabilitado
                                                         . $btnModificarHabilitado
                                                         . $btnEnviarDeshabilitado
+                                                        . $btnVerHabilitado
                                                         . $btnDescargarHabilitado;
                                              break;
                                          case "Aprobado":
                                              $botones = $btnNuevoDeshabilitado
                                                         . $btnModificarDeshabilitado
                                                         . $btnEnviarDeshabilitado
+                                                        . $btnVerHabilitado
                                                         . $btnDescargarHabilitado;
                                              break;
                                          default:
@@ -282,6 +288,7 @@ if (!$mostrarError){
                                              $botones = $btnNuevoDeshabilitado
                                                         . $btnModificarDeshabilitado
                                                         . $btnEnviarDeshabilitado
+                                                        . $btnVerHabilitado
                                                         . $btnDescargarHabilitado;
                                              break;
                                      }
