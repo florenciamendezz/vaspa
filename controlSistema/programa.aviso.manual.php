@@ -29,16 +29,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 include_once '../lib/notificacionesMail/notificacionCircuitoVaspa.php';
                 if (class_exists('notificacionCircuitoVaspa')) {
                     
-                    // 1. Obtener email del profesor responsable
+                    // 1. Obtener emails de los profesores responsables
                     $conexion = BDConexionSistema::getInstancia();
                     $sqlProf = "SELECT p.email FROM profesor p 
-                                JOIN asignatura a ON p.id = a.idProfesor 
-                                WHERE a.id = '" . $conexion->real_escape_string($idAsignatura) . "'";
+                                JOIN asignatura_responsable ar ON p.id = ar.idProfesor 
+                                WHERE ar.idAsignatura = '" . $conexion->real_escape_string($idAsignatura) . "'";
                     $resProf = $conexion->query($sqlProf);
-                    $emailDocente = "";
+                    $emailsDocentes = [];
                     if ($resProf && $resProf->num_rows > 0) {
-                        $rowProf = $resProf->fetch_assoc();
-                        $emailDocente = $rowProf['email'];
+                        while ($rowProf = $resProf->fetch_assoc()) {
+                            if (!empty($rowProf['email'])) {
+                                $emailsDocentes[] = $rowProf['email'];
+                            }
+                        }
                     }
                     
                     // 2. Determinar email del revisor actual
@@ -82,8 +85,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         $rolRevisor = "Vinculación Académica (Firma Final)";
                     }
                     
-                    // Llamamos a la función de notificación
-                    notificacionCircuitoVaspa::notificarAvisoManual($idAsignatura, $anio, $emailDocente, $emailRevisor, $rolRevisor);
+                    // Llamamos a la función de notificación para cada uno de los responsables
+                    if (!empty($emailsDocentes)) {
+                        foreach ($emailsDocentes as $emailDocente) {
+                            notificacionCircuitoVaspa::notificarAvisoManual($idAsignatura, $anio, $emailDocente, $emailRevisor, $rolRevisor);
+                        }
+                    }
                 }
             }
             

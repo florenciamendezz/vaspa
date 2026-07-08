@@ -33,24 +33,14 @@ if (!$resultado) {
 if (!$mostrarError){ 
     $asignaturas = $profesor->obtenerAsignaturasDePlanVigente();
     
-    // Agrupamos las asignaturas duplicadas por plan en un arreglo único
+    // Simplificado sin planes: cargamos las asignaturas directamente
     $asignaturasAgrupadas = array();
     if ($asignaturas) {
         foreach ($asignaturas as $Asignatura) {
             $idAsig = $Asignatura->getId();
-            if (!isset($asignaturasAgrupadas[$idAsig])) {
-                $asignaturasAgrupadas[$idAsig] = array(
-                    'objeto' => $Asignatura,
-                    'planes' => array()
-                );
-            }
-            $planInfo = array(
-                'id' => $Asignatura->getIdPlan(),
-                'inicio' => $Asignatura->getAnioInicioPlan()
+            $asignaturasAgrupadas[$idAsig] = array(
+                'objeto' => $Asignatura
             );
-            if (!in_array($planInfo, $asignaturasAgrupadas[$idAsig]['planes'])) {
-                $asignaturasAgrupadas[$idAsig]['planes'][] = $planInfo;
-            }
         }
     }
     
@@ -92,8 +82,16 @@ if (!$mostrarError){
             return strcmp($a['nombre'], $b['nombre']);
         });
     }
+    
+    // Obtener todas las asignaturas para el modal de asociar nueva materia
+    $resTodasAsignaturas = BDConexionSistema::getInstancia()->query("SELECT id, nombre FROM asignatura ORDER BY nombre ASC");
+    $todasAsignaturasModal = [];
+    if ($resTodasAsignaturas) {
+        while ($row = $resTodasAsignaturas->fetch_assoc()) {
+            $todasAsignaturasModal[] = $row;
+        }
+    }
 }
-
 ?>
 
 
@@ -123,7 +121,7 @@ if (!$mostrarError){
                     <h3>Mis Asignaturas</h3>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-3">
+                    <div class="row mb-3 align-items-end">
                         <div class="col-md-6">
                             <label for="filtroCarrera">Filtrar por Carrera:</label>
                             <select class="form-control" id="filtroCarrera">
@@ -133,6 +131,11 @@ if (!$mostrarError){
                                 <?php } ?>
                             </select>
                         </div>
+                        <div class="col-md-6 text-md-right mt-3 mt-md-0">
+                            <button type="button" class="btn btn-primary btn-premium px-4" data-toggle="modal" data-target="#modalModificacionRevista">
+                                <span class="oi oi-envelope-closed mr-2"></span> Informar modificación situación de revista
+                            </button>
+                        </div>
                     </div>
                     <?php
                     if ($mostrarError) { ?>
@@ -141,7 +144,7 @@ if (!$mostrarError){
                         </div>
                     <?php
                     } else {
-                        //var_dump($asignaturas);                        if (empty($asignaturas)){ ?>
+                        //var_dump($asignaturas);                        if (empty($asignaturas)){ ?>
                             <div class="alert alert-warning text-center" role="alert">
                                 No tienes asignaturas asignadas en planes de estudio vigentes.
                             </div>
@@ -153,7 +156,6 @@ if (!$mostrarError){
                                         <tr>
                                             <th>C&oacute;digo de Asignatura</th>
                                             <th>Nombre</th>
-                                            <th>Plan de Estudios</th>
                                             <th>Carreras</th>
                                             <th>Estado del programa</th>
                                             <th>Vigencia</th>
@@ -186,13 +188,6 @@ if (!$mostrarError){
                                         <?= nl2br(htmlspecialchars($programaDetalle->getComentarioDesaprobacion())); ?>
                                     </div>
                                 <?php } ?>
-                            </td>
-                            <td>
-                                <?php 
-                                foreach ($item['planes'] as $p) {
-                                    echo '<span class="badge badge-info mb-1 mr-1 d-inline-block">' . htmlspecialchars($p['id']) . ' (Inicio: ' . htmlspecialchars($p['inicio']) . ')</span> ';
-                                }
-                                ?>
                             </td>
                             <td>
                                 <?php
@@ -341,11 +336,135 @@ if (!$mostrarError){
                     $("#formEnviarRevision").submit();
                 }
             }
+
+            $(document).ready(function() {
+                $('#tipoModificacion').on('change', function() {
+                    var valor = $(this).val();
+                    if (valor === 'eliminar') {
+                        $('#grupoEliminar').removeClass('d-none');
+                        $('#materiaEliminar').attr('required', true);
+                        $('#grupoAgregar').addClass('d-none');
+                        $('#materiaAgregar').removeAttr('required');
+                    } else if (valor === 'agregar') {
+                        $('#grupoAgregar').removeClass('d-none');
+                        $('#materiaAgregar').attr('required', true);
+                        $('#grupoEliminar').addClass('d-none');
+                        $('#materiaEliminar').removeAttr('required');
+                    } else {
+                        $('#grupoEliminar').addClass('d-none');
+                        $('#materiaEliminar').removeAttr('required');
+                        $('#grupoAgregar').addClass('d-none');
+                        $('#materiaAgregar').removeAttr('required');
+                    }
+                });
+
+                $('#formModificacionRevista').on('submit', function(e) {
+                    e.preventDefault();
+                    
+                    var btn = $(this).find('button[type="submit"]');
+                    var originalHtml = btn.html();
+                    btn.html('<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span> Enviando...').attr('disabled', true);
+
+                    $.ajax({
+                        url: '../controlSistema/profesor.informar.revista.php',
+                        type: 'POST',
+                        data: $(this).serialize(),
+                        dataType: 'json',
+                        success: function(response) {
+                            btn.html(originalHtml).removeAttr('disabled');
+                            if (response.success) {
+                                alert('Solicitud enviada correctamente por correo a Vinculación Académica.');
+                                $('#modalModificacionRevista').modal('hide');
+                                $('#formModificacionRevista')[0].reset();
+                                $('#grupoEliminar, #grupoAgregar').addClass('d-none').find('select').removeAttr('required');
+                            } else {
+                                alert('Error al enviar la solicitud: ' + (response.error || 'Intente nuevamente.'));
+                            }
+                        },
+                        error: function() {
+                            btn.html(originalHtml).removeAttr('disabled');
+                            alert('Error de conexión con el servidor.');
+                        }
+                    });
+                });
+            });
         </script>
 
         <!-- Formulario POST Oculto para Enviar a Revisión -->
         <form id="formEnviarRevision" action="../controlSistema/programa.enviar.revision.php" method="POST" style="display:none;">
             <input type="hidden" name="idPrograma" id="idProgramaEnviar">
         </form>
+
+        <!-- Modal para Solicitar Modificación Situación de Revista -->
+        <div class="modal fade" id="modalModificacionRevista" tabindex="-1" role="dialog" aria-labelledby="modalModificacionRevistaLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 15px 35px rgba(0,0,0,0.15);">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border-top-left-radius: 16px; border-top-right-radius: 16px; border-bottom: none;">
+                        <h5 class="modal-title font-weight-bold" id="modalModificacionRevistaLabel">
+                            <span class="oi oi-envelope-closed mr-2"></span> Informar modificación situación de revista
+                        </h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form id="formModificacionRevista">
+                        <div class="modal-body p-4">
+                            <div class="alert alert-info" style="border-radius: 10px; font-size: 0.9rem;">
+                                <strong>Nota:</strong> Esta solicitud será enviada por correo electrónico a <strong>Vinculación Académica</strong> para que realice las modificaciones correspondientes en el sistema.
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="tipoModificacion" class="font-weight-bold">Tipo de Modificación:</label>
+                                <select class="form-control" id="tipoModificacion" name="tipoModificacion" required>
+                                    <option value="">-- Seleccionar tipo --</option>
+                                    <option value="eliminar">Eliminarme de una materia (dejar de cargar el programa)</option>
+                                    <option value="agregar">Agregarme a una materia nueva (cargar un nuevo programa y ser responsable)</option>
+                                </select>
+                            </div>
+
+                            <!-- Div para desvinculación -->
+                            <div class="form-group d-none" id="grupoEliminar">
+                                <label for="materiaEliminar" class="font-weight-bold">Seleccione la asignatura de la cual desea desvincularse:</label>
+                                <select class="form-control" id="materiaEliminar" name="materiaEliminar">
+                                    <option value="">-- Seleccionar asignatura --</option>
+                                    <?php 
+                                    if (!empty($asignaturasAgrupadas)) {
+                                        foreach ($asignaturasAgrupadas as $item) { 
+                                            $asig = $item['objeto'];
+                                            echo '<option value="' . htmlspecialchars($asig->getId() . ' - ' . $asig->getNombre()) . '">' . htmlspecialchars($asig->getId() . ' - ' . $asig->getNombre()) . '</option>';
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <!-- Div para asignación -->
+                            <div class="form-group d-none" id="grupoAgregar">
+                                <label for="materiaAgregar" class="font-weight-bold">Seleccione la nueva asignatura a la cual desea asignarse:</label>
+                                <select class="form-control" id="materiaAgregar" name="materiaAgregar">
+                                    <option value="">-- Seleccionar asignatura --</option>
+                                    <?php 
+                                    foreach ($todasAsignaturasModal as $asig) {
+                                        echo '<option value="' . htmlspecialchars($asig['id'] . ' - ' . $asig['nombre']) . '">' . htmlspecialchars($asig['id'] . ' - ' . $asig['nombre']) . '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="comentariosRevista" class="font-weight-bold">Comentarios / Observaciones adicionales:</label>
+                                <textarea class="form-control" id="comentariosRevista" name="comentarios" rows="4" placeholder="Detalle los motivos, resoluciones o aclaraciones necesarias para Vinculación Académica..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="border-top: none; padding: 1.5rem;">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px;">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; border-radius: 8px; padding: 0.5rem 1.5rem;">
+                                <span class="oi oi-location mr-1"></span> Enviar Solicitud
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </body>
 </html>

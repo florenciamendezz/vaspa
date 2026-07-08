@@ -1226,6 +1226,23 @@ if ($rol == PermisosSistema::ROL_PROFESOR) {
                         </div>
                     </div>
                 </div>
+
+                <div class="col-md-4 mb-4">
+                    <div class="card card-acceso">
+                        <div class="card-body p-4 d-flex flex-column h-100">
+                            <div class="acceso-icon-container icon-green" style="background-color: rgba(16, 185, 129, 0.1); color: #10b981;">
+                                <span class="oi oi-person"></span>
+                            </div>
+                            <h5 class="font-weight-bold text-dark mb-2">Asociar Profesores</h5>
+                            <p class="text-muted flex-grow-1" style="font-size: 0.9rem;">
+                                Modifica el profesor responsable asignado a cada materia del establecimiento.
+                            </p>
+                            <a href="asignaturas.profesores.php" class="btn-premium-action btn-premium-primary align-self-start mt-3">
+                                Acceder <span class="oi oi-arrow-right ml-1.5" style="font-size: 0.75rem;"></span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             <?php endif; ?>
         </div>
 

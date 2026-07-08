@@ -144,9 +144,10 @@ class Profesor {
         //La constante __DIR__ retorna la ruta absoluta del directorio donde se encuentra el fichero que la está utilizando. Y dirname() retorna el directorio padre, en combinación dirname(__DIR__) nos retornaría la ruta absoluta del directorio padre donde se encuentra el fichero que la está usando.
         
         // obtenemos las asignaturas en donde es responsable el profesor
-        $this->query = "SELECT * "
-                . "FROM asignatura "
-                . "WHERE idProfesor = '{$this->id}'";
+        $this->query = "SELECT a.* "
+                . "FROM asignatura a "
+                . "INNER JOIN asignatura_responsable ar ON a.id = ar.idAsignatura "
+                . "WHERE ar.idProfesor = '{$this->id}'";
                 
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);
         
@@ -175,15 +176,19 @@ class Profesor {
         
         $anioActual = date("Y"); // anio actual tomado del servidor
         
-        // Obtenemos las asignaturas vigentes y el plan correspondiente (eliminamos DISTINCT para soportar multi-vigencia)
-        $this->query = "SELECT a.*, pl.id AS idPlan, pl.anio_inicio AS anioInicioPlan, pl.anio_fin AS anioFinPlan 
+        // Obtenemos las asignaturas vigentes y el plan correspondiente (o materias sin plan asociado) que estén activas en la carrera
+        $this->query = "SELECT DISTINCT a.*, pl.id AS idPlan, pl.anio_inicio AS anioInicioPlan, pl.anio_fin AS anioFinPlan 
         FROM profesor p 
-        INNER JOIN asignatura a ON p.id = a.idProfesor 
-        INNER JOIN plan_asignatura pa ON a.id = pa.idAsignatura
-        INNER JOIN plan pl ON pa.idPlan = pl.id
+        INNER JOIN asignatura_responsable ar ON p.id = ar.idProfesor 
+        INNER JOIN asignatura a ON ar.idAsignatura = a.id
+        INNER JOIN carrera_asignatura ca ON a.id = ca.idAsignatura AND ca.activo = 1
+        LEFT JOIN plan_asignatura pa ON a.id = pa.idAsignatura
+        LEFT JOIN plan pl ON pa.idPlan = pl.id
         WHERE p.id = '{$this->id}' 
-          AND pl.estado = 'vigente'
-          AND ((pl.anio_inicio <= '{$anioActual}' AND pl.anio_fin >= '{$anioActual}') OR (pl.anio_inicio <= '{$anioActual}' AND pl.anio_fin IS NULL))
+          AND (
+               pl.id IS NULL 
+               OR ((pl.anio_inicio <= '{$anioActual}' AND (pl.anio_fin >= '{$anioActual}' OR pl.anio_fin IS NULL)))
+          )
         ORDER BY a.nombre ASC, pl.id ASC";
             
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);

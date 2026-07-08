@@ -259,6 +259,12 @@ if (isset($UsuarioSes->roles[0])) {
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="../vista/carreras.materias.php">
+                        <i data-lucide="book-marked"></i>
+                        Materias
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="../vista/planes.php">
                         <i data-lucide="book-open"></i>
                         Planes

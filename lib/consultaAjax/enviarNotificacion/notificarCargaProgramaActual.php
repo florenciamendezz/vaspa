@@ -11,7 +11,19 @@ include_once __DIR__.'/../../notificacionesMail/notificaciones.php';
 
 if (isset($_POST['idAsignatura'])){
     $idAsignatura = $_POST['idAsignatura'];
-    echo enviarMailSolicitarCargaPrograma($idAsignatura);
+    include_once __DIR__.'/../../../modeloSistema/Asignatura.Class.php';
+    $asignatura = new Asignatura($idAsignatura);
+    $profesores = $asignatura->getProfesoresResponsables();
+    $exito = 1;
+    if (!empty($profesores)) {
+        foreach ($profesores as $profesor) {
+            $resultado = enviarMailSolicitarCargaPrograma($idAsignatura, $profesor->getId());
+            if ($resultado != 1) {
+                $exito = $resultado;
+            }
+        }
+    }
+    echo $exito;
 } else {
     echo '<div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
         Ocurrio un error al intentar enviar el correo (Faltan datos).

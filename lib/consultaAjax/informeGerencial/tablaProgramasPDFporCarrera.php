@@ -13,29 +13,26 @@ if (isset($_POST['codCarrera']) && isset($_POST['anio'])){
     $codCarrera = $_POST['codCarrera'];
     $anio = $_POST['anio'];
     $carrera = new Carrera($codCarrera);
-    $plan = $carrera->getPlan($anio);
     
-    if (is_null($plan)){
-        $print = '<div class="alert alert-warning" role="alert">
-            No se encontr&oacute; el Plan de Estudio de la Carrera para el a&ntilde;o seleccionado.
-          </div>';
-    } else {
-        $conexion = BDConexionSistema::getInstancia();
-        
-        // Consulta optimizada para traer todas las asignaturas de la carrera y su respectivo estado de circuito
-        $sqlAsignaturas = "
-            SELECT DISTINCT a.id as idAsignatura, a.nombre as nombreAsignatura, a.idProfesor, 
-                   p.nombre as nombreProf, p.apellido as apellidoProf, p.email as emailProf,
-                   ppd.id as idProgramaPDF, ppd.ruta_archivo, ppd.en_revision, ppd.aprobado_escuela,
-                   ppd.aprobado_va, ppd.aprobado_depto, ppd.aprobado_va_firma, ppd.fue_desaprobado,
-                   ppd.comentario_desaprobacion, ppd.fecha_ultimo_movimiento_circuito, ppd.fecha_carga
-            FROM plan_asignatura pa
-            INNER JOIN asignatura a ON pa.idAsignatura = a.id
-            LEFT JOIN profesor p ON a.idProfesor = p.id
-            LEFT JOIN programa_pdf_detalle ppd ON a.id = ppd.id_asignatura AND ppd.anio = {$anio}
-            WHERE pa.idPlan = '{$plan->getId()}'
-            ORDER BY a.nombre ASC
-        ";
+    $conexion = BDConexionSistema::getInstancia();
+    
+    // Consulta optimizada para traer todas las asignaturas de la carrera y su respectivo estado de circuito
+    $sqlAsignaturas = "
+        SELECT a.id as idAsignatura, a.nombre as nombreAsignatura, 
+               GROUP_CONCAT(DISTINCT CONCAT(p.apellido, ', ', p.nombre) SEPARATOR '; ') as nombresProfesores,
+               GROUP_CONCAT(DISTINCT p.email SEPARATOR '; ') as emailsProfesores,
+               ppd.id as idProgramaPDF, ppd.ruta_archivo, ppd.en_revision, ppd.aprobado_escuela,
+               ppd.aprobado_va, ppd.aprobado_depto, ppd.aprobado_va_firma, ppd.fue_desaprobado,
+               ppd.comentario_desaprobacion, ppd.fecha_ultimo_movimiento_circuito, ppd.fecha_carga
+        FROM carrera_asignatura ca
+        INNER JOIN asignatura a ON ca.idAsignatura = a.id
+        LEFT JOIN asignatura_responsable ar ON a.id = ar.idAsignatura
+        LEFT JOIN profesor p ON ar.idProfesor = p.id
+        LEFT JOIN programa_pdf_detalle ppd ON a.id = ppd.id_asignatura AND ppd.anio = {$anio}
+        WHERE ca.idCarrera = '{$codCarrera}'
+        GROUP BY a.id, ppd.id
+        ORDER BY a.nombre ASC
+    ";
         
         $datos = $conexion->query($sqlAsignaturas);
         
@@ -67,8 +64,8 @@ if (isset($_POST['codCarrera']) && isset($_POST['anio'])){
                 $totalAsignaturas++;
                 $idAsignatura = $fila['idAsignatura'];
                 $nombreAsignatura = $fila['nombreAsignatura'];
-                $docenteNom = $fila['apellidoProf'] . ', ' . $fila['nombreProf'];
-                if (is_null($fila['idProfesor'])) {
+                $docenteNom = $fila['nombresProfesores'];
+                if (empty($docenteNom)) {
                     $docenteNom = '<span class="text-muted italic">No asignado</span>';
                 }
                 
@@ -403,7 +400,6 @@ if (isset($_POST['codCarrera']) && isset($_POST['anio'])){
         ';
         
         $print .= '</div>'; // Fin dashboard-container
-    }
     
     // --- LOGGING ---
     include_once '../../../modeloSistema/LogInforme.Class.php';

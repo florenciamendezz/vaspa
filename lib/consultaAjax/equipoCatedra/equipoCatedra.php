@@ -13,7 +13,7 @@ if (isset($_GET['idAsignatura'])){
     $idAsignatura= $_GET['idAsignatura'];
     
     $asignatura = new Asignatura($idAsignatura);
-    $profesorResponsable = new Profesor($asignatura->getIdProfesor());
+    $profesoresResponsables = $asignatura->getProfesoresResponsables();
     
     // En la siguiente query vamos a obtener al equipo de catedra de la asignatura (Nota: no se obtiene al profesor responsable ya que se lo obtiene del idProfesor de la clase Asignatura)
     $sql = "SELECT * "
@@ -46,13 +46,17 @@ if (isset($_GET['idAsignatura'])){
                             </tr>
                         </thead>
                         <tbody>';
-            // Agregamos los datos en la primera fila del profesor Responsable
+            // Agregamos los datos en la primera fila de los profesores Responsables
             
-            $html .= '<tr>';
-                $html .= '<td>'.$profesorResponsable->getApellido().'</td>';
-                $html .= '<td>'.$profesorResponsable->getNombre().'</td>';
-                $html .= '<td>Responsable</td>';
-                $html .= '<td></td></tr>';
+            if (!empty($profesoresResponsables)) {
+                foreach ($profesoresResponsables as $profResp) {
+                    $html .= '<tr>';
+                    $html .= '<td>'.$profResp->getApellido().'</td>';
+                    $html .= '<td>'.$profResp->getNombre().'</td>';
+                    $html .= '<td>Responsable</td>';
+                    $html .= '<td></td></tr>';
+                }
+            }
         
         if ($resultado->num_rows > 0) {
             

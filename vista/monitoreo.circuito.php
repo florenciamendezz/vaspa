@@ -47,20 +47,24 @@ if ($resOcultas && $resOcultas->num_rows > 0) {
 // Obtener si se debe mostrar las asignaturas ocultas por GET o sesión
 $mostrarOcultas = isset($_GET['mostrar_ocultas']) && $_GET['mostrar_ocultas'] == '1';
 
-// 3. Obtener todas las asignaturas de planes vigentes
-$sqlAsignaturas = "SELECT DISTINCT a.id as idAsignatura, a.nombre as nombreAsignatura, a.idProfesor, 
-                    p.nombre as nombreProf, p.apellido as apellidoProf, p.email as emailProf,
-                    pl.id as codPlan, c.nombre as nombreCarrera, a.es_institucional,
+// 3. Obtener todas las asignaturas vigentes y activas de las carreras (con plan de estudios opcional)
+$sqlAsignaturas = "SELECT a.id as idAsignatura, a.nombre as nombreAsignatura, 
+                    GROUP_CONCAT(DISTINCT CONCAT(p.apellido, ', ', p.nombre) SEPARATOR '; ') as nombresProfesores,
+                    GROUP_CONCAT(DISTINCT p.email SEPARATOR '; ') as emailsProfesores,
+                    COALESCE(pl.id, 'Sin Plan') as codPlan, c.nombre as nombreCarrera, a.es_institucional,
                     ppd.id as idProgramaPDF, ppd.ruta_archivo, ppd.en_revision, ppd.aprobado_escuela,
                     ppd.aprobado_va, ppd.aprobado_depto, ppd.aprobado_va_firma, ppd.fue_desaprobado,
                     ppd.comentario_desaprobacion, ppd.fecha_ultimo_movimiento_circuito
-                   FROM plan pl
-                   JOIN plan_asignatura pa ON pl.id = pa.idPlan
-                   JOIN asignatura a ON pa.idAsignatura = a.id
-                   LEFT JOIN profesor p ON a.idProfesor = p.id
-                   INNER JOIN carrera c ON pl.idCarrera = c.id
+                   FROM carrera_asignatura ca
+                   JOIN asignatura a ON ca.idAsignatura = a.id
+                   JOIN carrera c ON ca.idCarrera = c.id
+                   LEFT JOIN plan_asignatura pa ON a.id = pa.idAsignatura
+                   LEFT JOIN plan pl ON pa.idPlan = pl.id AND pl.idCarrera = c.id
+                   LEFT JOIN asignatura_responsable ar ON a.id = ar.idAsignatura
+                   LEFT JOIN profesor p ON ar.idProfesor = p.id
                    LEFT JOIN programa_pdf_detalle ppd ON a.id = ppd.id_asignatura AND ppd.anio = {$anioActual}
-                   WHERE (pl.anio_inicio <= '{$anioActual}' AND (pl.anio_fin >= '{$anioActual}' OR pl.anio_fin IS NULL))
+                   WHERE ca.activo = 1 AND (pl.id IS NULL OR (pl.anio_inicio <= '{$anioActual}' AND (pl.anio_fin >= '{$anioActual}' OR pl.anio_fin IS NULL)))
+                   GROUP BY a.id, pl.id, c.id, ppd.id
                    ORDER BY c.nombre ASC, a.nombre ASC";
 
 $resAsignaturas = $conexion->query($sqlAsignaturas);
@@ -262,8 +266,8 @@ $resAsignaturas = $conexion->query($sqlAsignaturas);
                                                 continue;
                                             }
                                             
-                                            $docenteNom = $fila['apellidoProf'] . ', ' . $fila['nombreProf'];
-                                            if (is_null($fila['idProfesor'])) {
+                                            $docenteNom = $fila['nombresProfesores'];
+                                            if (empty($docenteNom)) {
                                                 $docenteNom = '<span class="text-muted italic">No asignado</span>';
                                             }
                                             
@@ -340,8 +344,8 @@ $resAsignaturas = $conexion->query($sqlAsignaturas);
                                                 </td>
                                                 <td>
                                                     <?php echo $docenteNom; ?>
-                                                    <?php if (!is_null($fila['idProfesor'])): ?>
-                                                        <br><small class="text-muted"><?php echo htmlspecialchars($fila['emailProf']); ?></small>
+                                                    <?php if (!empty($fila['emailsProfesores'])): ?>
+                                                        <br><small class="text-muted"><?php echo htmlspecialchars(str_replace(';', ', ', $fila['emailsProfesores'])); ?></small>
                                                     <?php endif; ?>
                                                 </td>
                                                 <td>

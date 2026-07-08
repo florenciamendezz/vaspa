@@ -11,22 +11,18 @@ if (isset($_POST['idProfesor']) && isset($_POST['anio'])){
     
     $conexion = BDConexionSistema::getInstancia();
     
-    // Consulta optimizada para traer las asignaturas del profesor en sus respectivos planes y el estado en el circuito
+    // Consulta optimizada para traer las asignaturas del profesor y el estado en el circuito
     $sqlAsignaturas = "
-        SELECT DISTINCT ap.idPlan, ap.idCarrera, a.id as idAsignatura, a.nombre as nombreAsignatura,
+        SELECT DISTINCT ca.idCarrera, a.id as idAsignatura, a.nombre as nombreAsignatura,
                ppd.id as idProgramaPDF, ppd.ruta_archivo, ppd.en_revision, ppd.aprobado_escuela,
                ppd.aprobado_va, ppd.aprobado_depto, ppd.aprobado_va_firma, ppd.fue_desaprobado,
                ppd.comentario_desaprobacion, ppd.fecha_ultimo_movimiento_circuito, ppd.fecha_carga
         FROM profesor p 
-        INNER JOIN asignatura a ON p.id = a.idProfesor
-        INNER JOIN (
-            SELECT idPlan, anio_inicio, anio_fin, idAsignatura, idCarrera 
-            FROM plan pl 
-            INNER JOIN plan_asignatura pa ON pl.id = pa.idPlan
-        ) ap ON a.id = ap.idAsignatura
+        INNER JOIN asignatura_responsable ar ON p.id = ar.idProfesor
+        INNER JOIN asignatura a ON ar.idAsignatura = a.id
+        INNER JOIN carrera_asignatura ca ON a.id = ca.idAsignatura
         LEFT JOIN programa_pdf_detalle ppd ON a.id = ppd.id_asignatura AND ppd.anio = {$anio}
         WHERE p.id = '{$idProfesor}' 
-          AND ((ap.anio_inicio <= '{$anio}' AND ap.anio_fin >= '{$anio}') OR (ap.anio_inicio <= '{$anio}' AND ap.anio_fin IS NULL))
         ORDER BY a.nombre ASC
     ";
     
@@ -60,8 +56,8 @@ if (isset($_POST['idProfesor']) && isset($_POST['anio'])){
             $totalAsignaturas++;
             $idAsignatura = $fila['idAsignatura'];
             $nombreAsignatura = $fila['nombreAsignatura'];
-            $codPlan = $fila['idPlan'];
             $codCarrera = $fila['idCarrera'];
+            $codPlan = $codCarrera; // Mantenemos la variable por compatibilidad del arreglo de alertas
             
             $tienePdf = !is_null($fila['idProgramaPDF']);
             $estadoVisual = "Sin programa";
@@ -176,7 +172,7 @@ if (isset($_POST['idProfesor']) && isset($_POST['anio'])){
             
             // Construir fila de tabla
             $tablaFilasHtml .= '<tr>';
-            $tablaFilasHtml .= '<td>' . htmlspecialchars($codPlan) . '</td>';
+            $tablaFilasHtml .= '<td>' . htmlspecialchars($codCarrera) . '</td>';
             $tablaFilasHtml .= '<td>' . htmlspecialchars($idAsignatura) . '</td>';
             $tablaFilasHtml .= '<td><strong>' . htmlspecialchars($nombreAsignatura) . '</strong></td>';
             $tablaFilasHtml .= '<td class="text-center">' . $badgeDisponibilidad . '</td>';
@@ -353,7 +349,7 @@ if (isset($_POST['idProfesor']) && isset($_POST['anio'])){
                 $alertasHtml .= '
                             <li class="alert-item">
                                 <div class="alert-item-header">
-                                    <span>Plan ' . htmlspecialchars($a['plan']) . ' | ' . htmlspecialchars($a['codigo']) . ' - ' . htmlspecialchars($a['nombre']) . '</span>
+                                    <span>Carrera ' . htmlspecialchars($a['plan']) . ' | ' . htmlspecialchars($a['codigo']) . ' - ' . htmlspecialchars($a['nombre']) . '</span>
                                 </div>
                             </li>';
             }
@@ -376,7 +372,7 @@ if (isset($_POST['idProfesor']) && isset($_POST['anio'])){
                 <table class="table table-hover table-striped mb-0" id="tablaAsignaturasProf">
                     <thead>
                         <tr>
-                            <th>C&oacute;digo Plan</th>
+                            <th>Carrera</th>
                             <th>C&oacute;digo Asignatura</th>
                             <th>Asignatura</th>
                             <th class="text-center">PDF Disponible</th>

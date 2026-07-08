@@ -291,5 +291,55 @@ class notificacionCircuitoVaspa {
         
         return self::enviarCorreo($emailDocente, $asunto, $saludo, $introduccion, $cuerpo, $idAsignatura, $anio, $botonHTML);
     }
+
+    /**
+     * Notifica a Vinculación Académica una solicitud de modificación de situación de revista
+     */
+    public static function notificarModificacionRevista($profesorNombre, $profesorEmail, $tipo, $detalleAsignatura, $comentario) {
+        $destinatario = MAIL_SA;
+        $asunto = "VASPA: Solicitud de modificacion de situacion de revista";
+        
+        // Simulación en desarrollo
+        $isPlaywright = isset($_SERVER['HTTP_X_PLAYWRIGHT_TEST']) || (isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'Playwright') !== false);
+        if ($isPlaywright || (defined('Constantes::SERVER') && strpos(Constantes::SERVER, 'localhost') !== false && (!defined('FORZAR_ENVIO_MAIL') || !FORZAR_ENVIO_MAIL))) {
+            error_log("DESARROLLO: Simulación de correo enviado a {$destinatario} con asunto: '{$asunto}'");
+            return true;
+        }
+
+        $mail = new PHPMailer;
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = MAIL_SISTEMA;
+        $mail->Password = CONTRASENA_SISTEMA;
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
+        $mail->Timeout = 10;
+        $mail->FromName = "Sistema VASPA";
+        $mail->addAddress($destinatario);
+        
+        $cuerpo = "<p>Estimado/a Revisor/a de Vinculación Académica,</p>";
+        $cuerpo .= "<p>El profesor <strong>" . htmlspecialchars($profesorNombre) . "</strong> (" . htmlspecialchars($profesorEmail) . ") ha enviado una solicitud de modificación de situación de revista.</p>";
+        $cuerpo .= "<p><strong>Tipo de modificación:</strong> " . ($tipo === 'eliminar' ? 'Eliminarse de una materia' : 'Agregar a una materia nueva') . "</p>";
+        $cuerpo .= "<p><strong>Materia detallada:</strong> " . htmlspecialchars($detalleAsignatura) . "</p>";
+        if (!empty($comentario)) {
+            $cuerpo .= "<p><strong>Comentarios/Observaciones:</strong><br>" . nl2br(htmlspecialchars($comentario)) . "</p>";
+        }
+        $cuerpo .= "<p>Por favor, ingrese al sistema para realizar la reasignación correspondiente.</p>";
+        $cuerpo .= "<div style='text-align:center; margin:25px 0;'><a href='http://localhost/vaspa/vista/asignaturas.profesores.php' style='background-color:#3182ce; color:#ffffff; padding:10px 20px; text-decoration:none; border-radius:5px; font-weight:bold;'>Ver Panel de Profesores Responsables</a></div>";
+        
+        $mail->isHTML(true);
+        $mail->Subject = utf8_decode($asunto);
+        $mail->Body = utf8_decode($cuerpo);
+        
+        if (!$mail->send()) {
+            $mail->isMail();
+            if (!$mail->send()) {
+                error_log("Error al enviar notificación de revista a VA: " . $mail->ErrorInfo);
+                return false;
+            }
+        }
+        return true;
+    }
 }
 ?>

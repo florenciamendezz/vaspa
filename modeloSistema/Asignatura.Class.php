@@ -16,7 +16,7 @@ class Asignatura {
     protected $idDepartamento;
     protected $idEscuela;
     protected $contenidosMinimos;
-    protected $idProfesor;
+    protected $profesoresResponsables = null;
     protected $horasSemanales;
     protected $es_institucional;
     private $query;
@@ -35,7 +35,7 @@ class Asignatura {
             $this->setNombre($datos['nombre']);
             $this->setContenidosMinimos($datos['contenidosMinimos']);
             $this->setIdDepartamento($datos['departamento']);
-            $this->setIdProfesor($datos['idProfesor']);
+            $this->setIdProfesor(isset($datos['idProfesor']) ? $datos['idProfesor'] : null);
             $this->setHorasSemanales($datos['horasSemanales']);
         } else {
             //Sino viene un nuevo Objeto, lo recupero (para Modificar)
@@ -61,7 +61,9 @@ class Asignatura {
             $this->datos = $this->datos->fetch_assoc();
             if (is_array($this->datos)) {
                 foreach ($this->datos as $atributo => $valor) {
-                    $this->{$atributo} = $valor;
+                    if ($atributo !== 'idProfesor') {
+                        $this->{$atributo} = $valor;
+                    }
                 }
             }
         }
@@ -122,7 +124,39 @@ class Asignatura {
     }
 
     function getIdProfesor() {
-        return $this->idProfesor;
+        $responsables = $this->getProfesoresResponsables();
+        if (!empty($responsables)) {
+            return $responsables[0]->getId();
+        }
+        return null;
+    }
+
+    function getProfesoresResponsables() {
+        if ($this->profesoresResponsables === null) {
+            $this->profesoresResponsables = [];
+            if (!empty($this->id)) {
+                $query = "SELECT idProfesor FROM asignatura_responsable WHERE idAsignatura = '{$this->id}'";
+                $datos = BDConexionSistema::getInstancia()->query($query);
+                if ($datos && $datos->num_rows > 0) {
+                    while ($row = $datos->fetch_assoc()) {
+                        $this->profesoresResponsables[] = new Profesor($row['idProfesor']);
+                    }
+                }
+            }
+        }
+        return $this->profesoresResponsables;
+    }
+
+    function esResponsable($idProfesor) {
+        $responsables = $this->getProfesoresResponsables();
+        if (!empty($responsables)) {
+            foreach ($responsables as $prof) {
+                if ($prof->getId() == $idProfesor) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     function setContenidosMinimos($contenidosMinimos) {
@@ -158,7 +192,11 @@ class Asignatura {
     }
 
     function setIdProfesor($idProfesor) {
-        $this->idProfesor = $idProfesor;
+        if (!empty($idProfesor)) {
+            $this->profesoresResponsables = [new Profesor($idProfesor)];
+        } else {
+            $this->profesoresResponsables = [];
+        }
     }
 
     /**
@@ -166,20 +204,21 @@ class Asignatura {
      * @return Carrera[]
      */
     function getCarreras() {
-        $anioActual = date("Y");
-        $this->query = "SELECT DISTINCT carrera.id, carrera.nombre FROM asignatura JOIN plan_asignatura JOIN plan JOIN carrera WHERE asignatura.id = plan_asignatura.idAsignatura AND plan_asignatura.idPlan = plan.id AND plan.idCarrera = carrera.id AND asignatura.id = '{$this->id}' AND ((plan.anio_inicio <= '{$anioActual}' AND plan.anio_fin >= '{$anioActual}') OR (plan.anio_inicio <= '{$anioActual}' AND plan.anio_fin IS NULL))";
+        $this->query = "SELECT DISTINCT c.id, c.nombre 
+                        FROM asignatura a 
+                        INNER JOIN carrera_asignatura ca ON a.id = ca.idAsignatura 
+                        INNER JOIN carrera c ON ca.idCarrera = c.id 
+                        WHERE a.id = '{$this->id}'";
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);
 
         $Carreras = NULL;
 
         for ($x = 0; $x < $this->datos->num_rows; $x++) {
             $Carreras[] = $this->datos->fetch_object("Carrera");
-            //$this->addElemento($this->datos->fetch_object("Carrera"));
         }
 
         unset($this->query);
         unset($this->datos);
-        //echo $Carreras;
         return $Carreras;
     }
 
@@ -207,7 +246,9 @@ class Asignatura {
      * @return Profesor[]
      */
     function getProfesoresPracticaSinResponsable() {
-        $this->query = "SELECT profesor_asignatura.idProfesor FROM profesor_asignatura JOIN asignatura WHERE asignatura.id = profesor_asignatura.idAsignatura AND rol LIKE 'practica' AND asignatura.id = {$this->id} AND profesor_asignatura.idProfesor != {$this->idProfesor}";
+        $this->query = "SELECT pa.idProfesor FROM profesor_asignatura pa 
+                        WHERE pa.rol LIKE 'practica' AND pa.idAsignatura = '{$this->id}' 
+                        AND pa.idProfesor NOT IN (SELECT idProfesor FROM asignatura_responsable WHERE idAsignatura = '{$this->id}')";
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);
         $Profesores = NULL;
         for ($x = 0; $x < $this->datos->num_rows; $x++) {
@@ -243,9 +284,11 @@ class Asignatura {
     /**
      * 
      * @return Profesor[]
-     *
+     */
     function getProfesoresTeoriaSinResponsable() {
-        $this->query = "SELECT profesor_asignatura.idProfesor FROM profesor_asignatura JOIN asignatura WHERE asignatura.id = profesor_asignatura.idAsignatura AND rol LIKE 'teoria' AND asignatura.id = {$this->id} AND profesor_asignatura.idProfesor != {$this->idProfesor}";
+        $this->query = "SELECT pa.idProfesor FROM profesor_asignatura pa 
+                        WHERE pa.rol LIKE 'teoria' AND pa.idAsignatura = '{$this->id}' 
+                        AND pa.idProfesor NOT IN (SELECT idProfesor FROM asignatura_responsable WHERE idAsignatura = '{$this->id}')";
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);
         $Profesores = NULL;
         for ($x = 0; $x < $this->datos->num_rows; $x++) {
@@ -258,8 +301,6 @@ class Asignatura {
 
         return $Profesores;
     }
-     * 
-     */
 
     /**
      * 
@@ -418,9 +459,10 @@ class Asignatura {
         
         // obtenemos la cantidad de notificaciones enviadas al profesor solicitando
         // el programa de asignatura del anio actual
+        $idProf = $this->getIdProfesor();
         $this->query = "SELECT COUNT(*) AS cantidad "
                 . "FROM `registro_notificacion` "
-                . "WHERE idProfesor = '{$this->idProfesor}' AND "
+                . "WHERE idProfesor = '{$idProf}' AND "
                 . "idAsignatura = '{$this->id}' AND "
                 . "YEAR(fecha) = {$anioActual}";
         
@@ -464,9 +506,6 @@ class Asignatura {
         
         $planes = NULL;
         
-//        if ($this->datos->num_rows > 0) { // 
-//            $programa = $this->datos->fetch_object("Programa"); // creamos objeto programa
-//        }
         if ($this->datos->num_rows > 0) {
             for ($x = 0; $x < $this->datos->num_rows; $x++) {
                 $resultado = $this->datos->fetch_assoc();
@@ -678,28 +717,7 @@ class Asignatura {
      * @return Carrera[]
      */
     function getCarrerasProgramaPDF($anio) {
-        $anioActual = date("Y"); // anio actual tomado del servidor
-                
-        $this->query = "SELECT carrera.id, carrera.nombre "
-                . "FROM asignatura JOIN plan_asignatura JOIN plan JOIN carrera "
-                . "WHERE asignatura.id = plan_asignatura.idAsignatura AND "
-                . "plan_asignatura.idPlan = plan.id AND "
-                . "plan.idCarrera = carrera.id AND asignatura.id = '{$this->id}' "
-                . "AND ((anio_inicio <= {$anio} AND {$anio} <= anio_fin) OR "
-                . "(anio_inicio <= {$anio} AND {$anio} <= {$anioActual} AND anio_fin IS NULL))";
-        $this->datos = BDConexionSistema::getInstancia()->query($this->query);
-
-        $Carreras = NULL;
-
-        for ($x = 0; $x < $this->datos->num_rows; $x++) {
-            $Carreras[] = $this->datos->fetch_object("Carrera");
-            //$this->addElemento($this->datos->fetch_object("Carrera"));
-        }
-
-        unset($this->query);
-        unset($this->datos);
-        //echo $Carreras;
-        return $Carreras;
+        return $this->getCarreras();
     }
     
     /******** FIN FUNCIONES UTILIZADAS POR EL GENERAR PDF *********/
