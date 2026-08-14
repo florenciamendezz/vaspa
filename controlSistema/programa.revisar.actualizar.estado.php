@@ -35,6 +35,115 @@ switch ($programa->getVigencia()) {
 }
 $datosAsig = "<b>{$asignatura->getNombre()} - {$asignatura->getId()}</b>, con vigencia para <b>{$vigencia}</b>";
 
+$Usuario = $_SESSION['usuario'];
+$rol = $Usuario->roles[0]->nombre;
+
+if (isset($_POST["guardarComentarioAvanzado"])) {
+    $comentario = $_POST["comentario"];
+    $accionEstado = $_POST["accionEstado"]; // 'observacion', 'aprobar', 'desaprobar'
+    $habilitarReentrega = isset($_POST["habilitarReentrega"]) ? 1 : 0;
+    
+    $idUsuario = intval($Usuario->id);
+    $comentarioEscaped = BDConexionSistema::getInstancia()->real_escape_string($comentario);
+    $rolEscaped = BDConexionSistema::getInstancia()->real_escape_string($rol);
+    
+    // 1. Guardar comentario en historial de devoluciones
+    $sqlDevolucion = "INSERT INTO programa_devoluciones (id_programa, id_programa_pdf, id_usuario, rol_revisor, fecha, comentario, leido, resuelto) 
+                      VALUES ({$idPrograma}, NULL, {$idUsuario}, '{$rolEscaped}', NOW(), '{$comentarioEscaped}', 0, 0)";
+    BDConexionSistema::getInstancia()->query($sqlDevolucion);
+    
+    // 2. Procesar acción sobre el estado
+    $reentregaRealizada = false;
+    
+    if ($accionEstado == 'aprobar') {
+        if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACION_ACADEMICA || $rol == 'VA'){
+            $sqlUp = "UPDATE PROGRAMA SET aprobadoVa = 1 WHERE id = '{$idPrograma}'";
+            BDConexionSistema::getInstancia()->query($sqlUp);
+        } elseif ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO) {
+            $sqlUp = "UPDATE PROGRAMA SET aprobadoDepto = 1 WHERE id = '{$idPrograma}'";
+            BDConexionSistema::getInstancia()->query($sqlUp);
+        } elseif ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA) {
+            $sqlUp = "UPDATE PROGRAMA SET aprobadoEscuela = 1 WHERE id = '{$idPrograma}'";
+            BDConexionSistema::getInstancia()->query($sqlUp);
+        }
+    } elseif ($accionEstado == 'desaprobar') {
+        if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACION_ACADEMICA || $rol == 'VA'){
+            $sqlUp = "UPDATE PROGRAMA SET aprobadoVa = 0, fueDesaprobado = 1, comentarioVa = '{$comentarioEscaped}' WHERE id = '{$idPrograma}'";
+            BDConexionSistema::getInstancia()->query($sqlUp);
+        } elseif ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO) {
+            $sqlUp = "UPDATE PROGRAMA SET aprobadoDepto = 0, fueDesaprobado = 1, comentarioDepto = '{$comentarioEscaped}' WHERE id = '{$idPrograma}'";
+            BDConexionSistema::getInstancia()->query($sqlUp);
+        } elseif ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA) {
+            $sqlUp = "UPDATE PROGRAMA SET aprobadoEscuela = 0, fueDesaprobado = 1, comentarioEscuela = '{$comentarioEscaped}' WHERE id = '{$idPrograma}'";
+            BDConexionSistema::getInstancia()->query($sqlUp);
+        }
+        $habilitarReentrega = 1; // Obligatorio al desaprobar
+    } else {
+        // Solo registrar comentario (observacion)
+        if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACION_ACADEMICA || $rol == 'VA'){
+            $sqlUp = "UPDATE PROGRAMA SET comentarioVa = '{$comentarioEscaped}' WHERE id = '{$idPrograma}'";
+            BDConexionSistema::getInstancia()->query($sqlUp);
+        } elseif ($rol == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO) {
+            $sqlUp = "UPDATE PROGRAMA SET comentarioDepto = '{$comentarioEscaped}' WHERE id = '{$idPrograma}'";
+            BDConexionSistema::getInstancia()->query($sqlUp);
+        } elseif ($rol == PermisosSistema::ROL_DIRECTOR_ESCUELA) {
+            $sqlUp = "UPDATE PROGRAMA SET comentarioEscuela = '{$comentarioEscaped}' WHERE id = '{$idPrograma}'";
+            BDConexionSistema::getInstancia()->query($sqlUp);
+        }
+    }
+    
+    // 3. Procesar reentrega si corresponde
+    if ($habilitarReentrega == 1) {
+        $circuito = 'estandar';
+        $sqlAsig = "SELECT es_institucional FROM asignatura WHERE id = '{$programa->getIdAsignatura()}'";
+        $resAsig = BDConexionSistema::getInstancia()->query($sqlAsig);
+        if ($resAsig && $resAsig->num_rows > 0) {
+            $rowAsig = $resAsig->fetch_assoc();
+            if ($rowAsig['es_institucional'] == 1) {
+                $circuito = 'institucional';
+            }
+        }
+        $aprobadoEscuelaVal = ($circuito == 'estandar') ? "NULL" : "1";
+        
+        $sqlReset = "UPDATE programa 
+                      SET aprobadoEscuela = {$aprobadoEscuelaVal},
+                          aprobadoVa = NULL,
+                          aprobadoDepto = NULL,
+                          enRevision = 0,
+                          fueDesaprobado = 0,
+                          comentarioVa = '',
+                          comentarioDepto = '',
+                          comentarioEscuela = ''
+                      WHERE id = {$idPrograma}";
+        BDConexionSistema::getInstancia()->query($sqlReset);
+        $reentregaRealizada = true;
+    }
+    
+    // 4. Enviar notificación por correo electrónico
+    $mailLib = '../lib/notificacionesMail/notificacionCircuitoVaspa.php';
+    if (file_exists($mailLib)) {
+        include_once $mailLib;
+        if (class_exists('notificacionCircuitoVaspa')) {
+            $idAsignatura = $programa->getIdAsignatura();
+            $anio = $programa->getAnio();
+            $profesor = new Profesor($asignatura->getIdProfesor());
+            $emailDocente = $profesor->getEmail();
+            
+            notificacionCircuitoVaspa::notificarComentarioDocente($idAsignatura, $anio, $emailDocente, $rol, $accionEstado, $comentario, $reentregaRealizada);
+        }
+    }
+    
+    $_SESSION['mensajeRevisarPrograma'] = '<div class="alert alert-success alert-dismissible fade show text-center" role="alert">
+        La revisión de '.$datosAsig.' fue guardada con éxito y se notificó al docente responsable.
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        </div>';
+        
+    header("location: ../vista/inicio.php");
+    exit;
+}
+
 if ($_SERVER["REQUEST_METHOD"] !== "POST"){
     header("location: ../vista/revisar.programas.php");
 } elseif (isset ($_POST["aprobarPrograma"])) {

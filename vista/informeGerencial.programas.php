@@ -294,6 +294,9 @@ $nombreUsuario = $Usuario->nombre;
                         <li class="nav-item">
                           <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Por Profesor Responsable</a>
                         </li>
+                        <li class="nav-item">
+                          <a class="nav-link" id="historial-tab" data-toggle="tab" href="#historial" role="tab" aria-controls="historial" aria-selected="false">Historial de Presentaciones (5 Años)</a>
+                        </li>
                     </ul>
                     <div class="tab-content" id="myTabContent">
                         <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
@@ -364,6 +367,43 @@ $nombreUsuario = $Usuario->nombre;
                                   </div>
                             </div>
                             
+                        </div>
+                        <div class="tab-pane fade" id="historial" role="tabpanel" aria-labelledby="historial-tab">
+                            <br>
+                            <div class="row justify-content-md-center">
+                                <div class="col-sm-5">
+                                    <label for="carreraHist">Carrera / Escuela</label>
+                                    <select id="carreraHist" name="carreraHist" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione carrera" data-none-results-text="No se encontraron resultados" data-size="5">
+                                        <option value="todas">Todas las carreras</option>
+                                        <?php
+                                        if (!empty($carreras)) {
+                                                foreach ($carreras as $carrera) {
+                                                    echo '<option value="' . $carrera->getId() . '">'.$carrera->getId().' - '.$carrera->getNombre().'</option>';
+                                                }
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                                <div class="col-sm-5">
+                                    <label for="profesorHist">Profesor Responsable</label>
+                                    <select id="profesorHist" name="profesorHist" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione profesor" data-none-results-text="No se encontraron resultados" data-size="5">
+                                        <option value="todos">Todos los profesores</option>
+                                        <?php
+                                        if (!empty($profesores)) {
+                                                foreach ($profesores as $profesor) {
+                                                    echo '<option value="' . $profesor->getId() . '">'.$profesor->getNombreCompleto().'</option>';
+                                                }
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <br>
+                            <div id="tablaReporte5Anios">
+                                <div class="alert alert-info" role="alert">
+                                    Seleccione una carrera y/o un profesor responsable para obtener el <b>informe del historial de los últimos 5 años</b> de presentaciones de programas.
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -1066,6 +1106,63 @@ $nombreUsuario = $Usuario->nombre;
                       }
                     
                   });
+                  
+                  // REPORTE HISTORIAL 5 AÑOS
+                  function cargarReporteHistorial() {
+                      var codCarrera = $('#carreraHist').val();
+                      var idProfesor = $('#profesorHist').val();
+                      
+                      if (!codCarrera || !idProfesor) return;
+                      
+                      $('#tablaReporte5Anios').html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="sr-only">Cargando...</span></div><p class="mt-2 text-muted">Generando reporte histórico de los últimos 5 años...</p></div>');
+                      
+                      $.ajax({
+                          type: 'POST',
+                          url: '../lib/consultaAjax/informeGerencial/reporteHistorial5Anios.php',
+                          data: {
+                              'codCarrera': codCarrera,
+                              'idProfesor': idProfesor
+                          }
+                      })
+                      .done(function(reporteHtml) {
+                          $('#tablaReporte5Anios').html(reporteHtml);
+                          $('#tablaReporte5AniosTable').DataTable({
+                              dom: 'Bfrtip',
+                              pageLength: 25,
+                              language: {
+                                  url: '../lib/datatable/es-ar.json'
+                              },
+                              buttons: [
+                                  {
+                                      extend: 'excel',
+                                      text: 'Exportar a Excel',
+                                      title: 'VASPA_Reporte_5_Anios',
+                                      className: 'btn btn-outline-success btn-sm'
+                                  },
+                                  {
+                                      extend: 'pdf',
+                                      text: 'Descargar PDF',
+                                      title: 'VASPA - Reporte de 5 Años de Presentaciones',
+                                      orientation: 'landscape',
+                                      pageSize: 'A4',
+                                      className: 'btn btn-outline-danger btn-sm'
+                                  },
+                                  {
+                                      extend: 'print',
+                                      text: 'Imprimir',
+                                      title: 'VASPA - Reporte de 5 Años de Presentaciones',
+                                      className: 'btn btn-outline-primary btn-sm'
+                                  }
+                              ]
+                          });
+                      })
+                      .fail(function() {
+                          $('#tablaReporte5Anios').html('<div class="alert alert-danger">Hubo un error al generar el reporte del historial de 5 años. Por favor, intente nuevamente.</div>');
+                      });
+                  }
+
+                  $('#carreraHist').change(cargarReporteHistorial);
+                  $('#profesorHist').change(cargarReporteHistorial);
                   
               });
     </script>

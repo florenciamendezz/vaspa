@@ -253,17 +253,28 @@ class ProgramaPDFDetalle {
         $conexion->autocommit(FALSE);
 
         try {
+            // Identificar el circuito de la asignatura para manejar vacancia
+            $circuito = $this->determinarCircuito($this->idAsignatura);
+            $aprobadoEscuelaUpdate = "";
+            $aprobadoEscuelaLegacyUpdate = "";
+            
+            if ($circuito == 'vacancia' && $this->aprobadoEscuela === null) {
+                $aprobadoEscuelaUpdate = ", aprobado_escuela = 1";
+                $aprobadoEscuelaLegacyUpdate = ", aprobadoEscuela = 1";
+            }
+
             // 1. Actualizar PROGRAMA_PDF_DETALLE
             $sql = "UPDATE programa_pdf_detalle 
                     SET en_revision = 1,
                         fecha_ultimo_movimiento_circuito = NOW()
+                        {$aprobadoEscuelaUpdate}
                     WHERE id = {$this->id}";
             if (!$conexion->query($sql)) throw new Exception("Error advancing PDF detail: " . $conexion->error);
 
             // 2. Actualizar PROGRAMA (Legacy)
             $idLegacy = $this->getProgramaLegacyId();
             if ($idLegacy) {
-                $sqlLegacy = "UPDATE programa SET enRevision = 1 WHERE id = {$idLegacy}";
+                $sqlLegacy = "UPDATE programa SET enRevision = 1 {$aprobadoEscuelaLegacyUpdate} WHERE id = {$idLegacy}";
                 if (!$conexion->query($sqlLegacy)) throw new Exception("Error advancing Legacy program: " . $conexion->error);
             }
 

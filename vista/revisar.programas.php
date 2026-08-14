@@ -51,9 +51,8 @@ if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACI
 $anioActual = date("Y"); //obtenemos el anio (4 digitos) del servidor (anio actual)
 
 $query = "SELECT DISTINCT (p.id) as idPrograma, a.nombre, a.id, p.anio, p.vigencia, p.fechaCarga, ppd.id as idProgramaPDF 
-                 FROM plan pl
-                 JOIN plan_asignatura pa ON pl.id = pa.idPlan
-                 JOIN asignatura a ON pa.idAsignatura = a.id 
+                 FROM asignatura a 
+                 JOIN carrera_asignatura ca ON a.id = ca.idAsignatura
                  JOIN programa p ON a.id = p.idAsignatura 
                  LEFT JOIN programa_pdf_detalle ppd ON p.idAsignatura = ppd.id_asignatura AND p.anio = ppd.anio
                  WHERE ( {$filtro} )

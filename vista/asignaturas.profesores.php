@@ -139,6 +139,22 @@ if ($resAsignaturas) {
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
         }
 
+        /* Ajustar el tamaño de fuente y diseño de bootstrap-select en la tabla */
+        .table-premium .bootstrap-select .btn {
+            font-size: 0.82rem !important;
+            padding: 0.4rem 0.75rem !important;
+            border-radius: 8px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            font-family: 'Outfit', sans-serif !important;
+            background-color: #fff !important;
+            color: #334155 !important;
+        }
+        
+        .table-premium .bootstrap-select .dropdown-menu {
+            font-size: 0.82rem !important;
+            font-family: 'Outfit', sans-serif !important;
+        }
+
         /* Toast de notificación premium */
         .toast-container {
             position: fixed;
@@ -307,7 +323,18 @@ if ($resAsignaturas) {
                 },
                 "pageLength": 25,
                 "ordering": true,
-                "order": [[1, "asc"]]
+                "order": [[1, "asc"]],
+                "drawCallback": function(settings) {
+                    // Volver a inicializar o refrescar bootstrap-select al cambiar de página
+                    $('#tablaAsociacion .selectpicker').each(function() {
+                        var $select = $(this);
+                        if ($select.data('selectpicker')) {
+                            $select.selectpicker('refresh');
+                        } else {
+                            $select.selectpicker();
+                        }
+                    });
+                }
             });
 
             $('#filtroCarrera').on('change', function() {

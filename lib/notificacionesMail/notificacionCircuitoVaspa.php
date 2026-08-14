@@ -177,6 +177,34 @@ class notificacionCircuitoVaspa {
     }
 
     /**
+     * Notificar comentario u observaciones al Profesor de forma flexible
+     */
+    public static function notificarComentarioDocente($idAsignatura, $anio, $emailDocente, $revisor, $estado, $comentario, $puedeReentregar) {
+        $asunto = "VASPA: Comentario / Observación registrada en su programa";
+        $saludo = "Estimado/a Profesor/a,";
+        
+        $estadoTexto = "";
+        if ($estado == 'aprobar') {
+            $estadoTexto = "El programa analítico ha sido Aprobado por la etapa: {$revisor}.";
+        } elseif ($estado == 'desaprobar') {
+            $estadoTexto = "El programa analítico ha sido Desaprobado/Devuelto por la etapa: {$revisor}.";
+        } else {
+            $estadoTexto = "Se han registrado observaciones en su programa analítico por parte de la etapa: {$revisor}. El estado general del circuito se mantiene.";
+        }
+        
+        $reentregaTexto = "";
+        if ($puedeReentregar) {
+            $reentregaTexto = "\n\nSe ha habilitado la opción para que pueda volver a cargar/corregir el archivo desde su panel de control.";
+        }
+        
+        $introduccion = $estadoTexto . $reentregaTexto;
+        $cuerpo = "Detalle del comentario:\n\n\"" . $comentario . "\"";
+        $botonHTML = '<div class="button-container"><a href="' . Constantes::HOME_SISTEMA . '" class="btn">Ir a Mis Asignaturas</a></div>';
+        
+        return self::enviarCorreo($emailDocente, $asunto, $saludo, $introduccion, $cuerpo, $idAsignatura, $anio, $botonHTML);
+    }
+
+    /**
      * M11.6 - Depto desaprueba -> Notificar a VA como intermediario (Con comentario de Depto)
      */
     public static function notificarDesaprobacionDepto($idAsignatura, $anio, $comentario) {

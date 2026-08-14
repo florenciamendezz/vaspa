@@ -287,6 +287,64 @@ if ($circuito == 'estandar') {
                         </div>
                         
                         <div class="card-footer bg-white pt-4">
+                            
+                            <?php if ($esEscuela || $esVA) { ?>
+                                <div class="card border border-primary shadow-sm mb-4">
+                                    <div class="card-header bg-primary text-white font-weight-bold">
+                                        <span class="oi oi-comment-square mr-2"></span> Panel de Evaluación y Comentarios (Exclusivo Escuela / Vinculación)
+                                    </div>
+                                    <div class="card-body">
+                                        <form action="../controlSistema/programa.revisar.actualizar.estado.pdf.php" method="POST">
+                                            <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
+                                            <input type="hidden" name="comentarioFlexible" value="1">
+                                            
+                                            <div class="form-group">
+                                                <label for="comentario_eval" class="font-weight-bold">Escribí tu comentario u observación:</label>
+                                                <textarea class="form-control" id="comentario_eval" rows="4" name="comentario" placeholder="Escribí aquí las observaciones o comentarios sobre el programa..." required></textarea>
+                                            </div>
+                                            
+                                            <div class="row align-items-center mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="font-weight-bold d-block">Acción sobre el estado:</label>
+                                                    <div class="form-check form-check-inline">
+                                                        <input class="form-check-input" type="radio" name="accionEstado" id="accionObservacion" value="observacion" checked>
+                                                        <label class="form-check-label font-weight-bold text-muted" for="accionObservacion">Solo dejar comentario (Mantener estado)</label>
+                                                    </div>
+                                                    <br>
+                                                    <div class="form-check form-check-inline mt-2">
+                                                        <input class="form-check-input" type="radio" name="accionEstado" id="accionAprobar" value="aprobar">
+                                                        <label class="form-check-label font-weight-bold text-success" for="accionAprobar">Aprobar programa</label>
+                                                    </div>
+                                                    <br>
+                                                    <div class="form-check form-check-inline mt-2">
+                                                        <input class="form-check-input" type="radio" name="accionEstado" id="accionDesaprobar" value="desaprobar">
+                                                        <label class="form-check-label font-weight-bold text-danger" for="accionDesaprobar">Desaprobar / Devolver al Profesor</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 border-left">
+                                                    <label class="font-weight-bold d-block">Permisos de edición para el Profesor:</label>
+                                                    <div class="custom-control custom-checkbox mt-2">
+                                                        <input type="checkbox" class="custom-control-input" id="habilitarReentrega" name="habilitarReentrega" value="1">
+                                                        <label class="custom-control-label font-weight-bold text-info" for="habilitarReentrega">
+                                                            Habilitar que el profesor pueda volver a cargar el programa (Reentrega)
+                                                        </label>
+                                                    </div>
+                                                    <p class="text-muted small mt-1">
+                                                        * Si seleccionas "Desaprobar", la reentrega se habilitará automáticamente de forma obligatoria.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="text-right">
+                                                <button type="submit" class="btn btn-primary" name="guardarComentarioAvanzado">
+                                                    <span class="oi oi-share-boxed mr-1"></span> Guardar Revisión y Notificar por Mail
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            <?php } ?>
+
                             <div class="card border shadow-sm">
                                 <div class="card-header bg-light">
                                     <h4 class="card-title mb-0 font-weight-bold text-dark"><span class="oi oi-comment-square mr-2"></span> Historial de Comentarios</h4>

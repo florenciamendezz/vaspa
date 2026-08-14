@@ -14,16 +14,7 @@ require_once '../../../modeloSistema/Programa.Class.php';
 require_once '../../../modeloSistema/ProgramaPDFDetalle.Class.php';
 
 if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
-    $codCarrera = $_POST['codCarrera'];
-    $carrera = new Carrera($codCarrera);
-    $plan = $carrera->getPlanVigente();
-    
-    if (is_null($plan)) {
-        echo '<div class="alert alert-warning" role="alert">No hay un plan de estudio vigente para esta carrera.</div>';
-        exit;
-    }
-
-    $codPlan = $plan->getId();
+    $codCarrera = $_POST['codCarrera'];    $carrera = new Carrera($codCarrera);
     $rol = $_POST['rol']; 
     $isVA = ($rol == 'VA' || $rol == 'Administrador' || $rol == 'Vinculación Académica');
 
@@ -58,12 +49,12 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
         </ul>
         <div class="tab-content" id="myTabContent">';
                             
-    // Obtener todas las asignaturas del plan incluyendo el idDepartamento
+    // Obtener todas las asignaturas de la carrera incluyendo el idDepartamento (independientemente del plan de estudios)
     $queryAsignaturas = "SELECT a.id, a.nombre, a.idDepartamento 
-                          FROM asignatura a
-                          JOIN plan_asignatura pa ON a.id = pa.idAsignatura
-                          WHERE pa.idPlan = '{$codPlan}'
-                          ORDER BY a.nombre ASC";
+                           FROM asignatura a
+                           JOIN carrera_asignatura ca ON a.id = ca.idAsignatura
+                           WHERE ca.idCarrera = '{$codCarrera}'
+                           ORDER BY a.nombre ASC";
     
     $resultadoAsignaturas = BDConexionSistema::getInstancia()->query($queryAsignaturas);
 
