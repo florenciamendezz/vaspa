@@ -354,30 +354,26 @@ if ($circuito == 'estandar') {
                                 $idPdf = intval($programaPDF->getId());
                                 $idLegacy = $programaLegacy ? intval($programaLegacy->getId()) : 0;
                                 
-                                $sqlDevs = "SELECT * FROM programa_devoluciones 
+                                // --- Comentarios PENDIENTES (resuelto = 0) ---
+                                $sqlPendientes = "SELECT * FROM programa_devoluciones 
                                             WHERE (id_programa_pdf = {$idPdf}" . ($idLegacy ? " OR id_programa = {$idLegacy}" : "") . ") 
-                                              AND resuelto = 0 
+                                              AND resuelto = 0
                                             ORDER BY fecha DESC";
-                                $resDevs = BDConexionSistema::getInstancia()->query($sqlDevs);
-                                if ($resDevs && $resDevs->num_rows > 0) {
-                                    while ($dev = $resDevs->fetch_assoc()) {
+                                $resPendientes = BDConexionSistema::getInstancia()->query($sqlPendientes);
+                                if ($resPendientes && $resPendientes->num_rows > 0) {
+                                    while ($dev = $resPendientes->fetch_assoc()) {
                                         if ($comentariosEncontrados) echo '<hr class="my-0">';
                                         $comentariosEncontrados = true;
-                                        
-                                        $statusBadge = $dev['resuelto'] == 1 
-                                            ? '<span class="badge badge-success float-right"><span class="oi oi-circle-check"></span> Resuelto</span>' 
-                                            : '<span class="badge badge-danger float-right"><span class="oi oi-warning"></span> Pendiente</span>';
-                                            
                                         $fechaFormat = date('d/m/Y H:i', strtotime($dev['fecha']));
-                                        
                                         echo '<div class="card-body">
-                                                ' . $statusBadge . '
+                                                <span class="badge badge-danger float-right"><span class="oi oi-warning"></span> Pendiente</span>
                                                 <h5 class="card-title font-weight-bold text-primary">' . htmlspecialchars($dev['rol_revisor']) . ' <small class="text-muted">(' . $fechaFormat . ')</small></h5>
                                                 <p class="card-text text-dark">' . nl2br(htmlspecialchars($dev['comentario'])) . '</p>
                                               </div>';
                                     }
                                 }
                                 
+                                // Fallback legacy si no hay registros en la tabla
                                 if (!$comentariosEncontrados && $programaLegacy) {
                                     if (!is_null($programaLegacy->getComentarioVa()) && !empty($programaLegacy->getComentarioVa())){
                                         $comentariosEncontrados = true;
@@ -408,6 +404,32 @@ if ($circuito == 'estandar') {
                                     echo '<div class="card-body text-center text-muted">
                                             No hay comentarios registrados en este programa.
                                           </div>';
+                                }
+                                
+                                // --- Revisiones ANTERIORES (resuelto = 1) colapsables ---
+                                $sqlResueltos = "SELECT * FROM programa_devoluciones 
+                                            WHERE (id_programa_pdf = {$idPdf}" . ($idLegacy ? " OR id_programa = {$idLegacy}" : "") . ") 
+                                              AND resuelto = 1
+                                            ORDER BY fecha DESC";
+                                $resResueltos = BDConexionSistema::getInstancia()->query($sqlResueltos);
+                                if ($resResueltos && $resResueltos->num_rows > 0) {
+                                    echo '<div class="border-top">
+                                        <button class="btn btn-link btn-sm text-muted w-100 text-left py-2" type="button" data-toggle="collapse" data-target="#historialResuelto" aria-expanded="false">
+                                            <span class="oi oi-clock mr-1"></span> Ver revisiones anteriores (' . $resResueltos->num_rows . ')
+                                        </button>
+                                        <div class="collapse" id="historialResuelto">';
+                                    $primero = true;
+                                    while ($dev = $resResueltos->fetch_assoc()) {
+                                        if (!$primero) echo '<hr class="my-0">';
+                                        $primero = false;
+                                        $fechaFormat = date('d/m/Y H:i', strtotime($dev['fecha']));
+                                        echo '<div class="card-body bg-light">
+                                                <span class="badge badge-success float-right"><span class="oi oi-circle-check"></span> Resuelto</span>
+                                                <h5 class="card-title font-weight-bold text-secondary">' . htmlspecialchars($dev['rol_revisor']) . ' <small class="text-muted">(' . $fechaFormat . ')</small></h5>
+                                                <p class="card-text text-muted">' . nl2br(htmlspecialchars($dev['comentario'])) . '</p>
+                                              </div>';
+                                    }
+                                    echo '</div></div>';
                                 }
                                 ?>
                             </div>

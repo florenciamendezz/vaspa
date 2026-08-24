@@ -37,15 +37,15 @@ if (isset($_POST["guardarComentarioAvanzado"])) {
     $rolEscaped = BDConexionSistema::getInstancia()->real_escape_string($rol);
     $idLegacyVal = $programaPDF->getProgramaLegacyId();
     
-    // 1. Guardar comentario en historial de devoluciones
-    $sqlDevolucion = "INSERT INTO programa_devoluciones (id_programa, id_programa_pdf, id_usuario, rol_revisor, fecha, comentario, leido, resuelto) 
-                      VALUES (" . ($idLegacyVal ? $idLegacyVal : "NULL") . ", {$idProgramaPDF}, {$idUsuario}, '{$rolEscaped}', NOW(), '{$comentarioEscaped}', 0, 0)";
-    BDConexionSistema::getInstancia()->query($sqlDevolucion);
-    
     // 2. Procesar acción sobre el estado
     $reentregaRealizada = false;
     
     if ($accionEstado == 'aprobar') {
+        // Insertar comentario en historial (el método aprobar() no lo hace)
+        $sqlDevolucion = "INSERT INTO programa_devoluciones (id_programa, id_programa_pdf, id_usuario, rol_revisor, fecha, comentario, leido, resuelto) 
+                          VALUES (" . ($idLegacyVal ? $idLegacyVal : "NULL") . ", {$idProgramaPDF}, {$idUsuario}, '{$rolEscaped}', NOW(), '{$comentarioEscaped}', 0, 0)";
+        BDConexionSistema::getInstancia()->query($sqlDevolucion);
+        
         $programaPDF->aprobar($rol);
         if ($rol == 'Secretario de Escuela' || $rol == 'Director de Escuela') {
             $sqlUp = "UPDATE programa_pdf_detalle SET aprobado_escuela = 1 WHERE id = {$idProgramaPDF}";
@@ -63,10 +63,16 @@ if (isset($_POST["guardarComentarioAvanzado"])) {
             }
         }
     } elseif ($accionEstado == 'desaprobar') {
+        // El método desaprobar() ya inserta en programa_devoluciones internamente,
+        // por eso NO se hace un INSERT manual aquí para evitar duplicados.
         $programaPDF->desaprobar($rol, $comentario);
         $habilitarReentrega = 1; // Obligatorio al desaprobar
     } else {
-        // Solo registrar comentario (observacion)
+        // Solo registrar comentario (observacion): insertar en historial
+        $sqlDevolucion = "INSERT INTO programa_devoluciones (id_programa, id_programa_pdf, id_usuario, rol_revisor, fecha, comentario, leido, resuelto) 
+                          VALUES (" . ($idLegacyVal ? $idLegacyVal : "NULL") . ", {$idProgramaPDF}, {$idUsuario}, '{$rolEscaped}', NOW(), '{$comentarioEscaped}', 0, 0)";
+        BDConexionSistema::getInstancia()->query($sqlDevolucion);
+        
         if ($rol == 'Secretario de Escuela' || $rol == 'Director de Escuela') {
             if ($idLegacyVal) {
                 $sqlUp = "UPDATE programa SET comentarioEscuela = '{$comentarioEscaped}' WHERE id = {$idLegacyVal}";
