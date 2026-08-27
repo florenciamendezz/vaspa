@@ -76,7 +76,7 @@ if (isset($_POST['codCarrera'])) {
                         <td class="font-weight-bold"><?php echo $idAsignatura; ?></td>
                         <td><?php echo $nombreAsignatura; ?></td>
                         <td>
-                            <select class="selectpicker depto-select" data-width="100%" data-live-search="true" data-container="body">
+                            <select class="selectpicker depto-select" data-id="<?php echo $idAsignatura; ?>" data-width="100%" data-live-search="true" data-container="body">
                                 <?php foreach ($deptos as $d) {
                                     $selected = ($d['id'] == $idDepto) ? 'selected' : '';
                                     echo '<option value="'.$d['id'].'" '.$selected.'>'.$d['nombre'].'</option>';
@@ -84,7 +84,7 @@ if (isset($_POST['codCarrera'])) {
                             </select>
                         </td>
                         <td>
-                            <select class="selectpicker responsables-select" data-width="100%" data-live-search="true" multiple title="Sin responsables" data-actions-box="true" data-container="body">
+                            <select class="selectpicker responsables-select" data-id="<?php echo $idAsignatura; ?>" data-width="100%" data-live-search="true" multiple title="Sin responsables" data-actions-box="true" data-container="body">
                                 <?php foreach ($profs as $p) {
                                     $selected = in_array($p['id'], $responsablesIds) ? 'selected' : '';
                                     echo '<option value="'.$p['id'].'" '.$selected.'>'.$p['apellido'].', '.$p['nombre'].'</option>';

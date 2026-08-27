@@ -18,7 +18,7 @@ if (isset($_POST['idAsignatura'])) {
 
     try {
         // 1. Actualizar departamento si está definido
-        if ($idDepartamento !== null) {
+        if ($idDepartamento !== null && $idDepartamento !== '') {
             $stmt = $db->prepare("UPDATE asignatura SET idDepartamento = ? WHERE id = ?");
             $stmt->bind_param("is", $idDepartamento, $idAsignatura);
             if (!$stmt->execute()) {

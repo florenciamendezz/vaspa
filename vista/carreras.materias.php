@@ -17,6 +17,15 @@ if ($resDeptos && $resDeptos->num_rows > 0) {
     }
 }
 
+// Obtener escuelas para el modal de creación rápida
+$resEscuelas = $db->query("SELECT * FROM escuela ORDER BY nombre ASC");
+$escuelas = [];
+if ($resEscuelas && $resEscuelas->num_rows > 0) {
+    while ($row = $resEscuelas->fetch_assoc()) {
+        $escuelas[] = $row;
+    }
+}
+
 // Obtener profesores para el modal de creación/edición rápida
 $resProfs = $db->query("SELECT * FROM profesor ORDER BY apellido ASC, nombre ASC");
 $profesores = [];
@@ -179,13 +188,24 @@ if ($resProfs && $resProfs->num_rows > 0) {
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="newDepto">Departamento</label>
                                         <select id="newDepto" class="selectpicker" data-width="100%" data-live-search="true" required>
                                             <option value="">Seleccione Departamento</option>
                                             <?php foreach ($departamentos as $d) {
                                                 echo '<option value="'.$d['id'].'">'.$d['nombre'].'</option>';
+                                            } ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="newEscuela">Escuela</label>
+                                        <select id="newEscuela" class="selectpicker" data-width="100%" data-live-search="true" required>
+                                            <option value="">Seleccione Escuela</option>
+                                            <?php foreach ($escuelas as $e) {
+                                                echo '<option value="'.$e['id'].'">'.$e['nombre'].'</option>';
                                             } ?>
                                         </select>
                                     </div>
@@ -286,7 +306,7 @@ if ($resProfs && $resProfs->num_rows > 0) {
                 // Cargar modal de creación rápida
                 $('#btnCrearAsociar').click(function() {
                     $('#formCrearMateria')[0].reset();
-                    $('#newDepto, #newResponsables').selectpicker('val', '');
+                    $('#newDepto, #newEscuela, #newResponsables').selectpicker('val', '');
                     $('#modalCrearAsociar').modal('show');
                 });
 
@@ -295,9 +315,10 @@ if ($resProfs && $resProfs->num_rows > 0) {
                     var id = $('#newId').val().trim();
                     var nombre = $('#newNombre').val().trim();
                     var idDepto = $('#newDepto').val();
+                    var idEscuela = $('#newEscuela').val();
                     var responsables = $('#newResponsables').val();
 
-                    if(id.length !== 4 || nombre === "" || idDepto === "") {
+                    if(id.length !== 4 || nombre === "" || idDepto === "" || idEscuela === "") {
                         alert('Por favor complete todos los campos obligatorios.');
                         return;
                     }
@@ -307,6 +328,7 @@ if ($resProfs && $resProfs->num_rows > 0) {
                         id: id,
                         nombre: nombre,
                         idDepartamento: idDepto,
+                        idEscuela: idEscuela,
                         responsables: responsables
                     }, function(res) {
                         var respuesta = JSON.parse(res);
@@ -338,22 +360,36 @@ if ($resProfs && $resProfs->num_rows > 0) {
 
                 // Guardar cambios en Depto o Responsables de la fila
                 $(document).on('change', '.depto-select, .responsables-select', function() {
-                    var fila = $(this).closest('tr');
-                    var idAsignatura = fila.data('id');
-                    var idDepto = fila.find('.depto-select').val();
-                    var responsables = fila.find('.responsables-select').val();
+                    var selectElem = $(this);
+                    var idAsignatura = selectElem.attr('data-id') || selectElem.data('id') || selectElem.closest('tr').attr('data-id') || selectElem.closest('tr').find('td:first').text().trim();
+                    
+                    if (!idAsignatura) {
+                        alert('Error: No se pudo determinar el código de la asignatura.');
+                        return;
+                    }
 
-                    $.post('../lib/consultaAjax/carrerasMaterias/cambiarDatosMateria.php', {
+                    var deptoElem = $('.depto-select[data-id="' + idAsignatura + '"]');
+                    var respElem = $('.responsables-select[data-id="' + idAsignatura + '"]');
+
+                    var idDepto = deptoElem.length ? deptoElem.val() : selectElem.closest('tr').find('.depto-select').val();
+                    var responsables = (respElem.length ? respElem.val() : selectElem.closest('tr').find('.responsables-select').val()) || [];
+
+                    var datos = {
                         idAsignatura: idAsignatura,
                         idDepartamento: idDepto,
                         responsables: responsables
-                    }, function(res) {
+                    };
+
+                    $.post('../lib/consultaAjax/carrerasMaterias/cambiarDatosMateria.php', datos, function(res) {
                         var respuesta = JSON.parse(res);
-                        if(!respuesta.success) {
-                            alert('No se pudieron guardar los cambios de la materia.');
+                        if(respuesta.success) {
+                            mostrarAlerta('success', 'Cambios guardados correctamente.');
+                        } else {
+                            alert('Error al guardar:\n' + (respuesta.error || '(sin detalle)'));
                         }
                     });
                 });
+
 
                 // Quitar materia de la carrera (Desasociar)
                 $(document).on('click', '.btn-quitar-materia', function() {
