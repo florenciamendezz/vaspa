@@ -103,6 +103,7 @@ INSERT INTO `rol_permiso` (`id_rol`, `id_permiso`) VALUES
 (8, 8),
 (8, 9),
 (8, 11),
+(8, 16),
 (9, 11),
 (9, 17),
 (9, 20),
