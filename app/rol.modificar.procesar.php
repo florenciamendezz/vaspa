@@ -3,43 +3,56 @@ include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_ROLES);
 include_once '../modelo/BDConexion.Class.php';
 $DatosFormulario = $_POST;
-$idRol = $DatosFormulario["id"];
+$idRol = (int)$DatosFormulario["id"];
+$nombreRol = trim($DatosFormulario["nombre"]);
+$mensaje = '';
+$consulta = false;
 
-BDConexion::getInstancia()->autocommit(false);
-BDConexion::getInstancia()->begin_transaction();
+// Comprobar si ya existe otro rol con el mismo nombre
+$sql = "SELECT * FROM rol WHERE nombre LIKE '{$nombreRol}' AND id <> {$idRol}";
+$resultado = BDConexion::getInstancia()->query($sql);
 
+if ($resultado && $resultado->num_rows > 0) {
+    $mensaje = "El rol <b>{$nombreRol}</b> ya existe, por favor ingrese otro nombre.";
+    $consulta = false;
+} else {
+    BDConexion::getInstancia()->autocommit(false);
+    BDConexion::getInstancia()->begin_transaction();
 
-$query = "UPDATE rol "
-        . "SET nombre = '{$DatosFormulario["nombre"]}' "
-        . "WHERE id = {$idRol}";
-$consulta = BDConexion::getInstancia()->query($query);
-if (!$consulta) {
-    BDConexion::getInstancia()->rollback();
-    //arrojar una excepcion
-    die(BDConexion::getInstancia()->errno);
-}
-
-$query = "DELETE FROM rol_permiso "
-        . "WHERE id_rol = {$idRol}";
-$consulta = BDConexion::getInstancia()->query($query);
-if (!$consulta) {
-    BDConexion::getInstancia()->rollback();
-    //arrojar una excepcion
-    die(BDConexion::getInstancia()->errno);
-}
-
-foreach ($DatosFormulario["permiso"] as $idPermiso) {
-    $query = "INSERT INTO rol_permiso "
-            . "VALUES ({$idRol}, {$idPermiso})";
+    $query = "UPDATE rol "
+            . "SET nombre = '{$nombreRol}' "
+            . "WHERE id = {$idRol}";
     $consulta = BDConexion::getInstancia()->query($query);
     if (!$consulta) {
         BDConexion::getInstancia()->rollback();
-        //arrojar una excepcion
-        die(BDConexion::getInstancia()->errno);
+        $mensaje = "Error al actualizar el rol en la base de datos.";
+    } else {
+        $query = "DELETE FROM rol_permiso "
+                . "WHERE id_rol = {$idRol}";
+        $consulta = BDConexion::getInstancia()->query($query);
+        if (!$consulta) {
+            BDConexion::getInstancia()->rollback();
+            $mensaje = "Error al actualizar los permisos del rol.";
+        } else {
+            if (isset($DatosFormulario["permiso"]) && is_array($DatosFormulario["permiso"])) {
+                foreach ($DatosFormulario["permiso"] as $idPermiso) {
+                    $query = "INSERT INTO rol_permiso "
+                            . "VALUES ({$idRol}, {$idPermiso})";
+                    $consulta = BDConexion::getInstancia()->query($query);
+                    if (!$consulta) {
+                        BDConexion::getInstancia()->rollback();
+                        $mensaje = "Error al asignar los permisos al rol.";
+                        break;
+                    }
+                }
+            }
+            if ($consulta) {
+                BDConexion::getInstancia()->commit();
+                BDConexion::getInstancia()->autocommit(true);
+            }
+        }
     }
 }
-BDConexion::getInstancia()->commit();
-BDConexion::getInstancia()->autocommit(true);
 ?>
 <html>
     <head>
@@ -68,7 +81,7 @@ BDConexion::getInstancia()->autocommit(true);
                     <?php } ?>   
                     <?php if (!$consulta) { ?>
                         <div class="alert alert-danger" role="alert">
-                            Ha ocurrido un error.
+                            Ha ocurrido un error. <?= !empty($mensaje) ? $mensaje : ''; ?>
                         </div>
                     <?php } ?>
                     <hr />
