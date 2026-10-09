@@ -1,473 +1,322 @@
 <?php
-
 include_once '../lib/ControlAcceso.Class.php';
-ControlAcceso::requierePermiso(PermisosSistema::PERMISO_ASIGNATURAS);
+
+// Validamos permisos: Asignaturas o VA
+$UsuarioSes = $_SESSION['usuario'] ?? null;
+$perfil = "";
+if (isset($UsuarioSes->roles[0])) {
+    $perfil = $UsuarioSes->roles[0]->nombre;
+}
+
+if (!ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_ASIGNATURAS, $UsuarioSes) && $perfil != PermisosSistema::ROL_VINCULACION_ACADEMICA) {
+    ControlAcceso::requierePermiso(PermisosSistema::PERMISO_ASIGNATURAS);
+}
+
 include_once '../controlSistema/ManejadorAsignatura.php';
 include_once '../modeloSistema/Asignatura.Class.php';
 include_once '../modeloSistema/Plan.Class.php';
+include_once '../modeloSistema/BDConexionSistema.Class.php';
 
-$manejadorAsignatura = new ManejadorAsignatura();
+$idAsignatura = $_GET['idAsignatura'] ?? '';
+$idPlan = $_GET['idPlan'] ?? '';
 
-// Obtenemos todas las asignaturas de la BD
-$asignaturas = $manejadorAsignatura->getColeccion();
-
-
-$idAsignatura = $_GET['idAsignatura'];
 $asignatura = new Asignatura($idAsignatura);
-
-$idPlan = $_GET['idPlan'];
 $plan = new Plan($idPlan);
 
+if (is_null($asignatura->getId()) || is_null($plan->getId())) {
+    header("Location: carreras.php");
+    exit;
+}
 
-$query = "SELECT id, nombre FROM asignatura ORDER BY id";
-$asig = BDConexionSistema::getInstancia()->query($query);
-
-//Esta query obtiene si una asignatura tiene o no correlativas asociadas. Esto me va a permitir mostrar/ ocultar los botones y el mensaje al usuario, del formulario.
-
-$consulta = "SELECT plan_asignatura.tieneCorrelativa FROM `plan_asignatura` WHERE `idAsignatura` = '$idAsignatura' AND `idPlan` = '$idPlan'";
-
-$tieneCorrelativa = BDConexionSistema::getInstancia()->query($consulta);
-
+// Obtenemos las asignaturas del plan (y del catálogo) para el selector de correlativas
+$queryOtras = "SELECT id, nombre FROM asignatura WHERE id != '{$idAsignatura}' ORDER BY nombre ASC";
+$resOtras = BDConexionSistema::getInstancia()->query($queryOtras);
+$materiasCatalogo = [];
+if ($resOtras) {
+    while ($row = $resOtras->fetch_assoc()) {
+        $materiasCatalogo[] = $row;
+    }
+}
 ?>
 
-<html>
-    <head>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Correlatividades de Asignatura</title>
 
-        <meta charset="UTF-8">
-        <script type="text/javascript" src="../lib/JQuery/jquery-3.3.1.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-        <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>
-        <link rel="stylesheet" href="../lib/bootstrap-4.1.1-dist/css/bootstrap.css" />
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.8/css/bootstrap-select.min.css" rel="stylesheet"/>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.8/js/bootstrap-select.min.js"></script>
-        <link rel="stylesheet" href="../lib/open-iconic-master/font/css/open-iconic-bootstrap.css" />
-        <script src="../lib/bootbox/bootbox.js"></script>
-        <script src="../lib/bootbox/bootbox.locales.js"></script>        
-        <link rel="stylesheet" href="../lib/datatable/dataTables.bootstrap4.min.css" />
-        <script type="text/javascript" src="../lib/datatable/jquery.dataTables.min.js"></script>
-        <script type="text/javascript" src="../lib/datatable/dataTables.bootstrap4.min.js"></script>
-        
-        <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Asignaturas Correlativas</title>
+    <link rel="stylesheet" href="../lib/bootstrap-4.1.1-dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="../lib/open-iconic-master/font/css/open-iconic-bootstrap.css" />
+    <link rel="stylesheet" href="../lib/datatable/dataTables.bootstrap4.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.8/css/bootstrap-select.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../lib/css/premium.css" />
 
-        <script>
+    <script type="text/javascript" src="../lib/JQuery/jquery-3.3.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.8/js/bootstrap-select.min.js"></script>
+    <script type="text/javascript" src="../lib/datatable/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="../lib/datatable/dataTables.bootstrap4.min.js"></script>
+    <script src="../lib/bootbox/bootbox.js"></script>
+    <script src="../lib/bootbox/bootbox.locales.js"></script>
 
-            $(function() {
+    <style>
+        .form-correlativa-box {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            transition: all 0.2s ease;
+        }
+        .form-correlativa-box:hover {
+            border-color: #3b82f6;
+            background: #f0f7ff;
+        }
+    </style>
+</head>
+<body>
 
-                // desactivamos el boton Guardar y Procesar
-                document.getElementById("submit-btn").disabled = true;
+    <?php include_once '../gui/navbar.php'; ?>
 
-            });
- 
-        </script>
-
-    </head>
-    <body>
-
-        <?php include_once '../gui/navbar.php'; ?>
-
-        <div class="container">
-            <div class="card">
-                <div class="card-header">
-
-                    <h3>Asignaturas correlativas de: <span class="text-info"><?= $asignatura->getId();?> - <?= $asignatura->getNombre();?> </span></h3>
-
-                </div>
-
-                <div class="card-body">
-                    <p> 
-
-                        <?php 
-                        
-                        //Validamos si la asignatura actual No tiene asignaturas correlativas asociadas previamente.
-                            
-                        $correlativa = $tieneCorrelativa->fetch_assoc();
-
-                        if($correlativa['tieneCorrelativa'] == 0){ ?>
-
-                            <div class="alert alert-info" role="alert">
-                                <p>
-                                    Estimado usuario, seleccione una asignatura de la lista, el requisito y tipo de correlatividad y pulse el bot&oacute;n <b>AGREGAR</b> para agregarla a la lista de asignaturas correlativas provisorias.<br /> 
-                                    Luego, presione el bot&oacute;n <b>Guardar y Procesar</b> para guardar los cambios de manera permanente.<br />
-                                </p>
-                            </div>
-                            <br />
-
-                        <?php } else{ ?>
-
-                            <div class="alert alert-warning" role="alert">
-                                <p>
-                                    Estimado usuario, <b>NO</b> se pueden modificar las asignaturas correlativas vinculadas a esta asignatura de la revisi&oacute;n del plan.<br />
-                                </p>
-                            </div>
-                            <br />
-
-                        <?php } ?>
-
-
-                        <form id="form" method="POST" action="asignaturas.correlativas.procesar.php">
-                
-                           <!--Enviamos el codigo del plan al otro archivo para realizar la insercion en la BD-->
-                           <input type="hidden" id="idPlan" name="idPlan" value="<?=$plan->getId();?>">
-                           <!--Enviamos el codigo de la asignatura al otro archivo para realizar la insercion en la BD-->
-                           <input type="hidden" id="idAsignatura" name="idAsignatura" value="<?=$asignatura->getId();?>">
-
-                           <div class="col-6">
-                                <div class="form-group">   
-                                    <div class="row justify-content-md-center">
-
-                                        <?php if($correlativa['tieneCorrelativa'] == 1){ ?>
-
-                                        <div class="col col-sm-10">
-                                            <label for="asignatura">Asignaturas</label>
-                                            <select id="asignatura" name="asignatura" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una Asignatura" data-none-results-text="No se encontraron resultados" disabled="" data-size="7" data-container="body">
-                                                <?php while ($asignatura=$asig->fetch_assoc()){?>
-                                                <option value="<?= $asignatura['id'] ?>"><?= $asignatura['id'].' - '.$asignatura['nombre'] ?>
-                                                </option>
-                                            <?php } ?>
-                                            </select>
-                                        </div>
-
-                                        <div class="col col-sm-10">
-                                            <label for="requisito">Requisito</label>
-                                            <select id="requisito" name="requisito" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione un Requisito" data-none-results-text="No se encontraron resultados" disabled="" data-container="body">
-                                                <option value="Aprobada">Aprobada</option>
-                                                <option value="Regular">Regular</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="col col-sm-10">
-                                            <label for="tipo">Tipo de Correlatividad</label>
-                                            <select id="tipo" name="tipo_correlatividad" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione el Tipo de Correlatividad" data-none-results-text="No se encontraron resultados" disabled="" data-container="body">
-                                                <option value="Precedente">Precedente</option>
-                                                <option value="Subsiguiente">Subsiguiente</option>
-                                            </select>
-                                        </div>
-
-                                        <?php } else{ ?>
-
-                                        <div class="col col-sm-10">
-                                            <label for="asignatura">Asignaturas</label>
-                                            <select id="asignatura" name="asignatura" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una Asignatura" data-none-results-text="No se encontraron resultados" data-size="7">
-                                                <?php while ($asignatura=$asig->fetch_assoc()){?>
-                                                <option value="<?= $asignatura['id'] ?>"><?= $asignatura['id'].' - '.$asignatura['nombre'] ?>
-                                                </option>
-                                            <?php } ?>
-                                            </select>
-                                        </div>
-
-                                        <div class="col col-sm-10" style="padding-top: 30px; padding-bottom: 30px;">
-                                            <label for="requisito">Requisito</label>
-                                            <select id="requisito" name="requisito" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione un Requisito" data-none-results-text="No se encontraron resultados">
-                                                <option value="Aprobada">Aprobada</option>
-                                                <option value="Regular">Regular</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="col col-sm-10">
-                                            <label for="tipo">Tipo de Correlatividad</label>
-                                            <select id="tipo" name="tipo_correlatividad" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione el Tipo de Correlatividad" data-none-results-text="No se encontraron resultados">
-                                                <option value="Precedente">Precedente</option>
-                                                <option value="Subsiguiente">Subsiguiente</option>
-                                            </select>
-                                        </div>
-
-                                        <?php } ?>
-
-
-                                        <?php if($correlativa['tieneCorrelativa'] == 1){ ?>
-
-                                        <div class="col col-sm-4">
-                                            <br />
-                                            <button class="btn btn-info" type="button" onclick="return add_li()" disabled="">AGREGAR</button>
-                                        </div>
-
-                                        <?php } else { ?>
-
-                                        <div class="col col-sm-4">
-                                            <br />
-                                            <button class="btn btn-info" type="button" onclick="return add_li()">AGREGAR</button>
-                                        </div>
-
-                                        <?php } ?>
-
-                                    </div>
-
-                                    <br />
-
-                                    <?php if($correlativa['tieneCorrelativa'] == 0){ ?>
-
-                                    <label for="listaDesordenada">Listado de asignaturas correlativas provisorias:</label>
-                                    
-                                    <ul id="listaDesordenada" class="list-group">
-                    
-                                    </ul> 
-
-                                    <?php } ?>
-
-                                </div>
-                            </div>
-
-
-                            <?php if($correlativa['tieneCorrelativa'] == 1){ ?>
-
-                            <button class="btn btn-primary" id="submit-btn" type="submit" disabled="">Guardar y Procesar</button>
-                            
-                            <?php } else { ?>
-
-                            <button class="btn btn-primary" id="submit-btn" type="submit">Guardar y Procesar</button>
-
-                            <?php } ?>
-
-
-                        </form> 
-
-                    </p>
-
-                    <div id="tabla"></div>
-                </div> <!-- End card-body -->
-                
-                <div class="card-footer text-center">
-                    <a href="carrera.verPlanes.php?id=<?= $plan->getIdCarrera(); ?>">
-                        <button type="button" class="btn btn-primary">
-                            <span class="oi oi-arrow-thick-left"></span> Volver A Planes
-                        </button>
+    <div class="container my-4">
+        <div class="card card-premium">
+            <div class="card-header card-header-premium">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-1">Correlatividades de: <span style="color: #60a5fa; font-weight: 700;"><?= htmlspecialchars($asignatura->getId() . ' - ' . $asignatura->getNombre()); ?></span></h3>
+                        <div class="text-white" style="opacity: 0.9;">
+                            Plan de Estudio: <strong><?= htmlspecialchars($plan->getId()); ?></strong>
+                        </div>
+                    </div>
+                    <a href="plan.asignaturas.php?id=<?= urlencode($plan->getId()); ?>&idCarrera=<?= urlencode($plan->getIdCarrera()); ?>" class="btn btn-outline-light btn-sm">
+                        <span class="oi oi-arrow-thick-left"></span> Volver a Materias del Plan
                     </a>
                 </div>
-            </div> <!-- End card -->
+            </div>
 
-
-
-        <?php include_once '../gui/footer.php'; ?>
-
-
-
-
-        <script>
-
-            /**
-             * Funcion que añade un <li> dentro del <ul>
-             */
-            
-            function add_li(){
-
-                var nuevoLi = document.getElementById("asignatura").value;
-
-                var elemento = document.getElementById("asignatura");
-
-                var elemento_seleccionado = elemento.options[elemento.selectedIndex].text;
-
-           
-                var requisito = document.getElementById("requisito").value;
-
-                var tipo = document.getElementById("tipo").value;
-
-                //Obtenemos el codigo de la asignatura actual, donde queremos agregar las correlativas
+            <div class="card-body">
                 
-                var cod = '<?php echo $idAsignatura;?>'
+                <!-- Feedback Toast / Alert -->
+                <div id="alertFeedback" style="display: none;" class="alert alert-dismissible fade show" role="alert">
+                    <span id="alertFeedbackText"></span>
+                    <button type="button" class="close" onclick="$('#alertFeedback').hide();">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
 
-                //Primero validamos que todos los campos sean seleccionados
+                <!-- Formulario Interactivo para Agregar / Modificar Correlatividades -->
+                <div class="form-correlativa-box">
+                    <h5 class="text-primary font-weight-bold mb-2">
+                        <span class="oi oi-plus"></span> Agregar o Modificar Correlatividades
+                    </h5>
+                    <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                        Seleccione la materia correlativa, el requisito exigido y si es <strong>Precedente</strong> (materia que el alumno debe haber cursado/aprobado antes de cursar esta) o <strong>Subsiguiente</strong> (materia que requerirá esta).
+                    </p>
 
-                if (nuevoLi === "" || requisito === "" || tipo === "") {
+                    <form id="formNuevaCorrelativa" onsubmit="event.preventDefault(); agregarCorrelativa();">
+                        <div class="form-row">
+                            <div class="col-md-5 mb-2">
+                                <label for="selectCorrelativa" class="font-weight-bold">Asignatura Correlativa</label>
+                                <select id="selectCorrelativa" class="form-control selectpicker" data-live-search="true" data-size="8" title="Seleccione una asignatura..." required>
+                                    <?php foreach ($materiasCatalogo as $m): ?>
+                                        <option value="<?= htmlspecialchars($m['id']); ?>" data-tokens="<?= htmlspecialchars($m['nombre'] . ' ' . $m['id']); ?>">
+                                            <?= htmlspecialchars($m['id'] . ' - ' . $m['nombre']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
 
-                    alert("No se han seleccionado todos los campos.");
+                            <div class="col-md-3 mb-2">
+                                <label for="selectRequisito" class="font-weight-bold">Requisito</label>
+                                <select id="selectRequisito" class="form-control" required>
+                                    <option value="Regular">Regular (Cursada)</option>
+                                    <option value="Aprobada">Aprobada (Final)</option>
+                                </select>
+                            </div>
 
-                } else{
+                            <div class="col-md-2 mb-2">
+                                <label for="selectTipo" class="font-weight-bold">Tipo</label>
+                                <select id="selectTipo" class="form-control" required>
+                                    <option value="Precedente">Precedente (Previa)</option>
+                                    <option value="Subsiguiente">Subsiguiente (Posterior)</option>
+                                </select>
+                            </div>
 
-                    //Validamos que el codigo de la asignatura a asociar no sea el mismo de la asignatura actual
-                    
-                    if (nuevoLi == cod){
+                            <div class="col-md-2 mb-2 d-flex align-items-end">
+                                <button type="submit" id="btnGuardarCorrelativa" class="btn btn-success btn-block" style="height: 38px;">
+                                    <span class="oi oi-plus"></span> Agregar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
 
-                        alert("No se puede agregar la asignatura como correlativa de si misma.");
+                <!-- Tabla de Correlatividades Actuales -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="text-dark font-weight-bold mb-0">
+                        <span class="oi oi-list"></span> Correlatividades Vigentes en el Plan
+                    </h4>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="cargarTablaCorrelativas();" title="Recargar tabla">
+                        <span class="oi oi-reload"></span> Actualizar lista
+                    </button>
+                </div>
 
-                    }else{
+                <div id="contenedorTablaCorrelativas">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Cargando...</span>
+                        </div>
+                        <p class="text-muted mt-2">Cargando correlatividades...</p>
+                    </div>
+                </div>
 
-                        if (nuevoLi.length > 0){
+            </div>
 
-                            if (find_li(nuevoLi)){
+            <div class="card-footer text-center">
+                <a href="plan.asignaturas.php?id=<?= urlencode($plan->getId()); ?>&idCarrera=<?= urlencode($plan->getIdCarrera()); ?>" class="btn btn-primary mr-2">
+                    <span class="oi oi-arrow-thick-left"></span> Volver a Asignaturas del Plan
+                </a>
+                <a href="carrera.verPlanes.php?id=<?= urlencode($plan->getIdCarrera()); ?>" class="btn btn-outline-secondary">
+                    <span class="oi oi-list"></span> Volver a Planes
+                </a>
+            </div>
+        </div>
+    </div>
 
-                                var li = document.createElement('li');
-                                li.id = nuevoLi;
-                                li.value = nuevoLi;
-                                li.className = "list-group-item";
-                                li.innerHTML = "<button id='" + nuevoLi + "' type='button' class='btn btn-danger' \n\
-                            title='Eliminar'  onClick='eliminar(id); eliminar_array(id);'><span class = 'oi oi-trash'></span></button>&nbsp;&nbsp;" + elemento_seleccionado+" - "+requisito+" - "+ tipo;
+    <?php include_once '../gui/footer.php'; ?>
 
-                                document.getElementById("listaDesordenada").appendChild(li);
-                                
-                                agregarElementos();
-                            }
-                        }
+    <script type="text/javascript">
+        var idPlanActual = "<?= addslashes($idPlan); ?>";
+        var idAsignaturaActual = "<?= addslashes($idAsignatura); ?>";
+
+        function mostrarAlerta(tipo, mensaje) {
+            var alertBox = $('#alertFeedback');
+            alertBox.removeClass('alert-success alert-danger alert-warning alert-info');
+            alertBox.addClass('alert-' + tipo);
+            $('#alertFeedbackText').html(mensaje);
+            alertBox.fadeIn();
+            setTimeout(function() {
+                alertBox.fadeOut();
+            }, 6000);
+        }
+
+        function cargarTablaCorrelativas() {
+            $('#contenedorTablaCorrelativas').load('../lib/consultaAjax/asignaturaCorrelativa/correlativasDeAsignatura.php?idAsignatura=' + encodeURIComponent(idAsignaturaActual) + '&idPlan=' + encodeURIComponent(idPlanActual));
+        }
+
+        function agregarCorrelativa() {
+            var idCorrelativa = $('#selectCorrelativa').val();
+            var requisito = $('#selectRequisito').val();
+            var tipo = $('#selectTipo').val();
+
+            if (!idCorrelativa) {
+                mostrarAlerta('warning', 'Debe seleccionar una asignatura correlativa.');
+                return;
+            }
+
+            $('#btnGuardarCorrelativa').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Guardando...');
+
+            $.ajax({
+                url: '../lib/consultaAjax/asignaturaCorrelativa/agregarCorrelativa.php',
+                type: 'POST',
+                data: {
+                    idPlan: idPlanActual,
+                    idAsignatura: idAsignaturaActual,
+                    idCorrelativa: idCorrelativa,
+                    requisito: requisito,
+                    tipo: tipo
+                },
+                dataType: 'json',
+                success: function(resp) {
+                    $('#btnGuardarCorrelativa').prop('disabled', false).html('<span class="oi oi-plus"></span> Agregar');
+                    if (resp.status === 'success') {
+                        mostrarAlerta('success', '<strong>¡Éxito!</strong> ' + resp.message);
+                        $('#selectCorrelativa').val('').selectpicker('refresh');
+                        cargarTablaCorrelativas();
+                    } else if (resp.status === 'warning') {
+                        mostrarAlerta('warning', resp.message);
+                    } else {
+                        mostrarAlerta('danger', '<strong>Error:</strong> ' + resp.message);
                     }
+                },
+                error: function(xhr, status, error) {
+                    $('#btnGuardarCorrelativa').prop('disabled', false).html('<span class="oi oi-plus"></span> Agregar');
+                    mostrarAlerta('danger', 'Error de comunicación: ' + error);
                 }
-                return false;
-            }
-
-
-
-
-            /**
-             * Funcion que busca si existe ya el <li> dentrol del <ul>
-             * Devuelve true si no existe.
-             */
-            
-            function find_li(contenido){
-
-                var el = document.getElementById("listaDesordenada").getElementsByTagName("li");
-
-                for (var i = 0; i < el.length; i++){
-
-                    if (el[i].id == contenido) {
-
-                        alert("La asignatura con el codigo " + contenido + " ya existe en la lista de asignaturas correlativas a agregar.");
-                        return false;
-                    }
-                }
-                return true;
-            }
-
-
-
-
-            /**
-             * Funcion para eliminar los elementos de la lista
-             * Tiene que recibir el elemento pulsado
-             */
-            
-            function eliminar(id_){
-
-                var id = id_;
-                node = document.getElementById(id);
-                node.parentNode.removeChild(node);
-                
-            }
-
-        </script>
-
-
-
-
-        <script>
-
-            var vectorAsignaturas = new Array();
-            var vectorRequisitos = new Array();
-            var vectorTipos = new Array();
-
-
-            /**
-             * Funcion para agregar los elementos a cada uno de los array
-             */
-            
-            function agregarElementos(){
-                
-                var asignatura = document.getElementById("asignatura").value;
-                var requisito = document.getElementById("requisito").value;
-                var tipo = document.getElementById("tipo").value;
-                
-                vectorAsignaturas.push(asignatura);
-                vectorRequisitos.push(requisito);
-                vectorTipos.push(tipo);
-
-                validarElementos();
-
-            }
-
-
-            
-
-            /**
-             * Funcion para eliminar los elementos de los array
-             * Tiene que recibir el elemento pulsado
-             */
-            
-            function eliminar_array(id_){
-
-                //Obtenemos el id del elemento (codigo asignatura)
-                var id = id_;
-
-                //Obtenemos la posicion de ese elemento del vector principal donde se almacena
-                var indice = vectorAsignaturas.indexOf(id);
-
-                //En base a esa posicion, lo eliminamos del array, junto a su requisito y tipo
-                vectorAsignaturas.splice(indice, 1);
-                vectorRequisitos.splice(indice, 1);
-                vectorTipos.splice(indice, 1);
-
-                validarElementos();
-            }
-
-
-
-
-            /**
-             * Funcion para validar la longitud de los array
-             * Si la longitud de cada uno es mayor a 0 habilitamos el botón Guardar y Procesar, sino lo dejamos
-             * deshabilitado.
-             */
-
-            function validarElementos(){
-
-                if(vectorAsignaturas.length > 0 && vectorRequisitos.length > 0 && vectorTipos.length > 0){
-
-                    document.getElementById("submit-btn").disabled = "";
-
-                }else{
-
-                    document.getElementById("submit-btn").disabled = true;
-                }
-            }
-
-
-
-
-
-
-            //Enviamos los arrays al clickear el boton "GUARDAR Y PROCESAR"
-
-            $("#submit-btn").click(function(e){
-
-                $.ajax({
-                    type: "POST",
-                    url: "lista.asignaturas.correlativas.php",
-                    data: {'vectorAsignaturas': JSON.stringify(vectorAsignaturas),
-                    'vectorRequisitos': JSON.stringify(vectorRequisitos),
-                    'vectorTipos': JSON.stringify(vectorTipos)
-                    },
-                });
-
-            })
-
-        </script>
-
-
-
-
-        <script type="text/javascript">
-           
-                $('#tablaAsignaturas').DataTable({
-                    language: {
-                        url: '../lib/datatable/es-ar.json'
-                    }
-                });
-            
-        </script>
-
-
-
-
-        <!-- Script que lista las asignaturas correlativas -->
-
-        <script type="text/javascript">
-            $(document).ready(function(){
-                var idAsignatura = $("#idAsignatura").val();
-                var idPlan = $("#idPlan").val();
-		$('#tabla').load('../lib/consultaAjax/asignaturaCorrelativa/correlativasDeAsignatura.php?idAsignatura='+idAsignatura+'&idPlan='+idPlan);
-                $('#tablaAsignaturas').DataTable({
-                    language: {
-                        url: '../lib/datatable/es-ar.json'
-                    }
-                });
             });
-        </script>
+        }
 
-    </body>
+        function cambiarRequisito(idCorrelativaDe, nuevoRequisito) {
+            $.ajax({
+                url: '../lib/consultaAjax/asignaturaCorrelativa/cambiarRequisito.php',
+                type: 'POST',
+                data: {
+                    id: idCorrelativaDe,
+                    nuevoRequisito: nuevoRequisito
+                },
+                dataType: 'json',
+                success: function(resp) {
+                    if (resp.status === 'success') {
+                        mostrarAlerta('success', resp.message);
+                        cargarTablaCorrelativas();
+                    } else {
+                        mostrarAlerta('danger', resp.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    mostrarAlerta('danger', 'Error al modificar requisito: ' + error);
+                }
+            });
+        }
+
+        function eliminarCorrelativa(idCorrelativaDe, nombreAsignatura, tipo) {
+            bootbox.confirm({
+                title: "Eliminar Regla de Correlatividad",
+                message: "¿Está seguro de que desea eliminar la correlatividad " + tipo.toLowerCase() + " con <b>" + nombreAsignatura + "</b> para este plan?",
+                buttons: {
+                    cancel: {
+                        label: '<span class="oi oi-x"></span> Cancelar',
+                        className: 'btn-outline-secondary'
+                    },
+                    confirm: {
+                        label: '<span class="oi oi-trash"></span> Eliminar Regla',
+                        className: 'btn-danger'
+                    }
+                },
+                callback: function (result) {
+                    if (result) {
+                        $.ajax({
+                            url: '../lib/consultaAjax/asignaturaCorrelativa/eliminarCorrelativa.php',
+                            type: 'POST',
+                            data: {
+                                id: idCorrelativaDe,
+                                idPlan: idPlanActual,
+                                idAsignatura: idAsignaturaActual
+                            },
+                            dataType: 'json',
+                            success: function(resp) {
+                                if (resp.status === 'success') {
+                                    mostrarAlerta('success', resp.message);
+                                    cargarTablaCorrelativas();
+                                } else {
+                                    mostrarAlerta('danger', resp.message);
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                mostrarAlerta('danger', 'Error al eliminar: ' + error);
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            cargarTablaCorrelativas();
+        });
+    </script>
+</body>
 </html>

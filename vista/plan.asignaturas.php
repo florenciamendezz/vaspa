@@ -1,323 +1,347 @@
 <?php
+include_once '../lib/ControlAcceso.Class.php';
 
-    include_once '../lib/ControlAcceso.Class.php';
+// Validamos permisos: Carreras o VA
+$UsuarioSes = $_SESSION['usuario'] ?? null;
+$perfil = "";
+if (isset($UsuarioSes->roles[0])) {
+    $perfil = $UsuarioSes->roles[0]->nombre;
+}
+
+if (!ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_CARRERAS, $UsuarioSes) && $perfil != PermisosSistema::ROL_VINCULACION_ACADEMICA) {
     ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
-    include_once '../modeloSistema/Plan.Class.php';
+}
 
-    $idCarrera = $_GET['idCarrera'];
+include_once '../modeloSistema/Plan.Class.php';
+include_once '../modeloSistema/Carrera.Class.php';
+include_once '../modeloSistema/BDConexionSistema.Class.php';
 
-    $idPlan = $_GET['id'];
+$idCarrera = $_GET['idCarrera'] ?? '';
+$idPlan = $_GET['id'] ?? '';
 
-    $plan = new Plan($idPlan);
+$plan = new Plan($idPlan);
+$carrera = new Carrera($idCarrera);
 
-    if (is_null($plan->getAnio_fin())){
-        $periodo = ' ('.$plan->getAnio_inicio().' - Presente)';
-    } else {
-        $periodo = ' ('.$plan->getAnio_inicio().' - '.$plan->getAnio_fin().')';
+if (is_null($plan->getId())) {
+    header("Location: carreras.php");
+    exit;
+}
+
+if (is_null($plan->getAnio_fin())) {
+    $periodo = ' (' . $plan->getAnio_inicio() . ' - Presente)';
+} else {
+    $periodo = ' (' . $plan->getAnio_inicio() . ' - ' . $plan->getAnio_fin() . ')';
+}
+
+// Obtenemos el catálogo general de asignaturas para el autocompletado
+$queryAsig = "SELECT id, nombre FROM asignatura ORDER BY nombre ASC";
+$resAsig = BDConexionSistema::getInstancia()->query($queryAsig);
+$catalogoAsignaturas = [];
+if ($resAsig) {
+    while ($row = $resAsig->fetch_assoc()) {
+        $catalogoAsignaturas[] = $row;
     }
-
-
-    $query = "SELECT id, nombre FROM asignatura ORDER BY id";
-    $asig = BDConexionSistema::getInstancia()->query($query);
-
+}
 ?>
 
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <script type="text/javascript" src="../lib/JQuery/jquery-3.3.1.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-        <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>
-        <link rel="stylesheet" href="../lib/bootstrap-4.1.1-dist/css/bootstrap.css" />
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.8/css/bootstrap-select.min.css" rel="stylesheet"/>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.8/js/bootstrap-select.min.js"></script>
-        <link rel="stylesheet" href="../lib/open-iconic-master/font/css/open-iconic-bootstrap.css" />
-        <script src="../lib/bootbox/bootbox.js"></script>
-        <script src="../lib/bootbox/bootbox.locales.js"></script>        
-        <link rel="stylesheet" href="../lib/datatable/dataTables.bootstrap4.min.css" />
-        <script type="text/javascript" src="../lib/datatable/jquery.dataTables.min.js"></script>
-        <script type="text/javascript" src="../lib/datatable/dataTables.bootstrap4.min.js"></script>
-       
-        <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Planes</title>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Asignaturas del Plan</title>
 
-        <script>
+    <link rel="stylesheet" href="../lib/bootstrap-4.1.1-dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="../lib/open-iconic-master/font/css/open-iconic-bootstrap.css" />
+    <link rel="stylesheet" href="../lib/datatable/dataTables.bootstrap4.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.8/css/bootstrap-select.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../lib/css/premium.css" />
 
-            $(function() {
+    <script type="text/javascript" src="../lib/JQuery/jquery-3.3.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.8/js/bootstrap-select.min.js"></script>
+    <script type="text/javascript" src="../lib/datatable/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="../lib/datatable/dataTables.bootstrap4.min.js"></script>
+    <script src="../lib/bootbox/bootbox.js"></script>
+    <script src="../lib/bootbox/bootbox.locales.js"></script>
 
-                // desactivamos el boton Guardar y Procesar
-                document.getElementById("submit-btn").disabled = true;
+    <style>
+        .search-add-box {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            transition: all 0.2s ease;
+        }
+        .search-add-box:hover {
+            border-color: #3b82f6;
+            background: #f0f7ff;
+        }
+        .tag-info {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
 
-            });
- 
-        </script>
+    <?php include_once '../gui/navbar.php'; ?>
 
-    </head>
-    <body>
-
-        <?php include_once '../gui/navbar.php'; ?>
-
-        <div class="container">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Asignaturas de la revisi&oacute;n del Plan: <span class="text-info"><?= $plan->getId().$periodo;?></span></h3>
+    <div class="container my-4">
+        <div class="card card-premium">
+            <div class="card-header card-header-premium">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-1">Asignaturas del Plan <span style="color: #60a5fa; font-weight: 700;"><?= htmlspecialchars($plan->getId() . $periodo); ?></span></h3>
+                        <div class="text-white" style="opacity: 0.9;">
+                            Carrera: <strong><?= htmlspecialchars($carrera->getId() . ' - ' . $carrera->getNombre()); ?></strong>
+                        </div>
+                    </div>
+                    <a href="carrera.verPlanes.php?id=<?= urlencode($idCarrera); ?>" class="btn btn-outline-light btn-sm">
+                        <span class="oi oi-arrow-thick-left"></span> Volver a Planes
+                    </a>
                 </div>
-                <div class="card-body">
+            </div>
 
-                    <p>
-
-                        <?php
-
-                        //Verificamos si la revision del plan tiene asignaturas cargadas
-                            
-                        $asignaturas_plan = $plan->getAsignaturas();
-                                                    
-                        //Si es nulo quiere decir que todavia no se han insertado asignaturas.
-
-                        if (is_null($asignaturas_plan)){ ?>
-
-                            <div class="alert alert-info" role="alert">
-                                <p>
-                                    Estimado usuario, seleccione una asignatura de la lista y pulse el bot&oacute;n <b>AGREGAR</b> para agregarla a la lista de asignaturas provisorias de la revisi&oacute;n del plan en cuesti&oacute;n.<br /> 
-                                    Luego, presione el bot&oacute;n <b>Guardar y Procesar</b> para guardar los cambios de manera permanente.<br />
-                                </p>
-                            </div>
-                            <br />
-
-                        <?php } else{ ?>
-
-                            <div class="alert alert-warning" role="alert">
-                                <p>
-                                    Estimado usuario, <b>NO</b> se pueden modificar las asignaturas vinculadas a esta revisi&oacute;n del plan ya que al hacerlo seria una nueva revisi&oacute;n.<br />
-                                    Para crear una nueva revisi&oacute;n haga click en <a href="plan.revisiones.php?id=<?= $idCarrera ?>">Nueva Revisi&oacute;n del Plan </a>.
-                                </p>
-                            </div>
-                            <br />
-
-                        <?php } ?>
-
-                   
-                        <form id="form" method="POST" action="plan.asignaturas.procesar.php">
+            <div class="card-body">
                 
-                           <input type="hidden" id="codPlan" name="codPlan" value="<?=$plan->getId();?>">
-                           <input type="hidden" id="codCarrera" name="codCarrera" value="<?=$idCarrera?>">
+                <!-- Feedback Toast / Alert -->
+                <div id="alertFeedback" style="display: none;" class="alert alert-dismissible fade show" role="alert">
+                    <span id="alertFeedbackText"></span>
+                    <button type="button" class="close" onclick="$('#alertFeedback').hide();">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
 
-                           <div class="col-6">
-                                <div class="form-group">   
-                                    <div class="row justify-content-md-center">
+                <!-- Panel de Búsqueda y Carga Rápida / Al Vuelo -->
+                <div class="search-add-box">
+                    <h5 class="text-primary font-weight-bold mb-2">
+                        <span class="oi oi-magnifying-glass"></span> Agregar Asignatura al Plan
+                    </h5>
+                    <p class="tag-info mb-3">
+                        Busque una materia existente en el catálogo o escriba el nombre de una materia nueva para darla de alta automáticamente sin salir de la pantalla.
+                    </p>
 
-                                        <?php if (!is_null($asignaturas_plan)){ ?>
-
-                                        <div class="col col-sm-10">
-                                            <label for="asignatura">Asignaturas</label>
-                                            <select id="asignatura" name="asignatura" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una Asignatura" data-none-results-text="No se encontraron resultados" disabled="" data-size="7">
-                                                <?php while ($asignatura=$asig->fetch_assoc()){?>
-                                                <option value="<?= $asignatura['id'] ?>"><?= $asignatura['id'].' - '.$asignatura['nombre'] ?>
-                                                </option>
-                                            <?php } ?>
-                                            </select>
-                                        </div>
-
-                                        <?php } else{ ?>
-
-                                        <div class="col col-sm-10">
-                                            <label for="asignatura">Asignaturas</label>
-                                            <select id="asignatura" name="asignatura" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una Asignatura" data-none-results-text="No se encontraron resultados" data-size="7">
-                                                <?php while ($asignatura=$asig->fetch_assoc()){?>
-                                                <option value="<?= $asignatura['id'] ?>"><?= $asignatura['id'].' - '.$asignatura['nombre'] ?>
-                                                </option>
-                                            <?php } ?>
-                                            </select>
-                                        </div>
-
-                                        <?php } ?>
-
-                                        <?php if (!is_null($asignaturas_plan)){ ?>
-
-                                        <div class="col col-sm-2">
-                                            <br />
-                                            <button class="btn btn-info" type="button" onclick="return add_li()" disabled="">AGREGAR</button>
-                                        </div>
-
-                                        <?php } else { ?>
-
-                                            <div class="col col-sm-2">
-                                                <br />
-                                                <button class="btn btn-info" type="button" onclick="return add_li()">AGREGAR</button>
-                                            </div>
-
-                                        <?php } ?>
-
-                                    </div>
-
-                                    <br>
-
-                                    <?php if (is_null($asignaturas_plan)){ ?>
-
-                                    <label for="listaDesordenada">Listado de asignaturas provisorias:</label>
-                                    
-                                    <ul id="listaDesordenada" class="list-group">
-                    
-                                    </ul> 
-
-                                    <?php } ?>
-
+                    <div class="row align-items-center">
+                        <div class="col-md-9 mb-2 mb-md-0">
+                            <div class="input-group">
+                                <input type="text" id="inputAsignatura" class="form-control form-control-lg" list="listaSugerencias" placeholder="Escriba el nombre o código de la asignatura..." autocomplete="off">
+                                <datalist id="listaSugerencias">
+                                    <?php foreach ($catalogoAsignaturas as $asig): ?>
+                                        <option data-id="<?= htmlspecialchars($asig['id']); ?>" value="<?= htmlspecialchars($asig['nombre']); ?>">
+                                            [Cód: <?= htmlspecialchars($asig['id']); ?>]
+                                        </option>
+                                    <?php endforeach; ?>
+                                </datalist>
+                                <div class="input-group-append">
+                                    <button class="btn btn-secondary" type="button" onclick="$('#inputAsignatura').val('').focus();" title="Limpiar">
+                                        <span class="oi oi-delete"></span>
+                                    </button>
                                 </div>
                             </div>
-
-
-                            <?php if (!is_null($asignaturas_plan)){ ?>
-
-                            <button class="btn btn-primary" id= "submit-btn" type="submit" disabled="">Guardar y Procesar</button>
-                            
-                            <?php } else { ?>
-
-                            <button class="btn btn-primary" id= "submit-btn" type="submit">Guardar y Procesar</button>
-
-                         <?php } ?>
-
-                        </form> 
-                
-                    </p>
-                    <div id="tabla"></div>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" id="btnAgregar" class="btn btn-success btn-lg btn-block" onclick="agregarOcrearAsignatura();">
+                                <span class="oi oi-plus"></span> Agregar al Plan
+                            </button>
+                        </div>
+                    </div>
+                    <div id="sugerenciaNueva" class="mt-2" style="display: none;">
+                        <span class="badge badge-warning p-2">
+                            <span class="oi oi-bolt"></span> Esta materia no está en el catálogo. Al hacer clic en <strong>Agregar</strong> se creará y vinculará automáticamente.
+                        </span>
+                    </div>
                 </div>
-                <div class="card-footer text-center">
-                    <a href="carreras.php">
-                        <button type="button" class="btn btn-primary">
-                            <span class="oi oi-account-logout"></span> Volver A Carreras
-                        </button>
-                    </a>
-                </div>    
+
+                <!-- Tabla de Asignaturas Vinculadas -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="text-dark font-weight-bold mb-0">
+                        <span class="oi oi-list"></span> Materias cargadas en este Plan
+                    </h4>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="cargarTablaAsignaturas();" title="Recargar tabla">
+                        <span class="oi oi-reload"></span> Actualizar lista
+                    </button>
+                </div>
+
+                <div id="contenedorTabla">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Cargando...</span>
+                        </div>
+                        <p class="text-muted mt-2">Cargando asignaturas del plan...</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card-footer text-center">
+                <a href="carrera.verPlanes.php?id=<?= urlencode($idCarrera); ?>" class="btn btn-primary mr-2">
+                    <span class="oi oi-arrow-thick-left"></span> Volver a Planes de la Carrera
+                </a>
+                <a href="carreras.php" class="btn btn-outline-secondary">
+                    <span class="oi oi-account-logout"></span> Volver a Carreras
+                </a>
             </div>
         </div>
-        <?php include_once '../gui/footer.php'; ?>
+    </div>
 
+    <?php include_once '../gui/footer.php'; ?>
 
+    <script type="text/javascript">
+        var codPlan = "<?= addslashes($idPlan); ?>";
+        var catalogo = <?= json_encode($catalogoAsignaturas); ?>;
 
-        <script>
+        function mostrarAlerta(tipo, mensaje) {
+            var alertBox = $('#alertFeedback');
+            alertBox.removeClass('alert-success alert-danger alert-warning alert-info');
+            alertBox.addClass('alert-' + tipo);
+            $('#alertFeedbackText').html(mensaje);
+            alertBox.fadeIn();
+            setTimeout(function() {
+                alertBox.fadeOut();
+            }, 6000);
+        }
 
-            /**
-             * Funcion que añade un <li> dentro del <ul>
-             */
-            function add_li(){
+        function cargarTablaAsignaturas() {
+            $('#contenedorTabla').load('../lib/consultaAjax/planAsignatura/asignaturasDelPlan.php?id=' + encodeURIComponent(codPlan));
+        }
 
-                var nuevoLi = document.getElementById("asignatura").value;
-
-                var elemento = document.getElementById("asignatura");
-
-                var elemento_seleccionado = elemento.options[elemento.selectedIndex].text;
-
-
-                if (nuevoLi === "") {
-
-                    alert("No se ha seleccionado ninguna asignatura de la lista");
-
-                } else{
-
-                    if (nuevoLi.length > 0){
-
-                        if (find_li(nuevoLi)){
-
-                            var li = document.createElement('li');
-                            li.id = nuevoLi;
-                            li.value = nuevoLi;
-                            li.className = "list-group-item";
-                            li.innerHTML = "<button id='" + nuevoLi + "' type='button' class='btn btn-danger' \n\
-                        title='Eliminar'  onClick='eliminar(id)'><span class = 'oi oi-trash'></span></button>&nbsp;&nbsp;" + elemento_seleccionado;
-                            document.getElementById("listaDesordenada").appendChild(li);
-                            elementosLista();
-                        }
-                    }
-                }
-                return false;
+        // Detectar si lo escrito es una materia nueva o existente
+        $('#inputAsignatura').on('input', function() {
+            var val = $(this).val().trim().toLowerCase();
+            if (val.length === 0) {
+                $('#sugerenciaNueva').hide();
+                return;
             }
 
-
-            /**
-             * Funcion que busca si existe ya el <li> dentrol del <ul>
-             * Devuelve true si no existe.
-             */
-            function find_li(contenido){
-
-                var el = document.getElementById("listaDesordenada").getElementsByTagName("li");
-
-                for (var i = 0; i < el.length; i++){
-
-                    if (el[i].id == contenido) {
-                        alert("La asignatura con el codigo " + contenido + " ya existe en la lista de asignaturas a agregar");
-                        return false;
-                    }
-                }
-                return true;
-            }
-
-
-            /**
-             * Funcion para eliminar los elementos
-             * Tiene que recibir el elemento pulsado
-             */
-            function eliminar(id_){
-
-                var id = id_;
-                node = document.getElementById(id);
-                node.parentNode.removeChild(node);
-                elementosLista();
-
-            }
-
-        </script>
-
-
-
-
-
-        <script>
-
-            function elementosLista() {
-
-                var lis = document.getElementById("listaDesordenada").getElementsByTagName("li");
-
-                //Se utiliza spread operator para convertir en array los elementos de la lista
-                let arr = [...lis];
-                
-                var vectorElementos = new Array();
-              
-                for (var i = 0; i < arr.length; i++) {
-                    vectorElementos.push(arr[i]['id']);
-                }
-
-
-                if(vectorElementos.length > 0){
-
-                    document.getElementById("submit-btn").disabled = "";
-
-                }else{
-
-                    document.getElementById("submit-btn").disabled = true;
-                }
-                
-
-               $.ajax({
-                    type: "POST",
-                    url: "lista.asignaturas.php",
-                    data: {'vectorElementos': JSON.stringify(vectorElementos)
-                    },
-                });
-            }
-
-        </script>
-
-
-
-
-        <script type="text/javascript">
-
-            $(document).ready(function(){
-                var codPlan = $("#codPlan").val();
-            $('#tabla').load('../lib/consultaAjax/planAsignatura/asignaturasDelPlan.php?id='+codPlan);
+            var existe = catalogo.some(function(item) {
+                return item.nombre.toLowerCase() === val || item.id.toLowerCase() === val;
             });
 
-        </script>
+            if (!existe && val.length > 2) {
+                $('#sugerenciaNueva').show();
+            } else {
+                $('#sugerenciaNueva').hide();
+            }
+        });
 
+        // Permitir agregar con la tecla ENTER
+        $('#inputAsignatura').on('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                agregarOcrearAsignatura();
+            }
+        });
 
-    </body>
+        function agregarOcrearAsignatura() {
+            var valor = $('#inputAsignatura').val().trim();
+            if (valor.length === 0) {
+                mostrarAlerta('warning', 'Por favor, ingrese o seleccione el nombre de una asignatura.');
+                $('#inputAsignatura').focus();
+                return;
+            }
+
+            // Buscar si coincide con alguna del catálogo
+            var idEncontrado = '';
+            for (var i = 0; i < catalogo.length; i++) {
+                if (catalogo[i].nombre.toLowerCase() === valor.toLowerCase() || catalogo[i].id.toLowerCase() === valor.toLowerCase()) {
+                    idEncontrado = catalogo[i].id;
+                    break;
+                }
+            }
+
+            var payload = {
+                idPlan: codPlan
+            };
+
+            if (idEncontrado !== '') {
+                payload.idAsignatura = idEncontrado;
+            } else {
+                payload.nombreAsignatura = valor;
+            }
+
+            $('#btnAgregar').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Guardando...');
+
+            $.ajax({
+                url: '../lib/consultaAjax/planAsignatura/agregarAsignaturaPlan.php',
+                type: 'POST',
+                data: payload,
+                dataType: 'json',
+                success: function(resp) {
+                    $('#btnAgregar').prop('disabled', false).html('<span class="oi oi-plus"></span> Agregar al Plan');
+                    if (resp.status === 'success') {
+                        mostrarAlerta('success', '<strong>¡Éxito!</strong> ' + resp.message);
+                        $('#inputAsignatura').val('');
+                        $('#sugerenciaNueva').hide();
+                        
+                        // Si era nueva, agregarla al catálogo local para futuros autocompletados
+                        if (!idEncontrado && resp.idAsignatura) {
+                            catalogo.push({ id: resp.idAsignatura, nombre: valor });
+                            $('#listaSugerencias').append('<option data-id="' + resp.idAsignatura + '" value="' + valor + '">');
+                        }
+
+                        cargarTablaAsignaturas();
+                        $('#inputAsignatura').focus();
+                    } else if (resp.status === 'warning') {
+                        mostrarAlerta('warning', resp.message);
+                    } else {
+                        mostrarAlerta('danger', '<strong>Error:</strong> ' + resp.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#btnAgregar').prop('disabled', false).html('<span class="oi oi-plus"></span> Agregar al Plan');
+                    mostrarAlerta('danger', 'Error de comunicación con el servidor: ' + error);
+                }
+            });
+        }
+
+        function quitarAsignatura(idAsignatura, nombreAsignatura) {
+            bootbox.confirm({
+                title: "Desvincular Asignatura",
+                message: "¿Está seguro de que desea quitar la asignatura <b>" + idAsignatura + " - " + nombreAsignatura + "</b> de este plan de estudio?",
+                buttons: {
+                    cancel: {
+                        label: '<span class="oi oi-x"></span> Cancelar',
+                        className: 'btn-outline-secondary'
+                    },
+                    confirm: {
+                        label: '<span class="oi oi-trash"></span> Quitar del Plan',
+                        className: 'btn-danger'
+                    }
+                },
+                callback: function (result) {
+                    if (result) {
+                        $.ajax({
+                            url: '../lib/consultaAjax/planAsignatura/quitarAsignaturaPlan.php',
+                            type: 'POST',
+                            data: {
+                                idPlan: codPlan,
+                                idAsignatura: idAsignatura
+                            },
+                            dataType: 'json',
+                            success: function(resp) {
+                                if (resp.status === 'success') {
+                                    mostrarAlerta('success', 'La asignatura fue desvinculada del plan correctamente.');
+                                    cargarTablaAsignaturas();
+                                } else {
+                                    mostrarAlerta('danger', '<strong>Error:</strong> ' + resp.message);
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                mostrarAlerta('danger', 'Error de comunicación: ' + error);
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            cargarTablaAsignaturas();
+        });
+    </script>
+</body>
 </html>

@@ -1,26 +1,11 @@
 <?php
-include_once '../controlSistema/ManejadorPlan.php';
-include_once '../lib/ControlAcceso.Class.php';
-ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
-include_once '../modeloSistema/Carrera.Class.php';
-
-// validamos que se esta enviando el codigo de la carrera
-if (!isset($_GET["id"]) || empty($_GET["id"])){
+$id = isset($_GET["id"]) ? $_GET["id"] : "";
+if (!empty($id)) {
+    header("Location: carrera.verPlanes.php?id=" . urlencode($id));
+} else {
     header("Location: carreras.php");
-    exit;
 }
-
-$codCarrera = $_GET["id"];
-$carrera = new Carrera($codCarrera);
-
-if (is_null($carrera->getId())){
-    // no existe la carrera regresamos a la pantalla de planes
-    header("Location: carreras.php");
-    exit;
-}
-
-$planes = $carrera->getPlanesDeEstudio();
-
+exit;
 ?>
 
 <html>

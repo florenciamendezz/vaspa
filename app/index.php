@@ -284,20 +284,21 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                   // actualiza la lista carreras
                   $('#selectAnio').change(function () {
                     var anio = $('#selectAnio').val();
-                    //alert(anio);
+                    $("#programasAsignaturas").html('');
+                    if (!anio) {
+                        $('#selectCarrera').html('').selectpicker('refresh');
+                        return;
+                    }
                     $.ajax({
                       type: 'POST',
                       url: '../lib/consultaAjax/visualizar.programa.cargar.carreras.php',
                       data: {'anio': anio}
                     })
                     .done(function(carreras){
-                      $('#selectCarrera').html(carreras).selectpicker('destroy').selectpicker({
-                          noneResultsText: 'No se encontraron resultados',
-                          container: 'body'
-                      });
+                      $('#selectCarrera').html(carreras).selectpicker('refresh');
                     })
                     .fail(function(){
-                      alert('Hubo un error al cargar las asignaturas')
+                      alert('Hubo un error al cargar las carreras')
                     });
                   });
                   
@@ -306,7 +307,12 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                     // Recuperamos el anio y la carrera
                     var anio = $('#selectAnio').val();
                     var idCarrera = $('#selectCarrera').val();
-                    //alert(anio+" "+idCarrera);
+                    
+                    if (!idCarrera || idCarrera === '' || !anio || anio === '') {
+                        $("#programasAsignaturas").html('');
+                        return;
+                    }
+
                     $.ajax({
                       type: 'POST',
                       url: '../lib/consultaAjax/visualizarPrograma/tablaProgramasAsignaturas.php',

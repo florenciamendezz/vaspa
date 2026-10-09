@@ -328,4 +328,32 @@ class ManejadorPlan {
         
     }
     
+    /**
+     * Clona las asignaturas y correlatividades de un plan existente a un nuevo plan.
+     * @param string $idPlanOrigen
+     * @param string $idPlanDestino
+     * @return bool
+     */
+    function clonarEstructura($idPlanOrigen, $idPlanDestino) {
+        $db = BDConexionSistema::getInstancia();
+        $idPlanOrigen = $db->real_escape_string($idPlanOrigen);
+        $idPlanDestino = $db->real_escape_string($idPlanDestino);
+
+        // 1. Copiar plan_asignatura
+        $sqlAsignaturas = "INSERT INTO plan_asignatura (idPlan, idAsignatura, tieneCorrelativa) "
+                        . "SELECT '{$idPlanDestino}', idAsignatura, tieneCorrelativa "
+                        . "FROM plan_asignatura "
+                        . "WHERE idPlan = '{$idPlanOrigen}'";
+        $db->query($sqlAsignaturas);
+
+        // 2. Copiar correlativa_de
+        $sqlCorrelativas = "INSERT INTO correlativa_de (requisito, idAsignatura, idAsignatura_Correlativa_Anterior, idPlan) "
+                         . "SELECT requisito, idAsignatura, idAsignatura_Correlativa_Anterior, '{$idPlanDestino}' "
+                         . "FROM correlativa_de "
+                         . "WHERE idPlan = '{$idPlanOrigen}'";
+        $db->query($sqlCorrelativas);
+
+        return true;
+    }
+    
 }

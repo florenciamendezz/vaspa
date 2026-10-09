@@ -55,9 +55,9 @@ try {
                     <?php } ?>
                     <hr />
                     <h5 class="card-text">Opciones</h5>
-                    <a href="plan.revisiones.php<?= $idCarrera; ?>">
-                            <button type="button" class="btn btn-primary">
-                                <span class="oi oi-arrow-thick-left"></span> Volver a Revisiones del Plan
+                    <a href="carrera.verPlanes.php<?= $idCarrera; ?>">
+                            <button type="button" class="btn btn-primary mr-2">
+                                <span class="oi oi-arrow-thick-left"></span> Volver a Planes de la Carrera
                             </button>
                         </a>
                         <a href="carreras.php">

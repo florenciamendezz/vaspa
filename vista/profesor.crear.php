@@ -1,6 +1,6 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
-ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PROFESORES);
+// ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PROFESORES);
 include_once '../controlSistema/ManejadorDepartamento.php';
 $ManejadorDepartamento= new ManejadorDepartamento();
 $Departamentos = $ManejadorDepartamento->getColeccion();
@@ -39,7 +39,6 @@ if (isset($_SESSION["usuarioNombre"]) && isset($_SESSION["usuarioEmail"]) && iss
         <link rel="stylesheet" href="../lib/css/premium.css" />
     </head>
     <body>
-        <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="profesor.crear.procesar.php" method="post"> 
                 <div class="card card-premium">

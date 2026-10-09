@@ -13,8 +13,8 @@ if (isset($UsuarioSes->roles[0])) {
 }
 ?>
 
-<!-- Lucide Icons (moderno, SVG limpio) -->
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<!-- Lucide Icons local -->
+<script src="../lib/lucide.min.js"></script>
 
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -311,5 +311,7 @@ if (isset($UsuarioSes->roles[0])) {
 </div>
 
 <script>
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    document.addEventListener('DOMContentLoaded', function () {
+        lucide.createIcons();
+    });
 </script>

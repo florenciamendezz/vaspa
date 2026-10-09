@@ -1,69 +1,79 @@
 <?php
 //  EN ESTE SCRIPT SE MUESTRA UNA TABLA EN LA CUAL SE PRESENTA LAS ASIGNATURAS DEL CORRESPONDIENTE PLAN
 
-//include_once '../../modeloSistema/BDConexionSistema.Class.php';
 include_once '../../../modeloSistema/Plan.Class.php';
 include_once '../../../modeloSistema/Profesor.Class.php';
 include_once '../../../modeloSistema/Departamento.Class.php';
 
-$idPlan = $_GET['id'];
-
+$idPlan = $_GET['id'] ?? '';
 $plan = new Plan($idPlan);
-
-//var_dump($plan->getAsignaturas());
-
 $asignaturas = $plan->getAsignaturas();
 
-if (is_null($asignaturas)){
-    $html = '<div class="alert alert-warning text-center" role="alert">
-                No hay asignaturas asociadas a esta revisi&oacute;n del Plan de Estudio
-              </div>';
+if (is_null($asignaturas) || empty($asignaturas)) {
+    echo '<div class="alert alert-info text-center" role="alert">
+            <span class="oi oi-info"></span> No hay asignaturas vinculadas a este Plan de Estudio todav&iacute;a.
+            <br>Utilice el buscador superior para agregar materias existentes o crearlas al instante.
+          </div>';
 } else {
-    
-
-
-$html = '<table class="table table-hover table-sm" id="tablaAsignaturas">
-                        <thead>
-                            <tr class="table-info">
-                                <th>C&oacute;digo</th>
-                                <th>Asignatura</th>
-                                <th>Departamento</th>
-                                <th>Profesor Responsable</th>
-                                <th>Opciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>';
-                                foreach ($asignaturas as $asignatura) {
-                                    
-                                    $departamento = new Departamento($asignatura->getIdDepartamento());
-                                    $profesor = new Profesor($asignatura->getIdProfesor());
-                                    
-                                    $html .= '<td>'.$asignatura->getId().'</td>';
-                                    $html .= '<td>'.$asignatura->getNombre().'</td>';
-                                    $html .= '<td>'.$departamento->getNombre().'</td>';
-                                    $html .= '<td>'.$profesor->getApellido().'</td>';
-                                    $html .= '<td>
-                                         <a title="Ver Asignaturas correlativas" href="../vista/asignaturas.correlativas.php?idAsignatura='.$asignatura->getId().'&idPlan='.$plan->getId().'">
-                                            <button type="button" class="btn btn-outline-info">
-                                                <span class="oi oi-list"></span>
-                                            </button>
-                                        </a>
-                                      </td>
-                            </tr>';
-                            }
-                        $html .= '</tbody>
-                    </table>';
-}
-echo $html;
 ?>
-<script type="text/javascript">
-            //$(document).ready(function () {
-                $('#tablaAsignaturas').DataTable({
-                    language: {
-                        url: '../lib/datatable/es-ar.json'
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered table-sm" id="tablaAsignaturasPlan">
+            <thead class="thead-light">
+                <tr>
+                    <th style="width: 10%;">C&oacute;digo</th>
+                    <th>Asignatura</th>
+                    <th>Departamento</th>
+                    <th>Profesor Responsable</th>
+                    <th style="width: 18%;" class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($asignaturas as $asignatura) { 
+                    $depNombre = "Sin Asignar";
+                    if ($asignatura->getIdDepartamento()) {
+                        $depObj = new Departamento($asignatura->getIdDepartamento());
+                        if ($depObj->getNombre()) $depNombre = $depObj->getNombre();
                     }
-                });
-            //});
-</script>
 
+                    $profNombre = "Sin Asignar";
+                    if ($asignatura->getIdProfesor()) {
+                        $profObj = new Profesor($asignatura->getIdProfesor());
+                        if ($profObj->getApellido()) $profNombre = $profObj->getApellido() . ', ' . $profObj->getNombre();
+                    }
+                ?>
+                <tr>
+                    <td class="font-weight-bold"><?= htmlspecialchars($asignatura->getId()); ?></td>
+                    <td><?= htmlspecialchars($asignatura->getNombre()); ?></td>
+                    <td><?= htmlspecialchars($depNombre); ?></td>
+                    <td><?= htmlspecialchars($profNombre); ?></td>
+                    <td class="text-center">
+                        <a title="Gestionar Correlatividades" href="../vista/asignaturas.correlativas.php?idAsignatura=<?= urlencode($asignatura->getId()); ?>&idPlan=<?= urlencode($plan->getId()); ?>" class="btn btn-outline-info btn-sm mr-1">
+                            <span class="oi oi-list"></span> Correlativas
+                        </a>
+                        <button type="button" title="Quitar Asignatura del Plan" class="btn btn-outline-danger btn-sm" onclick="quitarAsignatura('<?= htmlspecialchars($asignatura->getId(), ENT_QUOTES); ?>', '<?= htmlspecialchars($asignatura->getNombre(), ENT_QUOTES); ?>')">
+                            <span class="oi oi-trash"></span> Quitar
+                        </button>
+                    </td>
+                </tr>
+                <?php } ?>
+            </tbody>
+        </table>
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            if ($.fn.DataTable.isDataTable('#tablaAsignaturasPlan')) {
+                $('#tablaAsignaturasPlan').DataTable().destroy();
+            }
+            $('#tablaAsignaturasPlan').DataTable({
+                language: {
+                    url: '../lib/datatable/es-ar.json'
+                },
+                pageLength: 25,
+                order: [[1, 'asc']]
+            });
+        });
+    </script>
+<?php
+}
+?>

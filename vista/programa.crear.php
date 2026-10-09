@@ -41,10 +41,6 @@ if ($Carreras) {
                             <input type="text" class="form-control" id="anio" name="anio" value="<?= date('Y'); ?>" readonly>
                         </div>
 
-
-
-
-
                         <div class="form-group">
                             <label for="archivoPDF">Archivo PDF</label>
                             <input type="file" class="form-control-file" id="archivoPDF" name="archivoPDF" accept=".pdf" required>

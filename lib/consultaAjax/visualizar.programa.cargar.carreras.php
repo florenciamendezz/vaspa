@@ -1,26 +1,33 @@
 <?php
+error_reporting(0);
 
-//Actualiza la lista Carreras (con las carreras) de acuerdo al anio que se selecciono de la lista desplegable
+// Actualiza la lista Carreras de acuerdo al anio seleccionado
+include_once __DIR__ . '/../../modeloSistema/BDConexionSistema.Class.php';
+include_once __DIR__ . '/../../modeloSistema/Plan.Class.php';
+include_once __DIR__ . '/../../controlSistema/ManejadorPlan.php';
+include_once __DIR__ . '/../../modeloSistema/Carrera.Class.php';
 
-include_once '../../modeloSistema/Plan.Class.php';
-include_once '../../controlSistema/ManejadorPlan.php';
-include_once '../../modeloSistema/Carrera.Class.php';
-
-$anio = $_POST['anio'];
-//$anio = 2011;
+$anio = isset($_POST['anio']) ? intval($_POST['anio']) : 0;
 $manejadorPlan = new ManejadorPlan();
 $planes = $manejadorPlan->getColeccion();
 
-//$carreras = NULL;
 $carreras = '';
+$carrerasAgregadas = [];
 
-foreach ($planes as $plan){
-    //Comprobamos que anio sea mayor igual que anio inicio y menor igual a anio fin, o que solamente sea mayor a  anio inicio y que anio fin sea nulo 
-    if (($plan->getAnio_inicio() <= $anio && $plan->getAnio_fin() >= $anio) || ($plan->getAnio_inicio() <= $anio && is_null($plan->getAnio_fin()))){
-        $carrera = new Carrera($plan->getIdCarrera(), NULL);
-        $carreras .= '<option value="'.$carrera->getId().'">'.$carrera->getId().' - '.$carrera->getNombre().'</option>';
+if (!empty($planes)) {
+    foreach ($planes as $plan){
+        // Comprobamos si el plan está vigente para el año
+        if (($plan->getAnio_inicio() <= $anio && $plan->getAnio_fin() >= $anio) || ($plan->getAnio_inicio() <= $anio && is_null($plan->getAnio_fin()))){
+            $idCarrera = $plan->getIdCarrera();
+            if (!in_array($idCarrera, $carrerasAgregadas)) {
+                $carrera = new Carrera($idCarrera, NULL);
+                if ($carrera && $carrera->getId()) {
+                    $carreras .= '<option value="'.$carrera->getId().'">'.$carrera->getId().' - '.$carrera->getNombre().'</option>';
+                    $carrerasAgregadas[] = $idCarrera;
+                }
+            }
+        }
     }
 }
 
-echo $carreras;
-//var_dump($carreras);
+echo $carreras;

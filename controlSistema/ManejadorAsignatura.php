@@ -59,9 +59,8 @@ class ManejadorAsignatura {
         $Asignatura->setId($this->completaConCeros($Asignatura->getId()));
         if ($this->validaEspaciosEnBlanco($Asignatura->getNombre())) {
             if ($this->chequearInexistencia($Asignatura->getId())) {
-                $this->query = "INSERT INTO ASIGNATURA "
-                        . "VALUES ('{$Asignatura->getId()}', '{$Asignatura->getNombre()}', '{$Asignatura->getIdDepartamento()}' , "
-                        . "'{$Asignatura->getContenidosMinimos()}', '{$Asignatura->getHorasSemanales()}' )";
+                $this->query = "INSERT INTO ASIGNATURA (id, nombre, idDepartamento, idEscuela) "
+                        . "VALUES ('{$Asignatura->getId()}', '{$Asignatura->getNombre()}', '{$Asignatura->getIdDepartamento()}', '{$Asignatura->getIdEscuela()}')";
                 $consulta = BDConexionSistema::getInstancia()->query($this->query);
                 if ($consulta) {
                     if (isset($datos['idProfesor']) && !empty($datos['idProfesor'])) {
@@ -115,8 +114,7 @@ class ManejadorAsignatura {
                 $this->query = "UPDATE ASIGNATURA "
                         . "SET nombre = '{$Asignatura->getNombre()}', "
                         . "idDepartamento = '{$Asignatura->getIdDepartamento()}' , "
-                        . "contenidosMinimos = '{$Asignatura->getContenidosMinimos()}' , "
-                        . "horasSemanales = '{$Asignatura->getHorasSemanales()}' "
+                        . "idEscuela = '{$Asignatura->getIdEscuela()}' "
                         . "WHERE id = '{$id_}'";
             } else {
                 if ($this->chequearInexistencia($Asignatura->getId())) {
@@ -124,8 +122,7 @@ class ManejadorAsignatura {
                             . "SET id = '{$Asignatura->getId()}', "
                             . "nombre = '{$Asignatura->getNombre()}', "
                             . "idDepartamento = '{$Asignatura->getIdDepartamento()}' , "
-                            . "contenidosMinimos = '{$Asignatura->getContenidosMinimos()}' , "
-                            . "horasSemanales = '{$Asignatura->getHorasSemanales()}' "
+                            . "idEscuela = '{$Asignatura->getIdEscuela()}' "
                             . "WHERE id = '{$id_}'";
                 } else {
                     throw new Exception("El c&oacute;digo  " . $Asignatura->getId() . " ya corresponde a una Asignatura en la Base de Datos");

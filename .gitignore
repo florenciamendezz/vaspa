@@ -1,3 +1,17 @@
 /pruebas-playwright/
 /pruebas-playwright/node_modules/
 /test-results/
+
+# Archivos PDF generados o subidos en pruebas
+/archivos/programas/*.pdf
+/uploads/*.pdf
+
+# Backups y volcados de base de datos
+*.sql
+scriptBD/backup_*.sql
+
+# Mantener los scripts base de instalación de la base de datos
+!scriptBD/01_bdusuarios.sql
+!scriptBD/02_ESTRUCTURA - bdgef_vaspa.sql
+!scriptBD/03_DATOS - bdgef_vaspa.sql
+!scriptBD/04_migracion_circuito_vaspa.sql

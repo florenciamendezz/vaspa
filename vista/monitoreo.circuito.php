@@ -22,6 +22,30 @@ if (isset($_GET['anio']) && is_numeric($_GET['anio'])) {
     $anioActual = intval($_GET['anio']);
 }
 
+$carreraFiltro = $_GET['carrera'] ?? 'todas';
+$planFiltro = $_GET['plan'] ?? 'todos';
+
+// Obtener todas las carreras para el selector
+$resCarreras = $conexion->query("SELECT id, nombre FROM carrera ORDER BY nombre ASC");
+$carrerasList = [];
+if ($resCarreras) {
+    while ($cRow = $resCarreras->fetch_assoc()) {
+        $carrerasList[] = $cRow;
+    }
+}
+
+// Obtener planes disponibles según carrera seleccionada
+$planesList = [];
+if ($carreraFiltro !== 'todas') {
+    $cEsc = $conexion->real_escape_string($carreraFiltro);
+    $resPl = $conexion->query("SELECT id, anio_inicio, anio_fin FROM plan WHERE idCarrera = '{$cEsc}' ORDER BY id ASC");
+    if ($resPl) {
+        while ($pRow = $resPl->fetch_assoc()) {
+            $planesList[] = $pRow;
+        }
+    }
+}
+
 // 1. Obtener estado de vacancia de Escuela
 $vacanciaActiva = false;
 $sqlVac = "SELECT valor FROM configuracion_sistema WHERE clave = 'vacancia_escuela'";
@@ -47,11 +71,25 @@ if ($resOcultas && $resOcultas->num_rows > 0) {
 // Obtener si se debe mostrar las asignaturas ocultas por GET o sesión
 $mostrarOcultas = isset($_GET['mostrar_ocultas']) && $_GET['mostrar_ocultas'] == '1';
 
-// 3. Obtener todas las asignaturas vigentes y activas de las carreras (con plan de estudios opcional)
+// 3. Armar filtros WHERE de Carrera y Plan
+$whereFiltro = " ca.activo = 1 ";
+if ($carreraFiltro !== 'todas') {
+    $cEsc = $conexion->real_escape_string($carreraFiltro);
+    $whereFiltro .= " AND c.id = '{$cEsc}' ";
+}
+if ($planFiltro !== 'todos') {
+    $pEsc = $conexion->real_escape_string($planFiltro);
+    $whereFiltro .= " AND pa.idPlan = '{$pEsc}' ";
+} else {
+    // Si no se especifica plan, considerar planes vigentes para el año o materias generales
+    $whereFiltro .= " AND (pl.id IS NULL OR (pl.anio_inicio <= '{$anioActual}' AND (pl.anio_fin >= '{$anioActual}' OR pl.anio_fin IS NULL))) ";
+}
+
+// 4. Obtener todas las asignaturas vigentes y activas de las carreras
 $sqlAsignaturas = "SELECT a.id as idAsignatura, a.nombre as nombreAsignatura, 
                     GROUP_CONCAT(DISTINCT CONCAT(p.apellido, ', ', p.nombre) SEPARATOR '; ') as nombresProfesores,
                     GROUP_CONCAT(DISTINCT p.email SEPARATOR '; ') as emailsProfesores,
-                    COALESCE(pl.id, 'Sin Plan') as codPlan, c.nombre as nombreCarrera, a.es_institucional,
+                    COALESCE(pa.idPlan, pl.id, 'Sin Plan') as codPlan, c.nombre as nombreCarrera, a.es_institucional,
                     ppd.id as idProgramaPDF, ppd.ruta_archivo, ppd.en_revision, ppd.aprobado_escuela,
                     ppd.aprobado_va, ppd.aprobado_depto, ppd.aprobado_va_firma, ppd.fue_desaprobado,
                     ppd.comentario_desaprobacion, ppd.fecha_ultimo_movimiento_circuito
@@ -63,8 +101,8 @@ $sqlAsignaturas = "SELECT a.id as idAsignatura, a.nombre as nombreAsignatura,
                    LEFT JOIN asignatura_responsable ar ON a.id = ar.idAsignatura
                    LEFT JOIN profesor p ON ar.idProfesor = p.id
                    LEFT JOIN programa_pdf_detalle ppd ON a.id = ppd.id_asignatura AND ppd.anio = {$anioActual}
-                   WHERE ca.activo = 1 AND (pl.id IS NULL OR (pl.anio_inicio <= '{$anioActual}' AND (pl.anio_fin >= '{$anioActual}' OR pl.anio_fin IS NULL)))
-                   GROUP BY a.id, pl.id, c.id, ppd.id
+                   WHERE {$whereFiltro}
+                   GROUP BY a.id, a.nombre, a.es_institucional, c.id, c.nombre, pa.idPlan, pl.id, ppd.id, ppd.ruta_archivo, ppd.en_revision, ppd.aprobado_escuela, ppd.aprobado_va, ppd.aprobado_depto, ppd.aprobado_va_firma, ppd.fue_desaprobado, ppd.comentario_desaprobacion, ppd.fecha_ultimo_movimiento_circuito
                    ORDER BY c.nombre ASC, a.nombre ASC";
 
 $resAsignaturas = $conexion->query($sqlAsignaturas);
@@ -139,16 +177,17 @@ $resAsignaturas = $conexion->query($sqlAsignaturas);
                                 </h1>
                                 <p class="text-muted mb-0">Control en tiempo real de los programas analíticos y configuraciones del circuito secuencial (Año <?php echo $anioActual; ?>).</p>
                             </div>
-                            <!-- Controles de Vacancia y Año -->
-                            <div class="mt-3 mt-md-0 d-flex align-items-center flex-wrap" style="gap: 15px;">
-                                <!-- Selector de Año de Monitoreo -->
-                                <div class="bg-white p-3 border rounded card-shadow d-flex align-items-center">
-                                    <form method="GET" action="" class="form-inline mb-0">
-                                        <label for="selectAnio" class="mr-2 font-weight-bold text-secondary mb-0">Año:</label>
+                            <!-- Controles de Filtros: Carrera, Plan, Año y Vacancia -->
+                            <div class="mt-3 mt-md-0 d-flex align-items-center flex-wrap" style="gap: 12px;">
+                                <!-- Selector Combinado de Filtros -->
+                                <div class="bg-white p-3 border rounded card-shadow">
+                                    <form method="GET" action="" class="form-inline mb-0" id="formFiltroMonitoreo">
                                         <?php if (isset($_GET['mostrar_ocultas'])): ?>
                                             <input type="hidden" name="mostrar_ocultas" value="<?php echo htmlspecialchars($_GET['mostrar_ocultas']); ?>">
                                         <?php endif; ?>
-                                        <select name="anio" id="selectAnio" class="form-control form-control-sm font-weight-bold" onchange="this.form.submit()">
+
+                                        <label for="selectAnio" class="mr-2 font-weight-bold text-secondary mb-0">Año:</label>
+                                        <select name="anio" id="selectAnio" class="form-control form-control-sm font-weight-bold mr-3" onchange="document.getElementById('formFiltroMonitoreo').submit()">
                                             <?php
                                             $anioMax = date("Y") + 1;
                                             for ($y = 2019; $y <= $anioMax; $y++) {
@@ -156,6 +195,28 @@ $resAsignaturas = $conexion->query($sqlAsignaturas);
                                                 echo "<option value=\"{$y}\" {$selected}>{$y}</option>";
                                             }
                                             ?>
+                                        </select>
+
+                                        <label for="selectCarrera" class="mr-2 font-weight-bold text-secondary mb-0">Carrera:</label>
+                                        <select name="carrera" id="selectCarrera" class="form-control form-control-sm mr-3" style="max-width: 220px;" onchange="document.getElementById('selectPlan').value='todos'; document.getElementById('formFiltroMonitoreo').submit()">
+                                            <option value="todas">Todas las Carreras</option>
+                                            <?php foreach ($carrerasList as $cItem): ?>
+                                                <option value="<?php echo htmlspecialchars($cItem['id']); ?>" <?php echo ($cItem['id'] === $carreraFiltro) ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($cItem['id'] . ' - ' . $cItem['nombre']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+
+                                        <label for="selectPlan" class="mr-2 font-weight-bold text-secondary mb-0">Plan:</label>
+                                        <select name="plan" id="selectPlan" class="form-control form-control-sm" style="max-width: 180px;" onchange="document.getElementById('formFiltroMonitoreo').submit()">
+                                            <option value="todos">Todos los Planes</option>
+                                            <?php foreach ($planesList as $pItem): 
+                                                $pPeriodo = is_null($pItem['anio_fin']) ? $pItem['anio_inicio'] . ' - Pres.' : $pItem['anio_inicio'] . ' - ' . $pItem['anio_fin'];
+                                            ?>
+                                                <option value="<?php echo htmlspecialchars($pItem['id']); ?>" <?php echo ($pItem['id'] === $planFiltro) ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($pItem['id'] . ' (' . $pPeriodo . ')'); ?>
+                                                </option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </form>
                                 </div>

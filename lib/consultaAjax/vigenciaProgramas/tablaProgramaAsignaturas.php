@@ -6,7 +6,7 @@ include_once '../../../modeloSistema/Plan.Class.php';
 include_once '../../../modeloSistema/Asignatura.Class.php';
 include_once '../../../modeloSistema/Profesor.Class.php';
 
-// verificamos que se recibe el codCarrera desde "panelSA.php"
+// verificamos que se recibe el codCarrera desde "panelVA.php"
 if (isset($_POST['codCarrera'])){
     $codCarrera = $_POST['codCarrera'];
     $carrera = new Carrera($codCarrera);
@@ -14,11 +14,11 @@ if (isset($_POST['codCarrera'])){
     // obtenemos el plan vigente de la carrera
     $plan = $carrera->getPlanVigente();
 
-    // validamos que te tenga plan de estudio vigente la carrera
-    if (is_null($plan)){
+    // validamos que se tenga un plan de estudio
+    if (is_null($plan) || is_null($plan->getId())){
         echo '<hr>
             <div class="alert alert-warning alert-dismissible fade show text-center" role="alert">
-            La carrera seleccionada <strong>no tiene un Plan de Estudio en vigencia</strong>, por favor revise o seleccione otra carrera.
+            La carrera seleccionada <strong>no tiene un Plan de Estudio disponible</strong>, por favor revise o seleccione otra carrera/plan.
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
@@ -28,13 +28,19 @@ if (isset($_POST['codCarrera'])){
         $asignaturas = $plan->getAsignaturas();
 
         //validamos que no este vacio asignaturas
-        if (!is_null($asignaturas)){
+        if (!is_null($asignaturas) && !empty($asignaturas)){
+
+            $periodoPlan = $plan->getId() . ' (' . ($plan->getAnio_fin() ? $plan->getAnio_inicio().' - '.$plan->getAnio_fin() : $plan->getAnio_inicio().' - Presente') . ')';
 
             // Armamos la tabla con la vigencia de los programas (si es que tiene programa) de las asignaturas del Plan
             // Solo se tienen en cuenta los programas cuya vigencia contengan el anio actual
 
             $html = '<hr>
-                            <div class="table-responsive table-premium mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="text-primary font-weight-bold mb-0">Plan de Estudio: ' . htmlspecialchars($periodoPlan) . '</h5>
+                                <span class="badge badge-info p-2">Total Asignaturas: ' . count($asignaturas) . '</span>
+                            </div>
+                            <div class="table-responsive table-premium mt-2">
                             <table class="table table-hover table-striped mb-0" id="tablaAsignaturas">
                             <thead>
                                 <tr>

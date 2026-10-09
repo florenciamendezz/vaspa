@@ -171,44 +171,67 @@ class Profesor {
     }
     
     function obtenerAsignaturasDePlanVigente(){
-        // importamos la clase Asignatura
+        // Importamos la clase Asignatura
         include_once __DIR__.'/Asignatura.Class.php';
-        
-        $anioActual = date("Y"); // anio actual tomado del servidor
-        
-        // Obtenemos las asignaturas vigentes y el plan correspondiente (o materias sin plan asociado) que estén activas en la carrera
-        $this->query = "SELECT DISTINCT a.*, pl.id AS idPlan, pl.anio_inicio AS anioInicioPlan, pl.anio_fin AS anioFinPlan 
-        FROM profesor p 
-        INNER JOIN asignatura_responsable ar ON p.id = ar.idProfesor 
-        INNER JOIN asignatura a ON ar.idAsignatura = a.id
-        INNER JOIN carrera_asignatura ca ON a.id = ca.idAsignatura AND ca.activo = 1
-        LEFT JOIN plan_asignatura pa ON a.id = pa.idAsignatura
-        LEFT JOIN plan pl ON pa.idPlan = pl.id
-        WHERE p.id = '{$this->id}' 
-          AND (
-               pl.id IS NULL 
-               OR ((pl.anio_inicio <= '{$anioActual}' AND (pl.anio_fin >= '{$anioActual}' OR pl.anio_fin IS NULL)))
-          )
-        ORDER BY a.nombre ASC, pl.id ASC";
-            
+
+        $anioActual = date("Y"); // Año actual tomado del servidor
+
+        // Obtenemos las asignaturas del profesor junto con el plan al que pertenecen.
+        // Se usa asignatura_responsable para respetar la relación profesor-asignatura actual.
+        // LEFT JOIN con plan_asignatura y plan para permitir asignaturas sin plan aún asignado.
+        // No se usa DISTINCT porque una misma asignatura puede pertenecer a más de un plan vigente.
+        $this->query = "SELECT a.*,
+                               pl.id          AS idPlan,
+                               pl.anio_inicio AS anioInicioPlan,
+                               pl.anio_fin    AS anioFinPlan
+                        FROM profesor p
+                        INNER JOIN asignatura_responsable ar
+                            ON p.id = ar.idProfesor
+                        INNER JOIN asignatura a
+                            ON ar.idAsignatura = a.id
+                        INNER JOIN carrera_asignatura ca
+                            ON a.id = ca.idAsignatura
+                            AND ca.activo = 1
+                        LEFT JOIN plan_asignatura pa
+                            ON a.id = pa.idAsignatura
+                        LEFT JOIN plan pl
+                            ON pa.idPlan = pl.id
+                        WHERE p.id = '{$this->id}'
+                          AND (
+                              pl.id IS NULL
+                              OR (
+                                  pl.anio_inicio <= '{$anioActual}'
+                                  AND (
+                                      pl.anio_fin >= '{$anioActual}'
+                                      OR pl.anio_fin IS NULL
+                                  )
+                              )
+                          )
+                        ORDER BY a.nombre ASC, pl.id ASC";
+
         $this->datos = BDConexionSistema::getInstancia()->query($this->query);
-        
-        // validamos el resultado de la query (si retorna false -> Ocurrio un error en la BD) Lanzamos una Excepcion informando el Error
-        if (!$this->datos) {
-            throw new Exception("Ocurrio un Error al obtener las Asignaturas del Profesor: {$this->apellido}, '{$this->nombre}'.");
+
+        // Validamos el resultado de la consulta
+        if ($this->datos === false) {
+            throw new Exception(
+                "Ocurrió un error al obtener las asignaturas del profesor: {$this->apellido}, '{$this->nombre}'."
+            );
         }
-        
+
         $asignaturas = NULL;
-        
+
         if ($this->datos->num_rows > 0) {
             while ($row = $this->datos->fetch_assoc()) {
-                // Instanciamos el objeto Asignatura con sus datos base
+                // Instanciamos el objeto Asignatura
                 $asigObj = new Asignatura($row['id']);
-                // Seteamos las propiedades dinámicas del plan
-                $asigObj->setIdPlan($row['idPlan']);
-                $asigObj->setAnioInicioPlan($row['anioInicioPlan']);
-                $asigObj->setAnioFinPlan($row['anioFinPlan']);
-                
+
+                // Guardamos la información del plan si existe
+                if (!empty($row['idPlan'])) {
+                    $asigObj->setIdPlan($row['idPlan']);
+                    $asigObj->setAnioInicioPlan($row['anioInicioPlan']);
+                    $asigObj->setAnioFinPlan($row['anioFinPlan']);
+                }
+
                 $asignaturas[] = $asigObj;
             }
         }

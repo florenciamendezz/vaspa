@@ -53,28 +53,25 @@ $nombreUsuario = $Usuario->nombre;
                         </div>
                         <div class="card-body">
                             <div id="codigoPlan"></div>
-                                <div class="row justify-content-center">
-                                    <div class="col-sm-5">
-                                    <label for="carrera">Carrera</label>
+                            <div class="row justify-content-center mb-3">
+                                <div class="col-sm-6">
+                                    <label for="carrera" class="font-weight-bold">Carrera</label>
                                     <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione una Carrera" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
                                         <?php if (!empty($carreras)){
-                                                    
-                                                        foreach ($carreras as $carrera) {
-                                                            echo '<option value="'.$carrera->getId().'">'.$carrera->getId().' - '.$carrera->getNombre().'</option>';
-                                                        }    
-                                                
+                                            foreach ($carreras as $carrera) {
+                                                echo '<option value="'.$carrera->getId().'">'.$carrera->getId().' - '.$carrera->getNombre().'</option>';
+                                            }    
                                         }
-                                            ?>
+                                        ?>
                                     </select>
-                                    </div>
-                                    
                                 </div>
+                            </div>
                             <div id="msgEnviarNotificacion"></div>
                             <div id="tablaVigenciaProgramas">
                                 <br>
                                 <div class="alert alert-info text-center" role="alert">
                                     Estimado usuario en esta pantalla podra obtener informaci&oacute;n acerca del estado de los Programas de Asignaturas de una Carrera. Para ello seleccione una Carrera de la lista.
-                                  </div>
+                                </div>
                             </div>
 
                         </div>
@@ -88,41 +85,49 @@ $nombreUsuario = $Usuario->nombre;
     
     <script>
             $(document).ready(function(){
-            // Si selecciona una carrera se actualiza la tabla que contiene la vigencia de los programas
-            // segun la carrera seleccionada, se mostrara solamente las asignaturas del plan vigente de la carrera
-            $('#carrera').change(function (e) {
-              var codCarrera = $("#carrera").val(); //obtenemos el codigo de la carrera seleccionada
-              $.ajax({
-                type: 'POST',
-                url: '../lib/consultaAjax/vigenciaProgramas/tablaProgramaAsignaturas.php',
-                data: {'codCarrera': codCarrera}
-              })
-              .done(function(tablaVigenciaProgramasAsignaturas){
-                $('#tablaVigenciaProgramas').html(tablaVigenciaProgramasAsignaturas);
-                var carrera = $('select[name="carrera"] option:selected').text();
-                var nombreArchivo = "Informe Estado de Programas de las Asignaturas de "+carrera;
-                //fecha
-                var now = new Date();
-                var jsDate = now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear();
-                //nombreusuarioEmisor
-                var emisor = '<?php echo $nombreUsuario; ?>';
-                var tituloExcel = 'Informe Gerencial - Sistema VASPA | Carrera: '+carrera+' | Fecha: '+jsDate;
-                              $('#tablaAsignaturas').DataTable({
-                                    dom: 'Bfrtip',
-                                    language: {
-                                        url: '../lib/datatable/es-ar.json'
-                                    },
-                                    aaSorting: [[ 2, 'asc' ]], // se ordena de manera ascendente por la tercera columna
-                                    "columnDefs": [ // deshabilita que las columnas sean ordenables
-                                        { 'orderable': false, 'targets': 5 },
-                                        { 'orderable': false, 'targets': 6 },
-                                        { 'orderable': false, 'targets': 7 }
-                                      ],
-                                    buttons: [
-                                        {
-                                            extend: 'excelHtml5',
-                                            title: tituloExcel,
-                                            text: 'Generar Excel',
+            function cargarTablaVigencia() {
+                var codCarrera = $("#carrera").val();
+
+                if (!codCarrera) return;
+
+                $('#tablaVigenciaProgramas').html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="text-muted mt-2">Cargando asignaturas y vigencias...</p></div>');
+
+                $.ajax({
+                    type: 'POST',
+                    url: '../lib/consultaAjax/vigenciaProgramas/tablaProgramaAsignaturas.php',
+                    data: {
+                        'codCarrera': codCarrera
+                    }
+                })
+                .done(function(tablaVigenciaProgramasAsignaturas){
+                    $('#tablaVigenciaProgramas').html(tablaVigenciaProgramasAsignaturas);
+                    var carrera = $('select[name="carrera"] option:selected').text();
+                    var nombreArchivo = "Informe Estado de Programas de las Asignaturas de "+carrera;
+                    var now = new Date();
+                    var jsDate = now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear();
+                    var emisor = '<?php echo $nombreUsuario; ?>';
+                    var tituloExcel = 'Informe Gerencial - Sistema VASPA | Carrera: '+carrera+' | Fecha: '+jsDate;
+                    
+                    if ($.fn.DataTable.isDataTable('#tablaAsignaturas')) {
+                        $('#tablaAsignaturas').DataTable().destroy();
+                    }
+
+                    $('#tablaAsignaturas').DataTable({
+                        dom: 'Bfrtip',
+                        language: {
+                            url: '../lib/datatable/es-ar.json'
+                        },
+                        aaSorting: [[ 1, 'asc' ]],
+                        columnDefs: [ // deshabilita que las columnas sean ordenables
+                            { 'orderable': false, 'targets': 5 },
+                            { 'orderable': false, 'targets': 6 },
+                            { 'orderable': false, 'targets': 7 }
+                        ],
+                        buttons: [
+                            {
+                                extend: 'excelHtml5',
+                                title: tituloExcel,
+                                text: 'Generar Excel',
                                             filename: nombreArchivo,
                                             exportOptions: {
                                                 columns: [0, 1, 2, 3, 4, 5, 6] //exportar columnas
@@ -195,13 +200,16 @@ $nombreUsuario = $Usuario->nombre;
                                         }
                                     ]
                                 });
-              })
-              .fail(function(){
-                alert('Hubo un error al cargar la Vigencia de los programas de asignaturas');
-              });
+                })
+                .fail(function(){
+                    alert('Hubo un error al cargar la Vigencia de los programas de asignaturas');
+                });
+            }
+
+            $('#carrera').change(function (e) {
+                cargarTablaVigencia();
             });
-                    
-          });
+        });
     </script>
    
     <script>

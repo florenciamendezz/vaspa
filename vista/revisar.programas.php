@@ -178,27 +178,31 @@ function obtenerProgramasAsignaturasRecientes($query) {
                     
                     <div class="row justify-content-md-center">
                         <div class="col-sm-5">
-                            <label for="carrera">Carrera</label>
-                            <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione Carrera" data-none-results-text="No se encontraron resultados" data-size="5" data-container="body">
+                            <label for="carrera" class="font-weight-bold">Carrera</label>
+                            <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione Carrera" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
                                 <?php
                                 if (!empty($carreras)) {
-                                    
-                                            foreach ($carreras as $carrera) {
-                                                echo '<option value="' . $carrera->getId() . '">'.$carrera->getId().' - '.$carrera->getNombre().'</option>';
-                                            }
-                                        
+                                    foreach ($carreras as $carrera) {
+                                        echo '<option value="' . $carrera->getId() . '">'.$carrera->getId().' - '.$carrera->getNombre().'</option>';
+                                    }
                                 }
                                 ?>
                             </select>
                         </div>
 
+                        <div class="col-sm-5">
+                            <label for="plan" class="font-weight-bold">Plan de Estudio</label>
+                            <select id="plan" name="plan" class="selectpicker" data-width="100%" data-live-search="true" title="Seleccione Plan (Opcional)" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
+                                <option value="todos">Todos los Planes de la Carrera</option>
+                            </select>
+                        </div>
                     </div>
                     <br>
                     <?php
                         // Mostramos mensaje, resultado de la operacion de haber aprobado o no un programa.
                         if (isset($_SESSION['mensajeRevisarPrograma'])) {
                             echo $_SESSION['mensajeRevisarPrograma'];
-                            unset($_SESSION['mensajeRevisarPrograma']); //
+                            unset($_SESSION['mensajeRevisarPrograma']);
                         }
                     ?>
                     <div id="tabProgramas">
@@ -208,48 +212,78 @@ function obtenerProgramasAsignaturasRecientes($query) {
                         ?>
                     </div>
                     <br>
-                    
-                    
-                        
                 </div>
             </div>
         </div>
-          <?php include_once '../gui/footer.php'; ?>
+        <?php include_once '../gui/footer.php'; ?>
         
         <script>
             $(document).ready(function(){
-                      $('#carrera').change(function () {
-                        var codCarrera = $('#carrera').val();
-                        // constante que almacena el rol del usuario logueado en el sistema
-                        const rol = "<?php echo $rol; ?>";
-                        $.ajax({
-                          type: 'POST',
-                          url: '../lib/consultaAjax/revisarPrograma/tablaProgramasAsignaturas.php',
-                          data: {'codCarrera': codCarrera,
-                                'rol': rol}
-                        })
-                        .done(function(programas){
-                          $('#tabProgramas').html(programas);
-                          // Inicializar DataTable en la respuesta AJAX (asumiendo que tablaProgramasAsignaturas.php devuelve la estructura de tabla)
-                          $('#tablaPrograma').DataTable({
-                                language: {
-                                    url: '../lib/datatable/es-ar.json'
-                                }
-                          });
-                        })
-                        .fail(function(){
-                          alert('Hubo un error al cargar los Programas de Asignaturas.')
-                        });
-                      });
-                              
-                      // Inicializar DataTable en la carga inicial
-                      $('#tablaPrograma').DataTable({
+                const rol = "<?php echo $rol; ?>";
+
+                function cargarTablaProgramas() {
+                    var codCarrera = $('#carrera').val();
+                    var codPlan = $('#plan').val() || 'todos';
+
+                    if (!codCarrera) return;
+
+                    $('#tabProgramas').html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="text-muted mt-2">Cargando programas de asignaturas...</p></div>');
+
+                    $.ajax({
+                        type: 'POST',
+                        url: '../lib/consultaAjax/revisarPrograma/tablaProgramasAsignaturas.php',
+                        data: {
+                            'codCarrera': codCarrera,
+                            'codPlan': codPlan,
+                            'rol': rol
+                        }
+                    })
+                    .done(function(programas){
+                        $('#tabProgramas').html(programas);
+                        if ($.fn.DataTable.isDataTable('#tablaPrograma')) {
+                            $('#tablaPrograma').DataTable().destroy();
+                        }
+                        $('#tablaPrograma').DataTable({
                             language: {
                                 url: '../lib/datatable/es-ar.json'
                             }
-                      });
+                        });
+                    })
+                    .fail(function(){
+                        alert('Hubo un error al cargar los Programas de Asignaturas.');
+                    });
+                }
+
+                $('#carrera').change(function () {
+                    var codCarrera = $('#carrera').val();
+                    if (!codCarrera) return;
+
+                    // Cargar los planes de estudio correspondientes a la carrera
+                    $.ajax({
+                        type: 'POST',
+                        url: '../lib/consultaAjax/revisarPrograma/planesDeCarrera.php',
+                        data: {'codCarrera': codCarrera}
+                    })
+                    .done(function(optionsPlan){
+                        $('#plan').html(optionsPlan);
+                        $('#plan').selectpicker('refresh');
+                        cargarTablaProgramas();
+                    });
+                });
+
+                $('#plan').change(function () {
+                    cargarTablaProgramas();
+                });
+                          
+                // Inicializar DataTable en la carga inicial
+                if ($('#tablaPrograma').length > 0) {
+                    $('#tablaPrograma').DataTable({
+                        language: {
+                            url: '../lib/datatable/es-ar.json'
+                        }
+                    });
+                }
             });
         </script>
-        
     </body>
 </html>

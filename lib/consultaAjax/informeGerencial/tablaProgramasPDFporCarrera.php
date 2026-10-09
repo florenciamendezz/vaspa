@@ -11,12 +11,23 @@ include_once '../../../modeloSistema/Profesor.Class.php';
 $print = ''; // valor a devolver
 if (isset($_POST['codCarrera']) && isset($_POST['anio'])){
     $codCarrera = $_POST['codCarrera'];
-    $anio = $_POST['anio'];
+    $anio = intval($_POST['anio']);
+    $codPlan = $_POST['codPlan'] ?? 'todos';
     $carrera = new Carrera($codCarrera);
     
     $conexion = BDConexionSistema::getInstancia();
+    $codCarreraEsc = $conexion->real_escape_string($codCarrera);
     
-    // Consulta optimizada para traer todas las asignaturas de la carrera y su respectivo estado de circuito
+    $joinPlan = "";
+    $wherePlan = " ca.idCarrera = '{$codCarreraEsc}' ";
+    
+    if (!empty($codPlan) && $codPlan !== 'todos' && $codPlan !== '-1') {
+        $codPlanEsc = $conexion->real_escape_string($codPlan);
+        $joinPlan = " INNER JOIN plan_asignatura pa ON a.id = pa.idAsignatura ";
+        $wherePlan = " pa.idPlan = '{$codPlanEsc}' ";
+    }
+    
+    // Consulta optimizada para traer todas las asignaturas de la carrera / plan y su respectivo estado de circuito
     $sqlAsignaturas = "
         SELECT a.id as idAsignatura, a.nombre as nombreAsignatura, 
                GROUP_CONCAT(DISTINCT CONCAT(p.apellido, ', ', p.nombre) SEPARATOR '; ') as nombresProfesores,
@@ -26,10 +37,11 @@ if (isset($_POST['codCarrera']) && isset($_POST['anio'])){
                ppd.comentario_desaprobacion, ppd.fecha_ultimo_movimiento_circuito, ppd.fecha_carga
         FROM carrera_asignatura ca
         INNER JOIN asignatura a ON ca.idAsignatura = a.id
+        {$joinPlan}
         LEFT JOIN asignatura_responsable ar ON a.id = ar.idAsignatura
         LEFT JOIN profesor p ON ar.idProfesor = p.id
         LEFT JOIN programa_pdf_detalle ppd ON a.id = ppd.id_asignatura AND ppd.anio = {$anio}
-        WHERE ca.idCarrera = '{$codCarrera}'
+        WHERE {$wherePlan}
         GROUP BY a.id, ppd.id
         ORDER BY a.nombre ASC
     ";

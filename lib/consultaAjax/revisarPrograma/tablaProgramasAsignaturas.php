@@ -14,8 +14,10 @@ require_once '../../../modeloSistema/Programa.Class.php';
 require_once '../../../modeloSistema/ProgramaPDFDetalle.Class.php';
 
 if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
-    $codCarrera = $_POST['codCarrera'];    $carrera = new Carrera($codCarrera);
+    $codCarrera = $_POST['codCarrera'];
+    $carrera = new Carrera($codCarrera);
     $rol = $_POST['rol']; 
+    $codPlan = $_POST['codPlan'] ?? 'todos';
     $isVA = ($rol == 'VA' || $rol == 'Administrador' || $rol == 'Vinculación Académica');
 
     // Tab a retornar en la pantalla Revisar Programas
@@ -49,14 +51,27 @@ if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
         </ul>
         <div class="tab-content" id="myTabContent">';
                             
-    // Obtener todas las asignaturas de la carrera incluyendo el idDepartamento (independientemente del plan de estudios)
-    $queryAsignaturas = "SELECT a.id, a.nombre, a.idDepartamento 
-                           FROM asignatura a
-                           JOIN carrera_asignatura ca ON a.id = ca.idAsignatura
-                           WHERE ca.idCarrera = '{$codCarrera}'
-                           ORDER BY a.nombre ASC";
+    $db = BDConexionSistema::getInstancia();
+    $codCarreraEsc = $db->real_escape_string($codCarrera);
     
-    $resultadoAsignaturas = BDConexionSistema::getInstancia()->query($queryAsignaturas);
+    // Si se especificó un plan concreto (distinto de 'todos' y de '-1')
+    if (!empty($codPlan) && $codPlan !== 'todos' && $codPlan !== '-1') {
+        $codPlanEsc = $db->real_escape_string($codPlan);
+        $queryAsignaturas = "SELECT DISTINCT a.id, a.nombre, a.idDepartamento 
+                               FROM asignatura a
+                               JOIN plan_asignatura pa ON a.id = pa.idAsignatura
+                               WHERE pa.idPlan = '{$codPlanEsc}'
+                               ORDER BY a.nombre ASC";
+    } else {
+        // Obtener todas las asignaturas de la carrera
+        $queryAsignaturas = "SELECT DISTINCT a.id, a.nombre, a.idDepartamento 
+                               FROM asignatura a
+                               JOIN carrera_asignatura ca ON a.id = ca.idAsignatura
+                               WHERE ca.idCarrera = '{$codCarreraEsc}'
+                               ORDER BY a.nombre ASC";
+    }
+    
+    $resultadoAsignaturas = $db->query($queryAsignaturas);
 
     // =================================================================================
     // PESTANIA ESTADO GENERAL

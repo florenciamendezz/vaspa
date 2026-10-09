@@ -60,7 +60,7 @@ class ManejadorProfesor {
 //        if ($this->chequearDNI($Profesor->getDni())) {
         if ($this->chequearEmail($Profesor->getEmail())) {
             $this->query = "INSERT INTO PROFESOR "
-                    . "VALUES ('{$Profesor->getId()}', '0', '{$Profesor->getNombre()}', '{$apellido}',"
+                    . "VALUES (NULL, '0', '{$Profesor->getNombre()}', '{$apellido}',"
                     . "'{$Profesor->getEmail()}', '{$Profesor->getCategoria()}', '{$Profesor->getPreferencias()}', '{$Profesor->getIdDepartamento()}')";
 
             $consulta = BDConexionSistema::getInstancia()->query($this->query);
@@ -88,7 +88,7 @@ class ManejadorProfesor {
 
             if ($this->chequearEmail($Profesor->getEmail())) {
                 $this->query = "INSERT INTO PROFESOR "
-                        . "VALUES ('{$Profesor->getId()}', '0', '{$Profesor->getNombre()}', '{$apellido}',"
+                        . "VALUES (NULL, '0', '{$Profesor->getNombre()}', '{$apellido}',"
                         . "'{$Profesor->getEmail()}', '{$Profesor->getCategoria()}', '{$Profesor->getPreferencias()}', '{$Profesor->getIdDepartamento()}')";
 
                 $consulta = BDConexionSistema::getInstancia()->query($this->query);
@@ -107,12 +107,11 @@ class ManejadorProfesor {
                     . "VALUES (null,'{$datos["nombreUsuario"]}','{$datos["email"]}')";
             $consulta = BDConexionSistema::getInstancia()->query($query);
             if (!$consulta) {
-                BDConexionSistema::getInstancia()->rollback();
-                //arrojar una excepcion
-                //die(BDConexion::getInstancia()->errno);
-                throw new Exception("No se puedo dar de alta el profesor (Error en la Base de Datos).");
+                $errorDB = BDConexionSistema::getInstancia()->error;
+                 BDConexionSistema::getInstancia()->rollback();
+            throw new Exception(
+                "Error al insertar el usuario: " . $errorDB);
             }
-
             // recuperamos la id del usuario
             $idUsuario = BDConexionSistema::getInstancia()->insert_id;
 
@@ -121,10 +120,11 @@ class ManejadorProfesor {
                     . "VALUES ({$idUsuario}, 9)";
             $consulta = BDConexionSistema::getInstancia()->query($query);
             if (!$consulta) {
+                $errorDB = BDConexionSistema::getInstancia()->error;
                 BDConexionSistema::getInstancia()->rollback();
-                //arrojar una excepcion
-                //die(BDConexion::getInstancia()->errno);
-                throw new Exception("No se puedo dar de alta el profesor (Error en la Base de Datos).");
+            throw new Exception(
+                "Error al asignar el rol al usuario: " . $errorDB
+            );
             }
 
             BDConexionSistema::getInstancia()->commit();

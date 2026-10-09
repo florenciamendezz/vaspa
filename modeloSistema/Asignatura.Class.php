@@ -33,10 +33,8 @@ class Asignatura {
         if (isset($datos)) {
             $this->setId($datos['id']);
             $this->setNombre($datos['nombre']);
-            $this->setContenidosMinimos($datos['contenidosMinimos']);
             $this->setIdDepartamento($datos['departamento']);
-            $this->setIdProfesor(isset($datos['idProfesor']) ? $datos['idProfesor'] : null);
-            $this->setHorasSemanales($datos['horasSemanales']);
+            $this->setIdEscuela(isset($datos['idEscuela']) ? $datos['idEscuela'] : null);
         } else {
             //Sino viene un nuevo Objeto, lo recupero (para Modificar)
             if (isset($id)) {

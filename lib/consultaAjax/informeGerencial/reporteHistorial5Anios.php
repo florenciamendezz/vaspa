@@ -22,10 +22,20 @@ if (isset($_POST['codCarrera']) && isset($_POST['idProfesor'])) {
     
     // Armar condiciones del filtro
     $where = " 1 = 1 ";
+    $joinPlan = "";
+    
     if ($codCarrera !== 'todas') {
         $codCarreraEscaped = $conexion->real_escape_string($codCarrera);
         $where .= " AND ca.idCarrera = '{$codCarreraEscaped}' ";
     }
+    
+    $codPlan = $_POST['codPlan'] ?? 'todos';
+    if (!empty($codPlan) && $codPlan !== 'todos' && $codPlan !== '-1') {
+        $codPlanEscaped = $conexion->real_escape_string($codPlan);
+        $joinPlan = " INNER JOIN plan_asignatura pa ON a.id = pa.idAsignatura ";
+        $where .= " AND pa.idPlan = '{$codPlanEscaped}' ";
+    }
+    
     if ($idProfesor !== 'todos') {
         $idProfesorEscaped = intval($idProfesor);
         $where .= " AND ar.idProfesor = {$idProfesorEscaped} ";
@@ -37,6 +47,7 @@ if (isset($_POST['codCarrera']) && isset($_POST['idProfesor'])) {
         FROM asignatura a
         JOIN carrera_asignatura ca ON a.id = ca.idAsignatura
         JOIN carrera c ON ca.idCarrera = c.id
+        {$joinPlan}
         LEFT JOIN asignatura_responsable ar ON a.id = ar.idAsignatura
         WHERE {$where}
         ORDER BY c.nombre ASC, a.nombre ASC

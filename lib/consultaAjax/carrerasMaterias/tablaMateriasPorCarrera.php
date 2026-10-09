@@ -25,21 +25,36 @@ if (isset($_POST['codCarrera'])) {
         $profs[] = $row;
     }
 
-    // Obtener materias asociadas a la carrera
-    $query = "SELECT a.id, a.nombre, a.idDepartamento, ca.activo 
+    $codPlan = $_POST['codPlan'] ?? 'todos';
+    $codCarreraEsc = $db->real_escape_string($codCarrera);
+    
+    $where = " ca.idCarrera = '{$codCarreraEsc}' ";
+    $joinPlan = "";
+    if (!empty($codPlan) && $codPlan !== 'todos' && $codPlan !== '-1') {
+        $codPlanEsc = $db->real_escape_string($codPlan);
+        $joinPlan = " INNER JOIN plan_asignatura pa ON a.id = pa.idAsignatura ";
+        $where .= " AND pa.idPlan = '{$codPlanEsc}' ";
+    }
+
+    // Obtener materias asociadas a la carrera / plan
+    $query = "SELECT DISTINCT a.id, a.nombre, a.idDepartamento, ca.activo 
               FROM carrera_asignatura ca
               INNER JOIN asignatura a ON ca.idAsignatura = a.id
-              WHERE ca.idCarrera = '{$codCarrera}'
+              {$joinPlan}
+              WHERE {$where}
               ORDER BY a.nombre ASC";
     $resMaterias = $db->query($query);
 
     if (!$resMaterias) {
-        echo '<div class="alert alert-danger text-center">Error al consultar las materias.</div>';
+        echo '<div class="alert alert-danger text-center">Error al consultar las materias: ' . htmlspecialchars($db->error) . '</div>';
         exit;
     }
 
     if ($resMaterias->num_rows == 0) {
-        echo '<div class="alert alert-warning text-center">La carrera seleccionada no tiene materias asociadas.</div>';
+        $msg = (!empty($codPlan) && $codPlan !== 'todos' && $codPlan !== '-1') 
+            ? 'El Plan de Estudio seleccionado no tiene materias asociadas.' 
+            : 'La carrera seleccionada no tiene materias asociadas.';
+        echo '<div class="alert alert-warning text-center">' . $msg . '</div>';
         exit;
     }
     

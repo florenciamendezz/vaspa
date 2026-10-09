@@ -113,13 +113,19 @@ if ($resProfs && $resProfs->num_rows > 0) {
                 <div class="card-body">
                     <div class="row justify-content-center mb-4">
                         <div class="col-sm-5">
-                            <label for="carreraSelect">Seleccione la Carrera</label>
+                            <label for="carreraSelect" class="font-weight-bold">Seleccione la Carrera</label>
                             <select id="carreraSelect" class="selectpicker" data-width="100%" data-live-search="true" required title="Seleccione una Carrera" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
                                 <?php if (!empty($carreras)) {
                                     foreach ($carreras as $c) {
                                         echo '<option value="'.$c->getId().'">'.$c->getId().' - '.$c->getNombre().'</option>';
                                     }
                                 } ?>
+                            </select>
+                        </div>
+                        <div class="col-sm-5">
+                            <label for="planSelect" class="font-weight-bold">Plan de Estudio</label>
+                            <select id="planSelect" class="selectpicker" data-width="100%" data-live-search="true" title="Todos los planes" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
+                                <option value="todos">Todos los planes</option>
                             </select>
                         </div>
                     </div>
@@ -235,23 +241,41 @@ if ($resProfs && $resProfs->num_rows > 0) {
             $(document).ready(function() {
                 var codCarrera = "";
 
-                // Cargar materias de la carrera seleccionada
+                // Cargar materias y planes de la carrera seleccionada
                 $('#carreraSelect').change(function() {
                     codCarrera = $(this).val();
                     if(codCarrera) {
                         $('#btnAsociarExistente').show().prop('disabled', false);
                         $('#btnCrearAsociar').show().prop('disabled', false);
-                        cargarTablaMaterias();
+                        
+                        // Cargar planes dinámicamente
+                        $.ajax({
+                            type: 'POST',
+                            url: '../lib/consultaAjax/revisarPrograma/planesDeCarrera.php',
+                            data: {'codCarrera': codCarrera}
+                        })
+                        .done(function(optionsPlan){
+                            $('#planSelect').html(optionsPlan).selectpicker('refresh');
+                            cargarTablaMaterias();
+                        });
                     } else {
+                        $('#planSelect').html('<option value="todos">Todos los planes</option>').selectpicker('refresh');
                         $('#btnAsociarExistente').hide().prop('disabled', true);
                         $('#btnCrearAsociar').hide().prop('disabled', true);
                         $('#tablaMateriasContainer').html('<div class="alert alert-info text-center" role="alert">Seleccione una carrera de la lista para gestionar las asignaturas y su pertenencia.</div>');
                     }
                 });
 
+                $('#planSelect').change(function() {
+                    if (codCarrera) {
+                        cargarTablaMaterias();
+                    }
+                });
+
                 function cargarTablaMaterias() {
+                    var codPlan = $('#planSelect').val() || 'todos';
                     $('#tablaMateriasContainer').html('<div class="text-center my-4"><img src="../lib/img/loader.gif"/> Cargando materias de la carrera...</div>');
-                    $.post('../lib/consultaAjax/carrerasMaterias/tablaMateriasPorCarrera.php', {codCarrera: codCarrera}, function(html) {
+                    $.post('../lib/consultaAjax/carrerasMaterias/tablaMateriasPorCarrera.php', {codCarrera: codCarrera, codPlan: codPlan}, function(html) {
                         $('#tablaMateriasContainer').html(html);
                         
                         // Inicializar DataTables

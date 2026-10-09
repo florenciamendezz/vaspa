@@ -302,9 +302,9 @@ $nombreUsuario = $Usuario->nombre;
                         <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
                             <br>
                             <div class="row justify-content-md-center">
-                                <div class="col-sm-5">
-                                    <label for="carrera">Carrera</label>
-                                    <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione carrera" data-none-results-text="No se encontraron resultados" data-size="5">
+                                <div class="col-sm-4">
+                                    <label for="carrera" class="font-weight-bold">Carrera</label>
+                                    <select id="carrera" name="carrera" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione carrera" data-none-results-text="No se encontraron resultados" data-size="7">
                                         <?php
                                         if (!empty($carreras)) {
                                                 foreach ($carreras as $carrera) {
@@ -315,9 +315,16 @@ $nombreUsuario = $Usuario->nombre;
                                     </select>
                                 </div>
 
-                                <div class="col-sm-2">
-                                    <label for="anio">A&ntilde;o</label>
-                                    <select id="anio" name="anio" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione a&ntilde;o" data-none-results-text="No se encontraron resultados" data-size="5">
+                                <div class="col-sm-4">
+                                    <label for="plan" class="font-weight-bold">Plan de Estudio</label>
+                                    <select id="plan" name="plan" class="selectpicker" data-width="100%" data-live-search="true" title="Todos los planes" data-none-results-text="No se encontraron resultados" data-size="7">
+                                        <option value="todos">Todos los Planes</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-sm-3">
+                                    <label for="anio" class="font-weight-bold">A&ntilde;o</label>
+                                    <select id="anio" name="anio" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione a&ntilde;o" data-none-results-text="No se encontraron resultados" data-size="7">
                                     </select>
                                 </div>
 
@@ -328,7 +335,7 @@ $nombreUsuario = $Usuario->nombre;
                             <!-- Modal para mostrar el grafico de torta resumiendo la disponibilidad de los programas -->
                             <div id="tablaProgramasAsignaturas">
                                 <div class="alert alert-info" role="alert">
-                                    Para obtener el <b>informe Gerencial de Programas por Carreras</b>, seleccione una carrera y a continuaci&oacute;n
+                                    Para obtener el <b>informe Gerencial de Programas por Carreras</b>, seleccione una carrera, plan y a continuaci&oacute;n
                                     un a&ntilde;o. Se le presentar&aacute; las asignaturas y su <b>disponibilidad para la comunidad universitaria</b>.
                                   </div>
                             </div>
@@ -340,7 +347,7 @@ $nombreUsuario = $Usuario->nombre;
                             <div class="row justify-content-md-center">
                                 <div class="col-sm-4">
                                     <label for="profesor">Profesor Responsable</label>
-                                    <select id="profesor" name="profesor" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione profesor" data-none-results-text="No se encontraron resultados" data-size="5">
+                                    <select id="profesor" name="profesor" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione profesor" data-none-results-text="No se encontraron resultados" data-size="7">
                                         <?php
                                         if (!empty($profesores)) {
                                                 foreach ($profesores as $profesor) {
@@ -353,7 +360,7 @@ $nombreUsuario = $Usuario->nombre;
 
                                 <div class="col-sm-2">
                                     <label for="anioProf">A&ntilde;o</label>
-                                    <select id="anioProf" name="anioProf" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione a&ntilde;o" data-none-results-text="No se encontraron resultados" data-size="5">
+                                    <select id="anioProf" name="anioProf" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione a&ntilde;o" data-none-results-text="No se encontraron resultados" data-size="7">
                                     </select>
                                 </div>
 
@@ -371,9 +378,9 @@ $nombreUsuario = $Usuario->nombre;
                         <div class="tab-pane fade" id="historial" role="tabpanel" aria-labelledby="historial-tab">
                             <br>
                             <div class="row justify-content-md-center">
-                                <div class="col-sm-5">
-                                    <label for="carreraHist">Carrera / Escuela</label>
-                                    <select id="carreraHist" name="carreraHist" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione carrera" data-none-results-text="No se encontraron resultados" data-size="5">
+                                <div class="col-sm-4">
+                                    <label for="carreraHist" class="font-weight-bold">Carrera / Escuela</label>
+                                    <select id="carreraHist" name="carreraHist" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione carrera" data-none-results-text="No se encontraron resultados" data-size="7">
                                         <option value="todas">Todas las carreras</option>
                                         <?php
                                         if (!empty($carreras)) {
@@ -384,9 +391,15 @@ $nombreUsuario = $Usuario->nombre;
                                         ?>
                                     </select>
                                 </div>
-                                <div class="col-sm-5">
-                                    <label for="profesorHist">Profesor Responsable</label>
-                                    <select id="profesorHist" name="profesorHist" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione profesor" data-none-results-text="No se encontraron resultados" data-size="5">
+                                <div class="col-sm-4">
+                                    <label for="planHist" class="font-weight-bold">Plan de Estudio</label>
+                                    <select id="planHist" name="planHist" class="selectpicker" data-width="100%" data-live-search="true" title="Todos los planes" data-none-results-text="No se encontraron resultados" data-size="7">
+                                        <option value="todos">Todos los planes</option>
+                                    </select>
+                                </div>
+                                <div class="col-sm-4">
+                                    <label for="profesorHist" class="font-weight-bold">Profesor Responsable</label>
+                                    <select id="profesorHist" name="profesorHist" class="selectpicker" data-width="100%" data-live-search="true" required="" title="Seleccione profesor" data-none-results-text="No se encontraron resultados" data-size="7">
                                         <option value="todos">Todos los profesores</option>
                                         <?php
                                         if (!empty($profesores)) {
@@ -401,7 +414,7 @@ $nombreUsuario = $Usuario->nombre;
                             <br>
                             <div id="tablaReporte5Anios">
                                 <div class="alert alert-info" role="alert">
-                                    Seleccione una carrera y/o un profesor responsable para obtener el <b>informe del historial de los últimos 5 años</b> de presentaciones de programas.
+                                    Seleccione una carrera, plan y/o un profesor responsable para obtener el <b>informe del historial de los últimos 5 años</b> de presentaciones de programas.
                                 </div>
                             </div>
                         </div>
@@ -422,55 +435,44 @@ $nombreUsuario = $Usuario->nombre;
                    $('.selectpicker').selectpicker({
                        noneResultsText: 'No se encontraron resultados'
                    });
-                   $('#carrera').change(function () {
-                    var codCarrera = $('#carrera').val();
-                    //alert(codCarrera);
-                    $.ajax({
-                      type: 'POST',
-                      url: '../lib/consultaAjax/informeGerencial/cargaSelectAnios.php',
-                      data: {'codCarrera': codCarrera}
-                    })
-                    .done(function(anios){
-                       $('#anio').html(anios).selectpicker('refresh');
-                      //$('#tablaProgramasAsignaturas').empty();
-                    })
-                    .fail(function(){
-                      alert('Hubo un error al cargar los anios.')
-                    });
-                  });
-                  
-                  $('#anio').change(function () {
-                      var anio = $('#anio').val();
-                      if (anio != -1){ // value = -1 significa que la carrera no tiene planes con lo cual no se podra obtener los programas
-                            var codCarrera = $('#carrera').val();
-                            //alert(codCarrera+codPlan);
-                            $.ajax({
-                              type: 'POST',
-                              url: '../lib/consultaAjax/informeGerencial/tablaProgramasPDFporCarrera.php',
-                              data: {'codCarrera': codCarrera,
-                                    'anio': anio}
-                            })
-                            .done(function(programas){
-                              //$(".selectpicker").selectpicker(); 
-                      
-                              $('#tablaProgramasAsignaturas').html(programas);
-                              var carrera = $('select[name="carrera"] option:selected').text();
-                              var nombreArchivo = "Informe Estado de Programas PDF "+carrera+", "+anio;
-                              //fecha
-                              var now = new Date();
-                              var jsDate = now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear();
-                              //nombreusuarioEmisor
-                              var emisor = '<?php echo $nombreUsuario; ?>';
-                              var tituloExcel = 'Informe Gerencial - Sistema VASPA | Carrera: '+carrera+'. Año: '+anio+' | Fecha: '+jsDate;
-                              $('#tablaAsignaturas').DataTable({
-                                    dom: 'Bfrtip',
-                                    language: {
-                                        url: '../lib/datatable/es-ar.json'
-                                    },
-//                                    buttons: [
-//                                        'copy', 'csv', 'excel', 'pdf', 'print'
-//                                    ]
-                                    buttons: [
+
+                   function cargarInformeCarrera() {
+                       var anio = $('#anio').val();
+                       var codCarrera = $('#carrera').val();
+                       var codPlan = $('#plan').val() || 'todos';
+
+                       if (!codCarrera || !anio || anio == -1) return;
+
+                       $('#tablaProgramasAsignaturas').html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="text-muted mt-2">Cargando informe gerencial...</p></div>');
+
+                       $.ajax({
+                           type: 'POST',
+                           url: '../lib/consultaAjax/informeGerencial/tablaProgramasPDFporCarrera.php',
+                           data: {
+                               'codCarrera': codCarrera,
+                               'codPlan': codPlan,
+                               'anio': anio
+                           }
+                       })
+                       .done(function(programas){
+                           $('#tablaProgramasAsignaturas').html(programas);
+                           var carrera = $('select[name="carrera"] option:selected').text();
+                           var nombreArchivo = "Informe Estado de Programas PDF "+carrera+", "+anio;
+                           var now = new Date();
+                           var jsDate = now.getDate()+'/'+(now.getMonth()+1)+'/'+now.getFullYear();
+                           var emisor = '<?php echo $nombreUsuario; ?>';
+                           var tituloExcel = 'Informe Gerencial - Sistema VASPA | Carrera: '+carrera+'. Año: '+anio+' | Fecha: '+jsDate;
+                           
+                           if ($.fn.DataTable.isDataTable('#tablaAsignaturas')) {
+                               $('#tablaAsignaturas').DataTable().destroy();
+                           }
+
+                           $('#tablaAsignaturas').DataTable({
+                                 dom: 'Bfrtip',
+                                 language: {
+                                     url: '../lib/datatable/es-ar.json'
+                                 },
+                                 buttons: [
                                         {
                                             extend: 'excelHtml5',
                                             title: tituloExcel,
@@ -759,10 +761,44 @@ $nombreUsuario = $Usuario->nombre;
                             .fail(function(){
                               alert('Hubo un error al cargar los Programas de Asignaturas.')
                             });
-                      }
-                    
-                  });
-                  
+                   }
+
+                   $('#carrera').change(function () {
+                       var codCarrera = $('#carrera').val();
+                       if (!codCarrera) return;
+
+                       // Cargar planes de la carrera seleccionada
+                       $.ajax({
+                           type: 'POST',
+                           url: '../lib/consultaAjax/revisarPrograma/planesDeCarrera.php',
+                           data: {'codCarrera': codCarrera}
+                       })
+                       .done(function(optionsPlan){
+                           $('#plan').html(optionsPlan).selectpicker('refresh');
+                       });
+
+                       // Cargar anios de la carrera seleccionada
+                       $.ajax({
+                           type: 'POST',
+                           url: '../lib/consultaAjax/informeGerencial/cargaSelectAnios.php',
+                           data: {'codCarrera': codCarrera}
+                       })
+                       .done(function(anios){
+                           $('#anio').html(anios).selectpicker('refresh');
+                           cargarInformeCarrera();
+                       })
+                       .fail(function(){
+                           alert('Hubo un error al cargar los años.');
+                       });
+                   });
+
+                   $('#plan').change(function () {
+                       cargarInformeCarrera();
+                   });
+
+                   $('#anio').change(function () {
+                       cargarInformeCarrera();
+                   });
               });
     </script>
     
@@ -1111,6 +1147,7 @@ $nombreUsuario = $Usuario->nombre;
                   function cargarReporteHistorial() {
                       var codCarrera = $('#carreraHist').val();
                       var idProfesor = $('#profesorHist').val();
+                      var codPlan = $('#planHist').val() || 'todos';
                       
                       if (!codCarrera || !idProfesor) return;
                       
@@ -1121,6 +1158,7 @@ $nombreUsuario = $Usuario->nombre;
                           url: '../lib/consultaAjax/informeGerencial/reporteHistorial5Anios.php',
                           data: {
                               'codCarrera': codCarrera,
+                              'codPlan': codPlan,
                               'idProfesor': idProfesor
                           }
                       })
@@ -1161,7 +1199,25 @@ $nombreUsuario = $Usuario->nombre;
                       });
                   }
 
-                  $('#carreraHist').change(cargarReporteHistorial);
+                  $('#carreraHist').change(function() {
+                      var codCarrera = $('#carreraHist').val();
+                      if (codCarrera === 'todas') {
+                          $('#planHist').html('<option value="todos">Todos los planes</option>').selectpicker('refresh');
+                          cargarReporteHistorial();
+                      } else {
+                          $.ajax({
+                              type: 'POST',
+                              url: '../lib/consultaAjax/revisarPrograma/planesDeCarrera.php',
+                              data: {'codCarrera': codCarrera}
+                          })
+                          .done(function(optionsPlan){
+                              $('#planHist').html(optionsPlan).selectpicker('refresh');
+                              cargarReporteHistorial();
+                          });
+                      }
+                  });
+
+                  $('#planHist').change(cargarReporteHistorial);
                   $('#profesorHist').change(cargarReporteHistorial);
                   
               });

@@ -1,6 +1,7 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
 include_once '../modeloSistema/Carrera.Class.php';
+include_once '../controlSistema/ManejadorPlan.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
 
 // validamos que se esta enviando el codigo de la carrera
@@ -8,17 +9,18 @@ if (!isset($_GET["id"]) || empty($_GET["id"])){
     header("Location: carreras.php");
     exit;
 }
-//$_GET["id"] = '016';
 $codCarrera = $_GET["id"];
 $carrera = new Carrera($codCarrera);
 
 if (is_null($carrera->getId())){
-    // no existe la carrera regresamos a la pantalla de planes
     header("Location: carreras.php");
     exit;
 }
 
-
+$manejadorPlan = new ManejadorPlan();
+$planesExistentes = $manejadorPlan->getPlanesSegunCarrera($codCarrera);
+$nroRevisionSugerido = !empty($planesExistentes) ? (count($planesExistentes) + 1) : 1;
+$codigoSugerido = $carrera->getId() . 'P' . $nroRevisionSugerido;
 ?>
 
 <html>
@@ -31,7 +33,7 @@ if (is_null($carrera->getId())){
         <script type="text/javascript" src="../lib/js/valida.anios.js"></script>
         <script src="../lib/bootbox/bootbox.js"></script>
         <script src="../lib/bootbox/bootbox.locales.js"></script>
-        <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Crear nueva revisi&oacute;n de Plan</title>
+        <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Crear Plan de Estudio</title>
         
         <!-- Google Fonts Outfit y Estilos Premium -->
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -43,7 +45,7 @@ if (is_null($carrera->getId())){
             <form action="plan.crear.procesar.php" method="post"> 
                 <div class="card card-premium">
                     <div class="card-header card-header-premium">
-                        <h3>Crear Nueva Revisi&oacute;n del Plan de: <span style="color: #60a5fa; font-weight: 600;"><?= $carrera->getId().' - '.$carrera->getNombre();?></span></h3>
+                        <h3>Crear Plan de Estudio para: <span style="color: #60a5fa; font-weight: 600;"><?= $carrera->getId().' - '.$carrera->getNombre();?></span></h3>
                         <p class="mb-0 mt-2 text-white" style="opacity: 0.85;">
                             Complete los campos a continuaci&oacute;n. 
                             Luego, presione el bot&oacute;n <b>Confirmar</b>.<br />
@@ -51,17 +53,17 @@ if (is_null($carrera->getId())){
                         </p>
                     </div>
                     <div class="card-body">
-                        <h4>Propiedades</h4>
+                        <h4>Propiedades del Plan</h4>
                         
                         <div class="form-group">
-                            <label for="inputCodigoPlan">N&uacute;mero de revisi&oacute;n del Plan</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <div class="input-group-text"><?= $carrera->getId().'P'; ?></div>
-                                  </div>
-                                <input type="number" name="id" class="form-control" id="inputCodigoPlan" placeholder="Ingrese el n&uacute;mero de revisi&oacute;n del Plan" 
-                                       min="1" max="20" required="" autofocus>
-                            </div>
+                            <label for="inputCodigoPlan" class="font-weight-bold">C&oacute;digo / Identificador del Plan</label>
+                            <input type="text" name="id" class="form-control" id="inputCodigoPlan" 
+                                   value="<?= htmlspecialchars($codigoSugerido); ?>" 
+                                   placeholder="Ej: <?= htmlspecialchars($codigoSugerido); ?>" 
+                                   maxlength="20" required autofocus>
+                            <small class="form-text text-muted">
+                                Puede modificar e ingresar manualmente el c&oacute;digo o identificador completo que corresponda para este plan.
+                            </small>
                         </div>
                         
                         <input type="hidden" id="inputCarrera" name="idCarrera" value="<?= $carrera->getId(); ?>">
@@ -76,6 +78,24 @@ if (is_null($carrera->getId())){
                             <label for="inputAnioFin">A&ntilde;o de Fin</label>
                             <!--En el año maximo se coloca el año actual + 25-->
                             <input type="number" name="anio_fin" class="form-control" min="1995" max="<?= date("Y") + 25; ?>" id="inputAnioFin" placeholder="Ingrese el a&ntilde;o de Fin del Plan" >
+                        </div>
+
+                        <div class="form-group bg-light p-3 rounded border border-info">
+                            <label for="idPlanOrigen" class="font-weight-bold text-info">
+                                <span class="oi oi-fork"></span> Inicializar a partir de un Plan existente (Clonaci&oacute;n r&aacute;pida)
+                            </label>
+                            <select name="idPlanOrigen" id="idPlanOrigen" class="form-control">
+                                <option value="">-- Plan en blanco (sin asignaturas iniciales) --</option>
+                                <?php if (!empty($planesExistentes)) { 
+                                    foreach ($planesExistentes as $pBase) { 
+                                        $periodoBase = is_null($pBase->getAnio_fin()) ? $pBase->getAnio_inicio().' - Presente' : $pBase->getAnio_inicio().' - '.$pBase->getAnio_fin();
+                                ?>
+                                    <option value="<?= $pBase->getId(); ?>">Copiar materias y correlatividades del Plan <?= $pBase->getId(); ?> (<?= $periodoBase; ?>)</option>
+                                <?php } } ?>
+                            </select>
+                            <small class="form-text text-muted">
+                                Si selecciona un plan previo, se copiar&aacute;n autom&aacute;ticamente todas sus asignaturas y correlatividades al nuevo plan, permiti&eacute;ndole ahorrar tiempo y luego editar s&oacute;lo las diferencias.
+                            </small>
                         </div>
 
                     </div>

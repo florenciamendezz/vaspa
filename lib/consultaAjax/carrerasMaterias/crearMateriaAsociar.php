@@ -7,13 +7,12 @@ if (!ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_CARRERAS)) {
     exit;
 }
 
-if (isset($_POST['codCarrera']) && isset($_POST['id']) && isset($_POST['nombre']) && isset($_POST['idDepartamento'])) {
+if (isset($_POST['codCarrera']) && isset($_POST['id']) && isset($_POST['nombre']) && isset($_POST['idDepartamento']) && isset($_POST['idEscuela'])) {
     $codCarrera = $_POST['codCarrera'];
     $id = $_POST['id'];
     $nombre = $_POST['nombre'];
     $idDepartamento = $_POST['idDepartamento'];
-    $horasSemanales = 0; // valor nulo o por defecto, al definirse luego en el PDF
-    $contenidosMinimos = ''; // vacío, al detallarse en el PDF analítico
+    $idEscuela = $_POST['idEscuela'];
     $responsables = isset($_POST['responsables']) ? $_POST['responsables'] : [];
 
     $db = BDConexionSistema::getInstancia();
@@ -29,9 +28,9 @@ if (isset($_POST['codCarrera']) && isset($_POST['id']) && isset($_POST['nombre']
     $db->begin_transaction();
 
     try {
-        // 3. Insertar asignatura (sin columna idProfesor que ya no existe)
-        $stmt = $db->prepare("INSERT INTO asignatura (id, nombre, idDepartamento, contenidosMinimos, horasSemanales) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssisi", $id, $nombre, $idDepartamento, $contenidosMinimos, $horasSemanales);
+        // 3. Insertar asignatura (sin columna idProfesor que ya no existe y usando idEscuela)
+        $stmt = $db->prepare("INSERT INTO asignatura (id, nombre, idDepartamento, idEscuela) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssii", $id, $nombre, $idDepartamento, $idEscuela);
         if (!$stmt->execute()) {
             throw new Exception("Error al insertar asignatura: " . $stmt->error);
         }

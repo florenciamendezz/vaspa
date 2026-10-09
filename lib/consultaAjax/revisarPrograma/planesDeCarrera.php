@@ -1,36 +1,26 @@
 <?php
-//include_once '../../../controlSistema/ManejadorPlan.php';
 include_once '../../../modeloSistema/Carrera.Class.php';
 
 $planesEstudio = '';
-if (isset($_POST['codCarrera'])){
+if (isset($_POST['codCarrera'])) {
     $carrera = new Carrera($_POST['codCarrera']);
 
     try {
         $planes = $carrera->getPlanesDeEstudio();
     } catch (Exception $e) {
-        echo $e->getMessage();
+        echo '<option value="-1">Error al cargar planes</option>';
+        exit;
     }
     
-    // Recorremos los planes y lo guardamos en un option
-    
-    if (is_null($planes)){
-        $planesEstudio .= '<option value="-1">No hay Planes de Estudio</option>';
+    if (is_null($planes) || empty($planes)) {
+        $planesEstudio .= '<option value="-1">Sin planes de estudio</option>';
     } else {
+        $planesEstudio .= '<option value="todos" selected>Todos los Planes de la Carrera</option>';
         foreach ($planes as $plan) {
-            $planesEstudio .= '<option value="'.$plan->getId().'">'.$plan->getId().' - '.$plan->getPeriodo().'</option>';
+            $periodo = $plan->getPeriodo();
+            $planesEstudio .= '<option value="' . htmlspecialchars($plan->getId()) . '">' . htmlspecialchars($plan->getId()) . ' (' . htmlspecialchars($periodo) . ')</option>';
         }
     }
-    
 }
 
 echo $planesEstudio;
-
-
-
-/* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-

@@ -17,7 +17,7 @@ if (is_null($profesor->obtenerAsignaturas())){
     // El profesor no tiene asignaturas se lo puede eliminar
     
     // Chequeamos si el profesor es un usuario del sistema
-    $sql = "SELECT id FROM ".Constantes::BD_USERS.".usuario "
+    $sql = "SELECT id, nombre FROM ".Constantes::BD_USERS.".usuario "
             . "WHERE email LIKE '{$profesor->getEmail()}'";
             
     $consulta = BDConexionSistema::getInstancia()->query($sql);
@@ -26,6 +26,24 @@ if (is_null($profesor->obtenerAsignaturas())){
     } else {
         
         $cantidadRegistros = $consulta->num_rows;
+        $idUsuario = null;
+        
+        if ($cantidadRegistros > 1) {
+            $nombreUsuarioEsperado = explode("@", $profesor->getEmail())[0];
+            while ($row = $consulta->fetch_assoc()) {
+                if ($row['nombre'] === $nombreUsuarioEsperado) {
+                    $idUsuario = $row["id"];
+                    $cantidadRegistros = 1;
+                    break;
+                }
+            }
+            if (is_null($idUsuario)) {
+                $cantidadRegistros = 0;
+            }
+        } elseif ($cantidadRegistros == 1) {
+            $registro = $consulta->fetch_assoc();
+            $idUsuario = $registro["id"];
+        }
         
         if ($cantidadRegistros == 0){
             // como devolvio cero registros la peticion a la BD, el profesor no tiene usuario con lo cual se lo deberia eliminar de la tabla profesor
@@ -49,10 +67,6 @@ if (is_null($profesor->obtenerAsignaturas())){
             
         } elseif ($cantidadRegistros == 1) {
             // devolvio un registro es un usuario del sistema, eliminarlo de USUARIO y PROFESOR
-            // obtenemos el id del usuario del profesor
-            $registro = $consulta->fetch_assoc();
-            $idUsuario = $registro["id"];
-
             try {
                 $consulta = $ManejadorProfesor->bajaUsuarioProfesor($profesor->getId(), $idUsuario);
             } catch (Exception $e) {
