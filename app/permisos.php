@@ -46,19 +46,19 @@ $ColeccionPermisos = new ColeccionPermisos();
                             <tbody>
                             <?php foreach ($ColeccionPermisos->getPermisos() as $Permiso) { ?>
                                 <tr>
-                                    <td><?= $Permiso->getNombre(); ?></td>
+                                    <td><?= e($Permiso->getNombre()); ?></td>
                                     <td>
-                                        <a title="Ver detalle" href="permiso.ver.php?id=<?= $Permiso->getId(); ?>">
+                                        <a title="Ver detalle" href="permiso.ver.php?id=<?= intval($Permiso->getId()); ?>">
                                             <button type="button" class="btn btn-outline-info">
                                                 <span class="oi oi-zoom-in"></span>
                                             </button>
                                         </a>
-                                        <a title="Modificar" href="permiso.modificar.php?id=<?= $Permiso->getId(); ?>">
+                                        <a title="Modificar" href="permiso.modificar.php?id=<?= intval($Permiso->getId()); ?>">
                                             <button type="button" class="btn btn-outline-warning">
                                                 <span class="oi oi-pencil"></span>
                                             </button>
                                         </a>
-                                        <a title="Eliminar" href="permiso.eliminar.php?id=<?= $Permiso->getId(); ?>">
+                                        <a title="Eliminar" href="permiso.eliminar.php?id=<?= intval($Permiso->getId()); ?>">
                                             <button type="button" class="btn btn-outline-danger">
                                                 <span class="oi oi-trash"></span>
                                             </button>

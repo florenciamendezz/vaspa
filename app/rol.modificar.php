@@ -25,6 +25,7 @@ $PermisosSistema = new ColeccionPermisos();
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="rol.modificar.procesar.php" method="post">
+                <?= ControlAcceso::campoCsrf(); ?>
                 <div class="card card-premium">
                     <div class="card-header card-header-premium">
                         <h3>Actualizar Rol</h3>

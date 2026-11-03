@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/lib/ControlAcceso.Class.php';
+ControlAcceso::requierePermiso(PermisosSistema::PERMISO_GENERAR_INFORME_GERENCIAL);
+
 // Extracción dinámica de las imágenes de logos en Base64 para evitar incrustar cadenas gigantes de texto
 $file_path = __DIR__ . '/vista/informeGerencial.programas.php';
 $logoUnpa = '';

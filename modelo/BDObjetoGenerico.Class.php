@@ -61,21 +61,34 @@ class BDObjetoGenerico extends BDModeloGenerico {
     function __construct($id, $nombreTabla) {
         
         parent::__construct();
-        $this->id = $id ? : $this->id;
-        $this->query = "SELECT * FROM {$nombreTabla} WHERE id = {$this->id}";
-        
-        $this->datos = BDConexion::getInstancia()->query($this->query);
-        $this->datos = $this->datos->fetch_assoc();
-        
-        foreach($this->datos as $atributo => $valor){
-            $this->{$atributo} = $valor;
+        if (!empty($id)) {
+            $this->id = intval($id);
+        }
+
+        // Validación de lista blanca para el identificador de tabla
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $nombreTabla)) {
+            throw new InvalidArgumentException("Nombre de tabla inválido.");
+        }
+
+        // Solo consultar si el ID es numérico positivo válido
+        if (!empty($this->id) && $this->id > 0) {
+            $db = BDConexion::getInstancia();
+            $stmt = $db->prepare("SELECT * FROM `{$nombreTabla}` WHERE id = ? LIMIT 1");
+            if ($stmt) {
+                $idParam = intval($this->id);
+                $stmt->bind_param("i", $idParam);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                if ($res && ($fila = $res->fetch_assoc())) {
+                    foreach ($fila as $atributo => $valor) {
+                        $this->{$atributo} = $valor;
+                    }
+                }
+                $stmt->close();
+            }
         }
         
-        unset($this->query);
-        unset($this->datos);
-        
     }
-    
     
     /**
      * 
@@ -96,33 +109,37 @@ class BDObjetoGenerico extends BDModeloGenerico {
      * 
      * @param String $claseElementoColeccion Clase que se instancia como elemento de la coleccion. Ejemplo: permiso
      * 
-     * 
      */
     function setColeccionElementos($tablaVinculacion, $tablaElementos, $idObjetoContenedor, $atributoFKElementoColeccion, $claseElementoColeccion) {
 
         $this->coleccionElementos = null;
         
-        /**
-         * @example 
-         * SELECT TablaElementos.*
-         * FROM permiso TablaElementos, rol_permiso TablaFK
-         * WHERE TablaElementos.id = TablaFK.id_permiso
-         * AND FK.id_rol = 1
-         */
-        $this->query = "SELECT TablaElementos.* "
-                . "FROM {$tablaElementos} TablaElementos, {$tablaVinculacion} TablaFK "
-                . "WHERE TablaElementos.id = TablaFK.{$atributoFKElementoColeccion} "
-                . "AND TablaFK.{$idObjetoContenedor} = {$this->id}";
-
-        $this->datos = BDConexion::getInstancia()->query($this->query);
-        if(!$this->datos) {
-            print_r($this->BD->error);
-        }
-        for ($x = 0; $x < $this->datos->num_rows; $x++) {
-            $this->coleccionElementos[] = $this->datos->fetch_object($claseElementoColeccion);
+        foreach ([$tablaVinculacion, $tablaElementos, $idObjetoContenedor, $atributoFKElementoColeccion] as $identificador) {
+            if (!preg_match('/^[a-zA-Z0-9_]+$/', $identificador)) {
+                throw new InvalidArgumentException("Identificador de base de datos inválido.");
+            }
         }
 
-        unset($this->query);
+        $idInt = intval($this->id);
+        $db = BDConexion::getInstancia();
+        $query = "SELECT TablaElementos.* "
+                . "FROM `{$tablaElementos}` TablaElementos, `{$tablaVinculacion}` TablaFK "
+                . "WHERE TablaElementos.id = TablaFK.`{$atributoFKElementoColeccion}` "
+                . "AND TablaFK.`{$idObjetoContenedor}` = ?";
+
+        $stmt = $db->prepare($query);
+        if ($stmt) {
+            $stmt->bind_param("i", $idInt);
+            $stmt->execute();
+            $this->datos = $stmt->get_result();
+            if ($this->datos) {
+                for ($x = 0; $x < $this->datos->num_rows; $x++) {
+                    $this->coleccionElementos[] = $this->datos->fetch_object($claseElementoColeccion);
+                }
+            }
+            $stmt->close();
+        }
+
         unset($this->datos);
     }
     
@@ -133,8 +150,5 @@ class BDObjetoGenerico extends BDModeloGenerico {
     function getColeccionElementos() {
         return $this->coleccionElementos;
     }
-
-
-    
     
 }

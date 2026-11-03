@@ -31,6 +31,7 @@ ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PERMISOS);
                     </div>
                     <div class="card-body">
                         <h4>Propiedades</h4>
+                        <?= ControlAcceso::campoCsrf(); ?>
                         <div class="form-group">
                             <label for="inputNombre">Nombre</label>
                             <input type="text" name="nombre" class="form-control" id="inputNombre" placeholder="Ingrese el nombre del Permiso" required="">

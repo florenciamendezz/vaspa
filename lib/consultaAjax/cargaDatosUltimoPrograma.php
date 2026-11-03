@@ -1,4 +1,6 @@
 <?php
+include_once '../../lib/ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
 
 header('Content-Type: application/json');
 /*

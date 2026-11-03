@@ -1,6 +1,27 @@
 <?php
-include_once '../lib/ControlAcceso.Class.php';
-session_destroy();
+include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
+
+// Limpieza completa de variables de sesión en memoria
+$_SESSION = [];
+
+// Borrado explícito de la cookie de sesión en el navegador
+if (ini_get("session.use_cookies")) {
+    $params = session_get_cookie_params();
+    setcookie(
+        session_name(),
+        '',
+        time() - 42000,
+        $params["path"],
+        $params["domain"],
+        $params["secure"],
+        $params["httponly"]
+    );
+}
+
+// Destrucción de la sesión en el servidor
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_destroy();
+}
 ?>
 
 <html>

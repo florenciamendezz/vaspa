@@ -1,0 +1,82 @@
+services:
+  # ----------------------------------------------------------------------------
+  # Servicio de Base de Datos MariaDB
+  # ----------------------------------------------------------------------------
+  db:
+    image: mariadb:10.6
+    container_name: vaspa-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS:-vaspa_db_password}
+      MYSQL_DATABASE: ${DB_NAME:-bdgef_vaspa}
+    ports:
+      - "${DB_FORWARD_PORT:-3307}:3306"
+    volumes:
+      - vaspa_db_data:/var/lib/mysql
+      - ./scriptBD:/docker-entrypoint-initdb.d:ro
+    networks:
+      - vaspa-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASS:-vaspa_db_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ----------------------------------------------------------------------------
+  # Servicio de Aplicación Web VASPA (PHP 8.2 + Apache)
+  # ----------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vaspa-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: ${DB_PASS:-vaspa_db_password}
+      DB_NAME: ${DB_NAME:-bdgef_vaspa}
+      DB_CHARSET: ${DB_CHARSET:-utf8}
+      MAIL_DRIVER: ${MAIL_DRIVER:-smtp}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-tls}
+      FORZAR_ENVIO_MAIL: ${FORZAR_ENVIO_MAIL:-false}
+      MAIL_SISTEMA_USER: ${MAIL_SISTEMA_USER:-sistema@uarg.unpa.edu.ar}
+      MAIL_SISTEMA_PASS: ${MAIL_SISTEMA_PASS:-}
+      MAIL_SA_USER: ${MAIL_SA_USER:-sec_academica@uarg.unpa.edu.ar}
+      MAIL_SA_PASS: ${MAIL_SA_PASS:-}
+      MAIL_DEPTO_CS_USER: ${MAIL_DEPTO_CS_USER:-depto_cs@uarg.unpa.edu.ar}
+      MAIL_DEPTO_CS_PASS: ${MAIL_DEPTO_CS_PASS:-}
+      MAIL_DEPTO_CNE_USER: ${MAIL_DEPTO_CNE_USER:-depto_cne@uarg.unpa.edu.ar}
+      MAIL_DEPTO_CNE_PASS: ${MAIL_DEPTO_CNE_PASS:-}
+      MAIL_PROFESOR_USER: ${MAIL_PROFESOR_USER:-profesor@uarg.unpa.edu.ar}
+      MAIL_PROFESOR_PASS: ${MAIL_PROFESOR_PASS:-}
+      MAIL_ESCUELA_USER: ${MAIL_ESCUELA_USER:-escuela@uarg.unpa.edu.ar}
+    volumes:
+      - vaspa_uploads:/var/www/html/archivos
+      - vaspa_programas:/var/www/html/programas
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - vaspa-net
+
+networks:
+  vaspa-net:
+    driver: bridge
+
+volumes:
+  vaspa_db_data:
+    driver: local
+  vaspa_uploads:
+    driver: local
+  vaspa_programas:
+    driver: local

@@ -55,82 +55,97 @@ class ManejadorProfesor {
 
         //Creo objeto sin enviar ID y enviando todos los datos del formulario
         $Profesor = new Profesor(null, $datos);
-        $apellido = mysqli_real_escape_string(BDConexionSistema::getInstancia(), $Profesor->getApellido());
+        $db = BDConexionSistema::getInstancia();
 
-//        if ($this->chequearDNI($Profesor->getDni())) {
         if ($this->chequearEmail($Profesor->getEmail())) {
-            $this->query = "INSERT INTO PROFESOR "
-                    . "VALUES (NULL, '0', '{$Profesor->getNombre()}', '{$apellido}',"
-                    . "'{$Profesor->getEmail()}', '{$Profesor->getCategoria()}', '{$Profesor->getPreferencias()}', '{$Profesor->getIdDepartamento()}')";
-
-            $consulta = BDConexionSistema::getInstancia()->query($this->query);
-            if ($consulta) {
-                return true;
-            } else {
+            $stmt = $db->prepare("INSERT INTO PROFESOR (dni, nombre, apellido, email, categoria, preferencias, idDepartamento) VALUES ('0', ?, ?, ?, ?, ?, ?)");
+            if (!$stmt) {
                 return false;
             }
+            $nom = $Profesor->getNombre();
+            $ape = $Profesor->getApellido();
+            $mail = $Profesor->getEmail();
+            $cat = $Profesor->getCategoria();
+            $pref = $Profesor->getPreferencias();
+            $depto = intval($Profesor->getIdDepartamento());
+            $stmt->bind_param("sssssi", $nom, $ape, $mail, $cat, $pref, $depto);
+            $consulta = $stmt->execute();
+            $stmt->close();
+            return $consulta;
         } else {
             throw new Exception("El email:  <b>" . $Profesor->getEmail() . "</b> ya corresponde a un profesor en la Base de Datos");
         }
-//        } else {
-//            throw new Exception("El DNI:  <b>" . $Profesor->getDni() . "</b> ya corresponde a un profesor en la Base de Datos");
-//        }
     }
 
     //Funcion para Alta de Profesores que son responsables de asignaturas (lo registra como usuario tambien)
     function altaUsuarioProfesor($datos) {
+        $db = BDConexionSistema::getInstancia();
 
-        if (BDConexionSistema::getInstancia()->begin_transaction()) {
+        if ($db->begin_transaction()) {
+            $db->autocommit(false);
+
             // INSERCION PROFESOR
-            //Creo objeto sin enviar ID y enviando todos los datos del formulario
             $Profesor = new Profesor(null, $datos);
-            $apellido = mysqli_real_escape_string(BDConexionSistema::getInstancia(), $Profesor->getApellido());
 
             if ($this->chequearEmail($Profesor->getEmail())) {
-                $this->query = "INSERT INTO PROFESOR "
-                        . "VALUES (NULL, '0', '{$Profesor->getNombre()}', '{$apellido}',"
-                        . "'{$Profesor->getEmail()}', '{$Profesor->getCategoria()}', '{$Profesor->getPreferencias()}', '{$Profesor->getIdDepartamento()}')";
-
-                $consulta = BDConexionSistema::getInstancia()->query($this->query);
+                $stmtProf = $db->prepare("INSERT INTO PROFESOR (dni, nombre, apellido, email, categoria, preferencias, idDepartamento) VALUES ('0', ?, ?, ?, ?, ?, ?)");
+                if (!$stmtProf) {
+                    $db->rollback();
+                    throw new Exception("Error al preparar alta de profesor.");
+                }
+                $nom = $Profesor->getNombre();
+                $ape = $Profesor->getApellido();
+                $mail = $Profesor->getEmail();
+                $cat = $Profesor->getCategoria();
+                $pref = $Profesor->getPreferencias();
+                $depto = intval($Profesor->getIdDepartamento());
+                $stmtProf->bind_param("sssssi", $nom, $ape, $mail, $cat, $pref, $depto);
+                $consulta = $stmtProf->execute();
+                $stmtProf->close();
             } else {
+                $db->rollback();
                 throw new Exception("El email:  <b>" . $Profesor->getEmail() . "</b> ya corresponde a un profesor en la Base de Datos");
             }
 
             if (!$consulta) {
-                BDConexionSistema::getInstancia()->rollback();
+                $db->rollback();
                 throw new Exception("No se puedo dar de alta el profesor (Error en la Base de Datos).");
             }
 
             // INSERCION USUARIO
-
-            $query = "INSERT INTO " . Constantes::BD_USERS . ".usuario "
-                    . "VALUES (null,'{$datos["nombreUsuario"]}','{$datos["email"]}')";
-            $consulta = BDConexionSistema::getInstancia()->query($query);
-            if (!$consulta) {
-                $errorDB = BDConexionSistema::getInstancia()->error;
-                 BDConexionSistema::getInstancia()->rollback();
-            throw new Exception(
-                "Error al insertar el usuario: " . $errorDB);
+            $nombreUsr = $datos["nombreUsuario"] ?? '';
+            $emailUsr = $datos["email"] ?? '';
+            $stmtUsr = $db->prepare("INSERT INTO " . Constantes::BD_USERS . ".usuario (id, nombre, email) VALUES (NULL, ?, ?)");
+            if (!$stmtUsr) {
+                $db->rollback();
+                throw new Exception("Error al preparar alta de usuario.");
             }
-            // recuperamos la id del usuario
-            $idUsuario = BDConexionSistema::getInstancia()->insert_id;
+            $stmtUsr->bind_param("ss", $nombreUsr, $emailUsr);
+            if (!$stmtUsr->execute()) {
+                $stmtUsr->close();
+                $db->rollback();
+                throw new Exception("Error al insertar el usuario: " . $db->error);
+            }
+            $idUsuario = (int) $db->insert_id;
+            $stmtUsr->close();
 
             // INSERCION USUARIO_ROL
-            $query = "INSERT INTO " . Constantes::BD_USERS . ".usuario_rol "
-                    . "VALUES ({$idUsuario}, 9)";
-            $consulta = BDConexionSistema::getInstancia()->query($query);
-            if (!$consulta) {
-                $errorDB = BDConexionSistema::getInstancia()->error;
-                BDConexionSistema::getInstancia()->rollback();
-            throw new Exception(
-                "Error al asignar el rol al usuario: " . $errorDB
-            );
+            $stmtRol = $db->prepare("INSERT INTO " . Constantes::BD_USERS . ".usuario_rol (id_usuario, id_rol) VALUES (?, 9)");
+            if (!$stmtRol) {
+                $db->rollback();
+                throw new Exception("Error al preparar rol de usuario.");
             }
+            $stmtRol->bind_param("i", $idUsuario);
+            if (!$stmtRol->execute()) {
+                $stmtRol->close();
+                $db->rollback();
+                throw new Exception("Error al asignar el rol al usuario: " . $db->error);
+            }
+            $stmtRol->close();
 
-            BDConexionSistema::getInstancia()->commit();
-            BDConexionSistema::getInstancia()->autocommit(true);
+            $db->commit();
+            $db->autocommit(true);
 
-            // si no se produjeron excepciones OK insercion, retornamos VERDADERO
             return TRUE;
         } else {
             throw new Exception("No se puedo dar de alta el profesor (Error en la Base de Datos).");
@@ -138,53 +153,68 @@ class ManejadorProfesor {
     }
 
     function baja($id_) {
-        $this->query = "DELETE FROM PROFESOR WHERE id = '{$id_}'";
-        $consulta = BDConexionSistema::getInstancia()->query($this->query);
-        if ($consulta) {
-            return true;
-        } else {
+        $db = BDConexionSistema::getInstancia();
+        $idInt = intval($id_);
+        $stmt = $db->prepare("DELETE FROM PROFESOR WHERE id = ?");
+        if (!$stmt) {
             return false;
         }
+        $stmt->bind_param("i", $idInt);
+        $consulta = $stmt->execute();
+        $stmt->close();
+        return $consulta;
     }
 
     function bajaUsuarioProfesor($idProfesor, $idUsuario) {
+        $db = BDConexionSistema::getInstancia();
 
-        if (BDConexionSistema::getInstancia()->begin_transaction()) {
+        if ($db->begin_transaction()) {
+            $db->autocommit(false);
+            $idUsrInt = intval($idUsuario);
+            $idProfInt = intval($idProfesor);
 
-            BDConexionSistema::getInstancia()->autocommit(false);
-            BDConexionSistema::getInstancia()->begin_transaction();
-
-            $query = "DELETE FROM " . Constantes::BD_USERS . ".usuario_rol "
-                    . "WHERE id_usuario = {$idUsuario}";
-
-            $consulta = BDConexionSistema::getInstancia()->query($query);
-            if (!$consulta) {
-                BDConexionSistema::getInstancia()->rollback();
-                //arrojar una excepcion
+            $stmtRol = $db->prepare("DELETE FROM " . Constantes::BD_USERS . ".usuario_rol WHERE id_usuario = ?");
+            if (!$stmtRol) {
+                $db->rollback();
+                throw new Exception("No se pudo eliminar el rol del usuario.");
+            }
+            $stmtRol->bind_param("i", $idUsrInt);
+            if (!$stmtRol->execute()) {
+                $stmtRol->close();
+                $db->rollback();
                 throw new Exception("No se pudo eliminar el usuario (Error en la Base de Datos).");
             }
+            $stmtRol->close();
 
-            $query = "DELETE FROM " . Constantes::BD_USERS . ".usuario "
-                    . "WHERE id = {$idUsuario}";
-            $consulta = BDConexionSistema::getInstancia()->query($query);
-            if (!$consulta) {
-                BDConexionSistema::getInstancia()->rollback();
-                //arrojar una excepcion
+            $stmtUsr = $db->prepare("DELETE FROM " . Constantes::BD_USERS . ".usuario WHERE id = ?");
+            if (!$stmtUsr) {
+                $db->rollback();
+                throw new Exception("No se pudo preparar borrado de usuario.");
+            }
+            $stmtUsr->bind_param("i", $idUsrInt);
+            if (!$stmtUsr->execute()) {
+                $stmtUsr->close();
+                $db->rollback();
                 throw new Exception("No se pudo eliminar el usuario (Error en la Base de Datos).");
             }
+            $stmtUsr->close();
 
-            $this->query = "DELETE FROM PROFESOR WHERE id = '{$idProfesor}'";
-            $consulta = BDConexionSistema::getInstancia()->query($this->query);
-            if (!$consulta) {
-                BDConexionSistema::getInstancia()->rollback();
-                //arrojar una excepcion
+            $stmtProf = $db->prepare("DELETE FROM PROFESOR WHERE id = ?");
+            if (!$stmtProf) {
+                $db->rollback();
+                throw new Exception("No se pudo preparar borrado de profesor.");
+            }
+            $stmtProf->bind_param("i", $idProfInt);
+            if (!$stmtProf->execute()) {
+                $stmtProf->close();
+                $db->rollback();
                 throw new Exception("No se pudo eliminar el usuario (Error en la Base de Datos).");
             }
+            $stmtProf->close();
 
-            BDConexionSistema::getInstancia()->commit();
-            BDConexionSistema::getInstancia()->autocommit(true);
+            $db->commit();
+            $db->autocommit(true);
 
-            // si no se produjeron excepciones OK eliminacion, retornamos VERDADERO
             return TRUE;
         } else {
             throw new Exception("No se pudo eliminar el usuario (Error en la Base de Datos).");
@@ -195,38 +225,35 @@ class ManejadorProfesor {
     function modificacion($datos, $id_) {
         $Profesor = new Profesor(null, $datos);
         $profesorAntes = new Profesor($id_, NULL);
-        $apellido = mysqli_real_escape_string(BDConexionSistema::getInstancia(), $Profesor->getApellido());
+        $db = BDConexionSistema::getInstancia();
+        $idInt = intval($id_);
+        $nom = $Profesor->getNombre();
+        $ape = $Profesor->getApellido();
+        $mail = $Profesor->getEmail();
+        $depto = intval($Profesor->getIdDepartamento());
 
         if ($profesorAntes->getEmail() != $Profesor->getEmail()) {
-//            if ($this->chequearDNI($Profesor->getDni())) {
-            if ($this->chequearEmail($Profesor->getEmail())) {
-                $this->query = "UPDATE PROFESOR "
-                        . "SET dni = '0', "
-                        . "nombre = '{$Profesor->getNombre()}', "
-                        . "apellido = '{$apellido}' ,"
-                        . "email = '{$Profesor->getEmail()}' ,"
-                        . "idDepartamento = '{$Profesor->getIdDepartamento()}'"
-                        . "WHERE id = '{$id_}'";
+            if ($this->chequearEmail($mail)) {
+                $stmt = $db->prepare("UPDATE PROFESOR SET dni = '0', nombre = ?, apellido = ?, email = ?, idDepartamento = ? WHERE id = ?");
+                if (!$stmt) {
+                    return false;
+                }
+                $stmt->bind_param("ssssi", $nom, $ape, $mail, $depto, $idInt);
+                $consulta = $stmt->execute();
+                $stmt->close();
+                return $consulta;
             } else {
-                throw new Exception("El email:  <b>" . $Profesor->getEmail() . "</b> ya corresponde a un profesor en la Base de Datos");
+                throw new Exception("El email:  <b>" . $mail . "</b> ya corresponde a un profesor en la Base de Datos");
             }
-//            } else {
-//                throw new Exception("El DNI:  <b>" . $Profesor->getDni() . "</b> ya corresponde a un profesor en la Base de Datos");
-//            }
         } else {
-            $this->query = "UPDATE PROFESOR "
-                    . "SET dni = '0', "
-                    . "nombre = '{$Profesor->getNombre()}', "
-                    . "apellido = '{$apellido}' ,"
-                    . "idDepartamento = '{$Profesor->getIdDepartamento()}'"
-                    . "WHERE id = '{$id_}'";
-        }
-
-        $consulta = BDConexionSistema::getInstancia()->query($this->query);
-        if ($consulta) {
-            return true;
-        } else {
-            return false;
+            $stmt = $db->prepare("UPDATE PROFESOR SET dni = '0', nombre = ?, apellido = ?, idDepartamento = ? WHERE id = ?");
+            if (!$stmt) {
+                return false;
+            }
+            $stmt->bind_param("sssi", $nom, $ape, $depto, $idInt);
+            $consulta = $stmt->execute();
+            $stmt->close();
+            return $consulta;
         }
     }
 
@@ -234,92 +261,80 @@ class ManejadorProfesor {
     function modificacionUsuarioProfesor($datos, $id_, $idUsuario) {
         $Profesor = new Profesor(null, $datos);
         $profesorAntes = new Profesor($id_, NULL);
-        $apellido = mysqli_real_escape_string(BDConexionSistema::getInstancia(), $Profesor->getApellido());
+        $db = BDConexionSistema::getInstancia();
+        $idInt = intval($id_);
+        $idUsrInt = intval($idUsuario);
+        $nom = $Profesor->getNombre();
+        $ape = $Profesor->getApellido();
+        $mail = $Profesor->getEmail();
+        $depto = intval($Profesor->getIdDepartamento());
 
         if ($profesorAntes->getEmail() != $Profesor->getEmail()) {
-//            if ($this->chequearDNI($Profesor->getDni())) {
-            if ($this->chequearEmail($Profesor->getEmail())) {
+            if ($this->chequearEmail($mail)) {
 
                 // iniciamos transaccion
-                BDConexionSistema::getInstancia()->autocommit(false);
-                BDConexionSistema::getInstancia()->begin_transaction();
+                $db->autocommit(false);
+                $db->begin_transaction();
 
-                // actualizmos datos del profesor
-                $query = "UPDATE PROFESOR "
-                        . "SET dni = '0', "
-                        . "nombre = '{$Profesor->getNombre()}', "
-                        . "apellido = '{$apellido}' ,"
-                        . "email = '{$Profesor->getEmail()}' ,"
-                        . "idDepartamento = '{$Profesor->getIdDepartamento()}'"
-                        . "WHERE id = '{$id_}'";
-
-                $consulta = BDConexionSistema::getInstancia()->query($query);
-                if (!$consulta) {
-                    BDConexionSistema::getInstancia()->rollback();
-                    //arrojar una excepcion
+                // actualizamos datos del profesor
+                $stmtProf = $db->prepare("UPDATE PROFESOR SET dni = '0', nombre = ?, apellido = ?, email = ?, idDepartamento = ? WHERE id = ?");
+                if (!$stmtProf) {
+                    $db->rollback();
+                    throw new Exception("No se pudo preparar modificación de profesor.");
+                }
+                $stmtProf->bind_param("ssssi", $nom, $ape, $mail, $depto, $idInt);
+                if (!$stmtProf->execute()) {
+                    $stmtProf->close();
+                    $db->rollback();
                     throw new Exception("No se pudo modificar los datos del profesor (Error en la Base de Datos).");
                 }
+                $stmtProf->close();
 
                 // actualizamos datos del usuario del profesor
-                $query = "UPDATE " . Constantes::BD_USERS . ".usuario "
-                        . "SET email = '{$Profesor->getEmail()}'"
-                        . "WHERE id = {$idUsuario}";
-                $consulta = BDConexionSistema::getInstancia()->query($query);
-                if (!$consulta) {
-                    BDConexionSistema::getInstancia()->rollback();
-                    //arrojar una excepcion
+                $stmtUsr = $db->prepare("UPDATE " . Constantes::BD_USERS . ".usuario SET email = ? WHERE id = ?");
+                if (!$stmtUsr) {
+                    $db->rollback();
+                    throw new Exception("No se pudo preparar modificación del usuario.");
+                }
+                $stmtUsr->bind_param("si", $mail, $idUsrInt);
+                if (!$stmtUsr->execute()) {
+                    $stmtUsr->close();
+                    $db->rollback();
                     throw new Exception("No se pudo modificar los datos del profesor (Error en la Base de Datos).");
                 }
+                $stmtUsr->close();
 
-                BDConexionSistema::getInstancia()->commit();
-                BDConexionSistema::getInstancia()->autocommit(true);
+                $db->commit();
+                $db->autocommit(true);
 
-                // si no se produjeron excepciones OK modificacion, retornamos VERDADERO
                 return TRUE;
             } else {
-                throw new Exception("El email:  <b>" . $Profesor->getEmail() . "</b> ya corresponde a un profesor en la Base de Datos");
+                throw new Exception("El email:  <b>" . $mail . "</b> ya corresponde a un profesor en la Base de Datos");
             }
-//            } else {
-//                throw new Exception("El DNI:  <b>" . $Profesor->getDni() . "</b> ya corresponde a un profesor en la Base de Datos");
-//            }
         } else {
-            $this->query = "UPDATE PROFESOR "
-                    . "SET dni = '0', "
-                    . "nombre = '{$Profesor->getNombre()}', "
-                    . "apellido = '{$apellido}' ,"
-                    . "idDepartamento = '{$Profesor->getIdDepartamento()}'"
-                    . "WHERE id = '{$id_}'";
-
-            $consulta = BDConexionSistema::getInstancia()->query($this->query);
-            if ($consulta) {
-                return true;
-            } else {
+            $stmt = $db->prepare("UPDATE PROFESOR SET dni = '0', nombre = ?, apellido = ?, idDepartamento = ? WHERE id = ?");
+            if (!$stmt) {
                 return false;
             }
+            $stmt->bind_param("sssi", $nom, $ape, $depto, $idInt);
+            $consulta = $stmt->execute();
+            $stmt->close();
+            return $consulta;
         }
     }
 
-//    function chequearDNI($dni_) {
-//        $this->resultado = BDConexionSistema::getInstancia()->query("SELECT 1 FROM PROFESOR WHERE dni = {$dni_} LIMIT 1");
-//        if ($this->resultado->num_rows == 1) {
-//            //El registro existe en la BD. No se puede insertar
-//            return false;
-//        } else {
-//            //El registro no existe en la BD. Se puede insertar
-//            return true;
-//        }
-//    }
-
     function chequearEmail($email_) {
-        //$email = mysqli_real_escape_string(BDConexionSistema::getInstancia(), $email_);
-        $this->resultado = BDConexionSistema::getInstancia()->query("SELECT 1 FROM PROFESOR WHERE email = '{$email_}' LIMIT 1");
-        if ($this->resultado->num_rows == 1) {
-            //El registro existe en la BD. No se puede insertar
+        $db = BDConexionSistema::getInstancia();
+        $stmt = $db->prepare("SELECT 1 FROM PROFESOR WHERE email = ? LIMIT 1");
+        if (!$stmt) {
             return false;
-        } else {
-            //El registro no existe en la BD. Se puede insertar
-            return true;
         }
+        $stmt->bind_param("s", $email_);
+        $stmt->execute();
+        $this->resultado = $stmt->get_result();
+        $existe = ($this->resultado && $this->resultado->num_rows == 1);
+        $stmt->close();
+        return !$existe;
     }
 
     function getEstadoProfesorProgramasPDF($idProfesor) {

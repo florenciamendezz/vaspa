@@ -1,25 +1,31 @@
 <?php
 /* SE DEFINEN CONSTANTES PARA LOS CORREOS DE PRUEBA PARA EL ENVIO DE NOTIFICACION */
+require_once __DIR__ . '/../Env.Class.php';
+Env::cargar();
 
 // MAIL DEL SISTEMA
-define('MAIL_SISTEMA', 'esstefaniamendez@gmail.com');
-define('CONTRASENA_SISTEMA', 'qkybvowecyfxdzok');
+if (!defined('MAIL_SISTEMA')) define('MAIL_SISTEMA', Env::get('MAIL_SISTEMA_USER', ''));
+if (!defined('CONTRASENA_SISTEMA')) define('CONTRASENA_SISTEMA', Env::get('MAIL_SISTEMA_PASS', ''));
 
 // MAIL DE SECRETARIA ACADEMICA
-define('MAIL_SA', 'esstefaniamendez@gmail.com');
-define('CONTRASENA_SA', 'qkybvowecyfxdzok');
+if (!defined('MAIL_SA')) define('MAIL_SA', Env::get('MAIL_SA_USER', ''));
+if (!defined('CONTRASENA_SA')) define('CONTRASENA_SA', Env::get('MAIL_SA_PASS', ''));
 
 // MAIL DEL DEPARTAMENTO DE CIENCIAS SOCIALES
-define('MAIL_DEPTO_CS', 'garaiestefi@gmail.com');
-define('CONTRASENA_DEPTO_CS', 'qkybvowecyfxdzok');
+if (!defined('MAIL_DEPTO_CS')) define('MAIL_DEPTO_CS', Env::get('MAIL_DEPTO_CS_USER', ''));
+if (!defined('CONTRASENA_DEPTO_CS')) define('CONTRASENA_DEPTO_CS', Env::get('MAIL_DEPTO_CS_PASS', ''));
 
 // MAIL DEL DEPARTAMENTO DE CIENCIAS NATURALES Y EXACTAS
-define('MAIL_DEPTO_CNE', 'estiloperladoaccesorios@gmail.com');
-define('CONTRASENA_DEPTO_CNE', 'qkybvowecyfxdzok');
+if (!defined('MAIL_DEPTO_CNE')) define('MAIL_DEPTO_CNE', Env::get('MAIL_DEPTO_CNE_USER', ''));
+if (!defined('CONTRASENA_DEPTO_CNE')) define('CONTRASENA_DEPTO_CNE', Env::get('MAIL_DEPTO_CNE_PASS', ''));
 
 // MAIL DEL PROFESOR
-define('MAIL_PROFESOR', 'accesoriosperlados@gmail.com');
-define('CONTRASENA_PROF', 'qkybvowecyfxdzok');
+if (!defined('MAIL_PROFESOR')) define('MAIL_PROFESOR', Env::get('MAIL_PROFESOR_USER', ''));
+if (!defined('CONTRASENA_PROF')) define('CONTRASENA_PROF', Env::get('MAIL_PROFESOR_PASS', ''));
+
+// MAIL DE ESCUELA
+if (!defined('MAIL_ESCUELA')) define('MAIL_ESCUELA', Env::get('MAIL_ESCUELA_USER', ''));
 
 // Define si se fuerza el envio real en desarrollo/localhost
-define('FORZAR_ENVIO_MAIL', false);
+$forzarEnvio = filter_var(Env::get('FORZAR_ENVIO_MAIL', false), FILTER_VALIDATE_BOOLEAN);
+if (!defined('FORZAR_ENVIO_MAIL')) define('FORZAR_ENVIO_MAIL', $forzarEnvio);

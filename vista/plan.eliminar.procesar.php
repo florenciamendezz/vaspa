@@ -1,6 +1,7 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
+ControlAcceso::requiereCsrf();
 include_once '../lib/Constantes.Class.php';
 include_once '../controlSistema/ManejadorPlan.php';
 include_once '../modeloSistema/Plan.Class.php';

@@ -1,4 +1,12 @@
 <?php
+include_once '../../../lib/ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
+$UsuarioSes = $_SESSION['usuario'] ?? null;
+$perfil = $UsuarioSes->roles[0]->nombre ?? "";
+if (!ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_ASIGNATURAS) && $perfil !== PermisosSistema::ROL_VINCULACION_ACADEMICA && $perfil !== PermisosSistema::ROL_ADMIN) {
+    http_response_code(403);
+    die('<div class="alert alert-danger text-center">Acceso denegado: No posee permisos suficientes.</div>');
+}
 
 include_once '../../../modeloSistema/BDConexionSistema.Class.php';
 include_once '../../../modeloSistema/Profesor.Class.php';
@@ -14,12 +22,17 @@ if (isset($_POST['idAsignatura']) && isset($_POST['idProfesor']) && isset($_POST
     
     $profesor = new Profesor($idProfesor);
     // Procedemos a eliminar en la BD
-    
-    $query = "DELETE FROM profesor_asignatura "
-            . "WHERE idAsignatura = '{$idAsignatura}' AND idProfesor = '{$idProfesor}' AND rol = '{$rol}'";
+    $db = BDConexionSistema::getInstancia();
+    $stmt = $db->prepare("DELETE FROM profesor_asignatura WHERE idAsignatura = ? AND idProfesor = ? AND rol = ?");
+    $affected = 0;
+    if ($stmt) {
+        $stmt->bind_param("sss", $idAsignatura, $idProfesor, $rol);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+    }
             
-    $consulta = BDConexionSistema::getInstancia()->query($query);
-    if (BDConexionSistema::getInstancia()->affected_rows == 1) {
+    if ($affected == 1) {
         //echo "Eliminado exitosamente";
         $mensaje = '<div class="alert alert-success alert-dismissible fade show text-center" role="alert">
                         Se desvincul&oacute; el Profesor <strong>'.$profesor->getApellido().'</strong>, <b>'.$profesor->getNombre().'</b> del Equipo de C&aacute;tedra.

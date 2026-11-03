@@ -51,21 +51,21 @@ $Carreras = $ManejadorCarrera->getColeccion();
                         <tbody>
                             <tr>
                                 <?php foreach ($Carreras as $Carrera) { ?>
-                                    <td><?= $Carrera->getId(); ?></td>
-                                    <td><?= $Carrera->getNombre(); ?></td>
+                                    <td><?= e($Carrera->getId()); ?></td>
+                                    <td><?= e($Carrera->getNombre()); ?></td>
 
                                     <td>
-                                        <a title="Ver Planes" href="carrera.verPlanes.php?id=<?= $Carrera->getId(); ?>">
+                                        <a title="Ver Planes" href="carrera.verPlanes.php?id=<?= urlencode((string)$Carrera->getId()); ?>">
                                             <button type="button" class="btn btn-outline-info">
                                                 <span class="oi oi-list"></span>
                                             </button>
                                         </a>
-                                        <a title="Modificar" href="carrera.modificar.php?id=<?= $Carrera->getId(); ?>">
+                                        <a title="Modificar" href="carrera.modificar.php?id=<?= urlencode((string)$Carrera->getId()); ?>">
                                             <button type="button" class="btn btn-outline-warning">
                                                 <span class="oi oi-pencil"></span>
                                             </button>
                                         </a>
-                                        <a title="Eliminar" href="carrera.eliminar.php?id=<?= $Carrera->getId(); ?>">
+                                        <a title="Eliminar" href="carrera.eliminar.php?id=<?= urlencode((string)$Carrera->getId()); ?>">
                                             <button type="button" class="btn btn-outline-danger">
                                                 <span class="oi oi-trash"></span>
                                             </button>

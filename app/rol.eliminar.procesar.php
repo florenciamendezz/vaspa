@@ -1,14 +1,15 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_ROLES);
+ControlAcceso::requiereCsrf();
 include_once '../modelo/BDConexion.Class.php';
-$DatosFormulario = $_POST;
+$idRol = intval($_POST["id"] ?? 0);
 
 BDConexion::getInstancia()->autocommit(false);
 BDConexion::getInstancia()->begin_transaction();
 
 $query = "DELETE FROM rol_permiso "
-        . "WHERE id_rol = {$DatosFormulario["id"]}";
+        . "WHERE id_rol = {$idRol}";
 
 $consulta = BDConexion::getInstancia()->query($query);
 if (!$consulta) {
@@ -18,7 +19,7 @@ if (!$consulta) {
 }
 
 $query = "DELETE FROM usuario_rol "
-        . "WHERE id_rol = {$DatosFormulario["id"]}";
+        . "WHERE id_rol = {$idRol}";
 
 $consulta = BDConexion::getInstancia()->query($query);
 if (!$consulta) {
@@ -28,7 +29,7 @@ if (!$consulta) {
 }
 
 $query = "DELETE FROM rol "
-        . "WHERE id = {$DatosFormulario["id"]}";
+        . "WHERE id = {$idRol}";
 $consulta = BDConexion::getInstancia()->query($query);
 if (!$consulta) {
     BDConexion::getInstancia()->rollback();

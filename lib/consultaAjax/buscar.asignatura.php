@@ -1,4 +1,6 @@
 <?php
+include_once '../../lib/ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
 /* 
  *Aqui se lleva a cabo el filtrado de la asignatura que se desea buscar
  */

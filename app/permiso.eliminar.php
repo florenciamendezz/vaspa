@@ -30,10 +30,11 @@ $Permiso = new Permiso($id);
                         <p class="alert alert-warning ">
                             <span class="oi oi-warning"></span> ATENCI&Oacute;N. Esta operaci&oacute;n no puede deshacerse.
                         </p>
-                        <p>¿Est&aacute; seguro que desea eliminar el permiso <b><?= $Permiso->getNombre(); ?></b>?</p>
+                        <p>¿Est&aacute; seguro que desea eliminar el permiso <b><?= e($Permiso->getNombre()); ?></b>?</p>
                     </div>
                     <div class="card-footer">
-                        <input type="hidden" name="id" class="form-control" id="id" value="<?= $Permiso->getId(); ?>" >
+                        <?= ControlAcceso::campoCsrf(); ?>
+                        <input type="hidden" name="id" class="form-control" id="id" value="<?= e($Permiso->getId()); ?>" >
                         <button type="submit" class="btn btn-outline-success">
                             <span class="oi oi-check"></span> Sí, deseo eliminar
                         </button>

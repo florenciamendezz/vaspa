@@ -90,14 +90,17 @@ if (isset($_POST['subirProgramas']) && $_SERVER["REQUEST_METHOD"] == "POST"){
                                     $query = "INSERT INTO programa_pdf VALUES ('{$nuevoNombrePrograma}', '{$anio}', NULL, '{$ruta}', '{$tamanio}')";
                                     $res = BDConexionSistema::getInstancia()->query($query);
                                     
-                                    $estadoSubidaProgramas .= '<li type="disc" class="text-success">El archivo: <b>'.$nombrePrograma.'</b> fue subido correctamente al sistema.</li>';
+                                    $nombreProgEsc = e($nombrePrograma);
+                                    $estadoSubidaProgramas .= '<li type="disc" class="text-success">El archivo: <b>'.$nombreProgEsc.'</b> fue subido correctamente al sistema.</li>';
                                     
                                     } else {
-                                        $estadoSubidaProgramas .= '<li type="disc" class="text-danger">El programa: <b>'.$nombrePrograma.' no pudo ser subido</b>. Error al intentar subir.</li>';
+                                        $nombreProgEsc = e($nombrePrograma);
+                                        $estadoSubidaProgramas .= '<li type="disc" class="text-danger">El programa: <b>'.$nombreProgEsc.' no pudo ser subido</b>. Error al intentar subir.</li>';
                                     }
                                     
                                 } else {
-                                    $estadoSubidaProgramas .= '<li type="disc" class="text-danger">El programa: <b>'.$nombrePrograma.' no pudo ser subido</b>. (Ya esta cargado en el Sistema).</li>';
+                                    $nombreProgEsc = e($nombrePrograma);
+                                    $estadoSubidaProgramas .= '<li type="disc" class="text-danger">El programa: <b>'.$nombreProgEsc.' no pudo ser subido</b>. (Ya esta cargado en el Sistema).</li>';
                                 }
                                 
                             } else {
@@ -105,15 +108,18 @@ if (isset($_POST['subirProgramas']) && $_SERVER["REQUEST_METHOD"] == "POST"){
                             }
                             
                         } else {
-                            $estadoSubidaProgramas .= '<li type="disc" class="text-danger">El programa: <b>'.$nombrePrograma.' no pudo ser subido</b> excede el tama&ntilde;o m&aacute;ximo permitido.</li>';
+                            $nombreProgEsc = e($nombrePrograma);
+                            $estadoSubidaProgramas .= '<li type="disc" class="text-danger">El programa: <b>'.$nombreProgEsc.' no pudo ser subido</b> excede el tama&ntilde;o m&aacute;ximo permitido.</li>';
                         }
                         
                     } else {
-                        $estadoSubidaProgramas .= '<li type="disc" class="text-danger">El archivo: <b>'.$nombrePrograma.' no pudo ser subido</b> ya que no es un PDF.</li>';
+                        $nombreProgEsc = e($nombrePrograma);
+                        $estadoSubidaProgramas .= '<li type="disc" class="text-danger">El archivo: <b>'.$nombreProgEsc.' no pudo ser subido</b> ya que no es un PDF.</li>';
                     }   
                 } else {
                     $nombrePrograma = $_FILES["programas"]["name"][$key];
-                    $estadoSubidaProgramas .= '<li type="disc" class="text-danger">El programa: <b>'.$nombrePrograma.' no pudo ser subido</b>. ('.getMensajeError($_FILES["programas"]["error"][$key]).').</li>';
+                    $nombreProgEsc = e($nombrePrograma);
+                    $estadoSubidaProgramas .= '<li type="disc" class="text-danger">El programa: <b>'.$nombreProgEsc.' no pudo ser subido</b>. ('.getMensajeError($_FILES["programas"]["error"][$key]).').</li>';
                     //echo '<br>El programa: '.$nombrePrograma.' tiene el siguiente error: '.getMensajeError($_FILES["programas"]["error"][$key]);
                 }
 

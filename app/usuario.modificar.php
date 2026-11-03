@@ -43,6 +43,7 @@ if ($rolUsuario == "Profesor"){
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="usuario.modificar.procesar.php" method="post">
+                <?= ControlAcceso::campoCsrf(); ?>
                 <div class="card card-premium">
                     <div class="card-header card-header-premium">
                         <h3>Actualizar Usuario</h3>

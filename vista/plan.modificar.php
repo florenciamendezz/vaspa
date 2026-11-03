@@ -54,6 +54,7 @@ $Carreras = $ManejadorCarrera->getColeccion();
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="plan.modificar.procesar.php" method="post"> 
+                <?= ControlAcceso::campoCsrf(); ?> 
                 <div class="card card-premium">
                     <div class="card-header card-header-premium">
                         <h3>Modificar Revisi&oacute;n de Plan: <span style="color: #60a5fa; font-weight: 600;"><?= $Plan->getId(); ?></span></h3>

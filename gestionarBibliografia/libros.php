@@ -1,6 +1,7 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
-$idPrograma = $_GET["id"];
+ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PROGRAMAS);
+$idPrograma = intval($_GET["id"] ?? 0);
 ?>
 <html>
     <head>

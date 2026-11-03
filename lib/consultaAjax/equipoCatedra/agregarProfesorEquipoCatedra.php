@@ -1,4 +1,12 @@
 <?php
+include_once '../../../lib/ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
+$UsuarioSes = $_SESSION['usuario'] ?? null;
+$perfil = $UsuarioSes->roles[0]->nombre ?? "";
+if (!ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_ASIGNATURAS) && $perfil !== PermisosSistema::ROL_VINCULACION_ACADEMICA && $perfil !== PermisosSistema::ROL_ADMIN) {
+    http_response_code(403);
+    die('<div class="alert alert-danger text-center">Acceso denegado: No posee permisos suficientes.</div>');
+}
 
 include_once '../../../modeloSistema/BDConexionSistema.Class.php';
 include_once '../../../modeloSistema/Profesor.Class.php';
@@ -27,23 +35,33 @@ if (isset($_POST['idProfesor']) && isset($_POST['idAsignatura']) && isset($_POST
     } else {
     
     // Validamos que no se inserte en caso de que el profesor ya pertenezca al equipo de catedra bajo el mismo rol
-    
-    $query = "SELECT * "
-            . "FROM profesor_asignatura "
-            . "WHERE idProfesor = '{$idProfesor}' AND idAsignatura = '{$idAsignatura}' AND rol LIKE '{$rol}'";
-    $resultado = BDConexionSistema::getInstancia()->query($query);
+    $db = BDConexionSistema::getInstancia();
+    $stmtCheck = $db->prepare("SELECT 1 FROM profesor_asignatura WHERE idProfesor = ? AND idAsignatura = ? AND rol = ?");
+    if ($stmtCheck) {
+        $stmtCheck->bind_param("sss", $idProfesor, $idAsignatura, $rol);
+        $stmtCheck->execute();
+        $resultado = $stmtCheck->get_result();
+        $stmtCheck->close();
+    } else {
+        $resultado = false;
+    }
     
     if ($resultado) {
         
         // Si no se obtienen registros de la BD procedemos a insertar
         if ($resultado->num_rows == 0) {
 
-            $query = "INSERT INTO profesor_asignatura "
-                    . "VALUES ('{$idAsignatura}', '{$idProfesor}', '{$rol}')";
-            $consulta = BDConexionSistema::getInstancia()->query($query);
+            $stmtIns = $db->prepare("INSERT INTO profesor_asignatura (idAsignatura, idProfesor, rol) VALUES (?, ?, ?)");
+            $affected = 0;
+            if ($stmtIns) {
+                $stmtIns->bind_param("sss", $idAsignatura, $idProfesor, $rol);
+                $stmtIns->execute();
+                $affected = $stmtIns->affected_rows;
+                $stmtIns->close();
+            }
             
             // Verificamos que la cantidad de filas afectadas sea igual a 1 (se inserto el registro)
-            if (BDConexionSistema::getInstancia()->affected_rows == 1) {
+            if ($affected == 1) {
                 //echo "Se inserto";
                 $mensaje = '<div class="alert alert-success alert-dismissible fade show text-center" role="alert">
                         Se agreg&oacute; al Profesor <strong>'.$profesor->getApellido().', '.$profesor->getNombre().'</strong> al Equipo de C&aacute;tedra.

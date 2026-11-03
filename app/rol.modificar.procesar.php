@@ -1,6 +1,7 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_ROLES);
+ControlAcceso::requiereCsrf();
 include_once '../modelo/BDConexion.Class.php';
 $DatosFormulario = $_POST;
 $idRol = (int)$DatosFormulario["id"];
@@ -13,7 +14,7 @@ $sql = "SELECT * FROM rol WHERE nombre LIKE '{$nombreRol}' AND id <> {$idRol}";
 $resultado = BDConexion::getInstancia()->query($sql);
 
 if ($resultado && $resultado->num_rows > 0) {
-    $mensaje = "El rol <b>{$nombreRol}</b> ya existe, por favor ingrese otro nombre.";
+    $mensaje = "El rol <b>" . e($nombreRol) . "</b> ya existe, por favor ingrese otro nombre.";
     $consulta = false;
 } else {
     BDConexion::getInstancia()->autocommit(false);

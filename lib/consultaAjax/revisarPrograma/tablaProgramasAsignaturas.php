@@ -8,17 +8,40 @@
 $path = realpath('../../../modeloSistema');
 set_include_path(get_include_path() . PATH_SEPARATOR . $path);
 
+include_once '../../../lib/ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
+
 include_once '../../../modeloSistema/BDConexionSistema.Class.php';
 include '../../../modeloSistema/Carrera.Class.php';
 require_once '../../../modeloSistema/Programa.Class.php';
 require_once '../../../modeloSistema/ProgramaPDFDetalle.Class.php';
 
-if (isset($_POST['codCarrera']) && isset($_POST['rol'])){
+if (isset($_POST['codCarrera'])){
     $codCarrera = $_POST['codCarrera'];
     $carrera = new Carrera($codCarrera);
-    $rol = $_POST['rol']; 
     $codPlan = $_POST['codPlan'] ?? 'todos';
-    $isVA = ($rol == 'VA' || $rol == 'Administrador' || $rol == 'Vinculación Académica');
+
+    $UsuarioSes = $_SESSION['usuario'];
+    $rolSesion = $UsuarioSes->roles[0]->nombre ?? '';
+    $emailUsuario = strtolower(trim($UsuarioSes->email ?? ''));
+
+    $isVA = ($rolSesion == PermisosSistema::ROL_ADMIN || $rolSesion == PermisosSistema::ROL_VINCULACION_ACADEMICA || $rolSesion == 'Secretaría Académica');
+
+    if ($isVA) {
+        $rol = 'VA';
+    } elseif ($rolSesion == PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO) {
+        if (defined('MAIL_DEPTO_CNE') && $emailUsuario === strtolower(MAIL_DEPTO_CNE)) {
+            $rol = 'DCNE';
+        } elseif (defined('MAIL_DEPTO_CS') && $emailUsuario === strtolower(MAIL_DEPTO_CS)) {
+            $rol = 'DCS';
+        } else {
+            $rol = $_POST['rol'] ?? 'DCNE';
+        }
+    } elseif ($rolSesion == PermisosSistema::ROL_DIRECTOR_ESCUELA) {
+        $rol = 'DEscuela';
+    } else {
+        $rol = $_POST['rol'] ?? $rolSesion;
+    }
 
     // Tab a retornar en la pantalla Revisar Programas
     $html = '<ul class="nav nav-tabs nav-pills nav-fill mb-3" id="myTab" role="tablist">

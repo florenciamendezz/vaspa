@@ -1,14 +1,23 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_USUARIOS);
+ControlAcceso::requiereCsrf();
 include_once '../modelo/BDConexion.Class.php';
 $DatosFormulario = $_POST;
 
+$db = BDConexion::getInstancia();
+$idUsuario = intval($DatosFormulario["id"] ?? 0);
+
 // obtenemos el rol del usuario
-$sql = "SELECT rol.nombre, email FROM usuario_rol JOIN rol ON id_rol = rol.id JOIN usuario ON id_usuario = usuario.id "
-        . "WHERE id_usuario = {$DatosFormulario["id"]}";
-        
-$resultado = BDConexion::getInstancia()->query($sql);
+$stmtRol = $db->prepare("SELECT rol.nombre, usuario.email FROM usuario_rol JOIN rol ON id_rol = rol.id JOIN usuario ON id_usuario = usuario.id WHERE id_usuario = ?");
+if ($stmtRol) {
+    $stmtRol->bind_param("i", $idUsuario);
+    $stmtRol->execute();
+    $resultado = $stmtRol->get_result();
+    $stmtRol->close();
+} else {
+    $resultado = false;
+}
 
 $mensaje = '';
 $error = "";
@@ -20,32 +29,38 @@ if (!$resultado){
 
 } else {
     $registro = $resultado->fetch_assoc();
-    $nombreRol = $registro["nombre"];
+    $nombreRol = $registro["nombre"] ?? '';
     
     // comprobamos el rol del usuario
     if ($nombreRol == "Profesor"){
         // Hay que eliminarlo tambien de la tabla PROFESOR
         // Verificamos si el profesor es responsable de asignaturas
-        $emailProfesor = $registro["email"];
+        $emailProfesor = $registro["email"] ?? '';
         
         // obtenemos datos del profesor
-        $sql = "SELECT * FROM ".Constantes::BD_SCHEMA.".profesor WHERE email LIKE '{$emailProfesor}'";
-        $resultado = BDConexion::getInstancia()->query($sql);
+        $stmtProf = $db->prepare("SELECT * FROM " . Constantes::BD_SCHEMA . ".profesor WHERE email = ? LIMIT 1");
+        if ($stmtProf) {
+            $stmtProf->bind_param("s", $emailProfesor);
+            $stmtProf->execute();
+            $resultadoProf = $stmtProf->get_result();
+            $stmtProf->close();
+        } else {
+            $resultadoProf = false;
+        }
         
-        if (!$resultado){
-            $error = 'Error al realizar petici&oacute;n a la Base de Datos';
+        if (!$resultadoProf || $resultadoProf->num_rows == 0){
+            $error = 'Error al realizar petici&oacute;n a la Base de Datos o profesor no encontrado';
             $consulta = FALSE;
         } else {
             include_once '../modeloSistema/Profesor.Class.php';
-            $registro = $resultado->fetch_assoc();
-            $idProfesor = $registro["id"];
+            $registroProf = $resultadoProf->fetch_assoc();
+            $idProfesor = $registroProf["id"];
             $profesor = new Profesor($idProfesor);
             
             if (is_null($profesor->obtenerAsignaturas())){
                 // El profesor no tiene asignaturas con lo cual se lo puede borrar
                 include_once '../controlSistema/ManejadorProfesor.php';
                 
-                $idUsuario = $DatosFormulario["id"];
                 $manejadorProfesor = new ManejadorProfesor();
                 // procedemos a borrar los registros
                 
@@ -61,40 +76,50 @@ if (!$resultado){
                 $error = 'El usuario que intenta eliminar es un <b>Profesor responsable de Asignaturas</b>, y tiene asignaturas a su cargo. Operaci&oacute;n no permitida.';
                 $consulta = FALSE;
             }
-            
-//            var_dump($profesor->obtenerAsignaturas());
-//            exit();
         }
          
     } else {
         // Solamente eliminamos el usuario
-        // comienza el codigo de eliminacion
+        $db->autocommit(false);
+        $db->begin_transaction();
 
-        BDConexion::getInstancia()->autocommit(false);
-        BDConexion::getInstancia()->begin_transaction();
+        $stmtDelRol = $db->prepare("DELETE FROM usuario_rol WHERE id_usuario = ?");
+        if (!$stmtDelRol) {
+            $db->rollback();
+            $error = "Error al preparar eliminación de rol del usuario.";
+            $consulta = false;
+        } else {
+            $stmtDelRol->bind_param("i", $idUsuario);
+            if (!$stmtDelRol->execute()) {
+                $stmtDelRol->close();
+                $db->rollback();
+                $error = "Error al eliminar rol del usuario.";
+                $consulta = false;
+            } else {
+                $stmtDelRol->close();
 
-        $query = "DELETE FROM usuario_rol "
-                . "WHERE id_usuario = {$DatosFormulario["id"]}";
-
-        $consulta = BDConexion::getInstancia()->query($query);
-        if (!$consulta) {
-            BDConexion::getInstancia()->rollback();
-            //arrojar una excepcion
-            die(BDConexion::getInstancia()->errno);
+                $stmtDelUsr = $db->prepare("DELETE FROM usuario WHERE id = ?");
+                if (!$stmtDelUsr) {
+                    $db->rollback();
+                    $error = "Error al preparar eliminación de usuario.";
+                    $consulta = false;
+                } else {
+                    $stmtDelUsr->bind_param("i", $idUsuario);
+                    if (!$stmtDelUsr->execute()) {
+                        $stmtDelUsr->close();
+                        $db->rollback();
+                        $error = "Error al eliminar usuario.";
+                        $consulta = false;
+                    } else {
+                        $stmtDelUsr->close();
+                        $db->commit();
+                        $db->autocommit(true);
+                        $consulta = true;
+                    }
+                }
+            }
         }
-
-        $query = "DELETE FROM usuario "
-                . "WHERE id = {$DatosFormulario["id"]}";
-        $consulta = BDConexion::getInstancia()->query($query);
-        if (!$consulta) {
-            BDConexion::getInstancia()->rollback();
-            //arrojar una excepcion
-            die(BDConexion::getInstancia()->errno);
-        }
-        BDConexion::getInstancia()->commit();
-        BDConexion::getInstancia()->autocommit(true);
     }
-    //exit();
 }
 
 

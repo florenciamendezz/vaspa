@@ -43,6 +43,7 @@ $codigoSugerido = $carrera->getId() . 'P' . $nroRevisionSugerido;
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="plan.crear.procesar.php" method="post"> 
+                <?= ControlAcceso::campoCsrf(); ?> 
                 <div class="card card-premium">
                     <div class="card-header card-header-premium">
                         <h3>Crear Plan de Estudio para: <span style="color: #60a5fa; font-weight: 600;"><?= $carrera->getId().' - '.$carrera->getNombre();?></span></h3>

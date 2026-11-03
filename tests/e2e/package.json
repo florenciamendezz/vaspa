@@ -1,0 +1,24 @@
+{
+  "name": "vaspa-e2e-tests",
+  "version": "1.0.0",
+  "description": "Suite integral de pruebas automatizadas E2E con Playwright para la aplicación VASPA",
+  "main": "playwright.config.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:report": "npx playwright show-report"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "vaspa",
+    "qa",
+    "testing"
+  ],
+  "author": "Equipo QA y Seguridad VASPA",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}

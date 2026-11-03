@@ -1,4 +1,11 @@
 <?php
+include_once '../lib/ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
+$UsuarioSes = $_SESSION['usuario'] ?? null;
+$perfil = $UsuarioSes->roles[0]->nombre ?? "";
+if (!ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_CARRERAS, $UsuarioSes) && $perfil != PermisosSistema::ROL_VINCULACION_ACADEMICA && $perfil != PermisosSistema::ROL_ADMIN) {
+    ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
+}
 include_once '../lib/Constantes.Class.php';
 include_once '../modeloSistema/Plan.Class.php';
 

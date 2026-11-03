@@ -41,6 +41,7 @@ if (isset($_SESSION["usuarioNombre"]) && isset($_SESSION["usuarioEmail"]) && iss
     <body>
         <div class="container">
             <form action="profesor.crear.procesar.php" method="post"> 
+                <?= ControlAcceso::campoCsrf(); ?> 
                 <div class="card card-premium">
                     <div class="card-header card-header-premium">
                         <h3>Alta de Profesor</h3>

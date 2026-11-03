@@ -30,10 +30,11 @@ $Rol = new Rol($id);
                         <p class="alert alert-warning ">
                             <span class="oi oi-warning"></span> ATENCI&Oacute;N. Esta operaci&oacute;n no puede deshacerse.
                         </p>
-                        <p>¿Est&aacute; seguro que desea eliminar el rol <b><?= $Rol->getNombre(); ?></b>?</p>
+                        <p>¿Est&aacute; seguro que desea eliminar el rol <b><?= e($Rol->getNombre()); ?></b>?</p>
                     </div>
                     <div class="card-footer">
-                        <input type="hidden" name="id" class="form-control" id="id" value="<?= $Rol->getId(); ?>" >
+                        <?= ControlAcceso::campoCsrf(); ?>
+                        <input type="hidden" name="id" class="form-control" id="id" value="<?= e($Rol->getId()); ?>" >
                         <button type="submit" class="btn btn-outline-success">
                             <span class="oi oi-check"></span> Sí, deseo eliminar
                         </button>

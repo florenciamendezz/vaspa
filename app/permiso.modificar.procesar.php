@@ -1,12 +1,18 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PERMISOS);
+ControlAcceso::requiereCsrf();
 include_once '../modelo/BDConexion.Class.php';
-$DatosFormulario = $_POST;
-$query = "UPDATE permiso "
-        . "SET nombre = '{$DatosFormulario["nombre"]}' "
-        . "WHERE id = {$DatosFormulario["id"]}";
-$consulta = BDConexion::getInstancia()->query($query);
+$nombre = trim($_POST['nombre'] ?? '');
+$id = intval($_POST['id'] ?? 0);
+
+$stmt = BDConexion::getInstancia()->prepare("UPDATE permiso SET nombre = ? WHERE id = ?");
+$consulta = false;
+if ($stmt && $id > 0 && $nombre !== '') {
+    $stmt->bind_param("si", $nombre, $id);
+    $consulta = $stmt->execute();
+    $stmt->close();
+}
 ?>
 <html>
     <head>

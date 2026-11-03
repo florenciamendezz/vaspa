@@ -295,6 +295,7 @@ if ($circuito == 'estandar') {
                                     </div>
                                     <div class="card-body">
                                         <form action="../controlSistema/programa.revisar.actualizar.estado.pdf.php" method="POST">
+                                            <?= ControlAcceso::campoCsrf(); ?>
                                             <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
                                             <input type="hidden" name="comentarioFlexible" value="1">
                                             
@@ -450,6 +451,7 @@ if ($circuito == 'estandar') {
                         </button>
                     </div>
                     <form action="../controlSistema/programa.actualizar.pdf.php" method="POST" enctype="multipart/form-data">
+                        <?= ControlAcceso::campoCsrf(); ?>
                         <div class="modal-body text-left">
                             <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
                             <div class="form-group">
@@ -478,6 +480,7 @@ if ($circuito == 'estandar') {
                         </button>
                     </div>
                     <form action="../controlSistema/programa.revisar.actualizar.estado.pdf.php" method="POST">
+                        <?= ControlAcceso::campoCsrf(); ?>
                         <div class="modal-body text-left">
                             <div class="form-group">
                                 <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
@@ -505,6 +508,7 @@ if ($circuito == 'estandar') {
                         </button>
                     </div>
                     <form action="../controlSistema/programa.revisar.actualizar.estado.pdf.php" method="POST">
+                        <?= ControlAcceso::campoCsrf(); ?>
                         <div class="modal-body text-left">
                             <p style="font-size: 1.1rem;">
                                 ¿Estás seguro de confirmar la aprobación final de esta asignatura? Esto finalizará el circuito y el programa quedará oficialmente aprobado.
@@ -525,6 +529,7 @@ if ($circuito == 'estandar') {
 
         <!-- Formulario oculto para avanzar el circuito -->
         <form id="formEnviarSiguiente" action="../controlSistema/programa.enviar.revision.php" method="POST" style="display:none;">
+            <?= ControlAcceso::campoCsrf(); ?>
             <input type="hidden" name="idPrograma" value="<?= $programaPDF->getId();?>">
         </form>
         

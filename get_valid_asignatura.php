@@ -1,4 +1,9 @@
 <?php
+if (php_sapi_name() !== 'cli') {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    die('Acceso denegado: Este script solo puede ejecutarse mediante la interfaz de línea de comandos (CLI).');
+}
 include_once 'modeloSistema/BDConexionSistema.Class.php';
 
 $sql = "SELECT id FROM asignatura LIMIT 1";

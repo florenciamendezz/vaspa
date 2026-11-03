@@ -41,32 +41,52 @@ $reqEsc = $db->real_escape_string($requisito);
 
 if ($tipo === 'Precedente') {
     // La materia actual requiere a $idCorrelativa
-    $idMateria = $db->real_escape_string($idAsignatura);
-    $idAnt = $db->real_escape_string($idCorrelativa);
+    $idMateria = $idAsignatura;
+    $idAnt = $idCorrelativa;
 } else {
     // $idCorrelativa requiere a la materia actual
-    $idMateria = $db->real_escape_string($idCorrelativa);
-    $idAnt = $db->real_escape_string($idAsignatura);
+    $idMateria = $idCorrelativa;
+    $idAnt = $idAsignatura;
 }
 
 try {
     // Verificar si ya existe exactamente esta regla
-    $checkSql = "SELECT id, requisito FROM correlativa_de WHERE idPlan = '{$idPlanEsc}' AND idAsignatura = '{$idMateria}' AND idAsignatura_Correlativa_Anterior = '{$idAnt}'";
-    $checkRes = $db->query($checkSql);
-    if ($checkRes && $checkRes->num_rows > 0) {
-        $row = $checkRes->fetch_assoc();
-        echo json_encode(['status' => 'warning', 'message' => "Esta regla de correlatividad ya se encuentra registrada (Requisito actual: {$row['requisito']})."]);
-        exit;
+    $stmtCheck = $db->prepare("SELECT id, requisito FROM correlativa_de WHERE idPlan = ? AND idAsignatura = ? AND idAsignatura_Correlativa_Anterior = ? LIMIT 1");
+    if ($stmtCheck) {
+        $stmtCheck->bind_param("sss", $idPlan, $idMateria, $idAnt);
+        $stmtCheck->execute();
+        $checkRes = $stmtCheck->get_result();
+        if ($checkRes && $checkRes->num_rows > 0) {
+            $row = $checkRes->fetch_assoc();
+            $stmtCheck->close();
+            echo json_encode(['status' => 'warning', 'message' => "Esta regla de correlatividad ya se encuentra registrada (Requisito actual: {$row['requisito']})."]);
+            exit;
+        }
+        $stmtCheck->close();
     }
 
-    $sqlInsert = "INSERT INTO correlativa_de (requisito, idAsignatura, idAsignatura_Correlativa_Anterior, idPlan) VALUES ('{$reqEsc}', '{$idMateria}', '{$idAnt}', '{$idPlanEsc}')";
-    if ($db->query($sqlInsert)) {
-        // Actualizar tieneCorrelativa en plan_asignatura
-        $db->query("UPDATE plan_asignatura SET tieneCorrelativa = 1 WHERE idPlan = '{$idPlanEsc}' AND idAsignatura = '{$idMateria}'");
+    $stmtInsert = $db->prepare("INSERT INTO correlativa_de (requisito, idAsignatura, idAsignatura_Correlativa_Anterior, idPlan) VALUES (?, ?, ?, ?)");
+    if ($stmtInsert) {
+        $stmtInsert->bind_param("ssss", $requisito, $idMateria, $idAnt, $idPlan);
+        if ($stmtInsert->execute()) {
+            $stmtInsert->close();
 
-        echo json_encode(['status' => 'success', 'message' => 'Correlativa agregada exitosamente.']);
+            // Actualizar tieneCorrelativa en plan_asignatura
+            $stmtUpd = $db->prepare("UPDATE plan_asignatura SET tieneCorrelativa = 1 WHERE idPlan = ? AND idAsignatura = ?");
+            if ($stmtUpd) {
+                $stmtUpd->bind_param("ss", $idPlan, $idMateria);
+                $stmtUpd->execute();
+                $stmtUpd->close();
+            }
+
+            echo json_encode(['status' => 'success', 'message' => 'Correlativa agregada exitosamente.']);
+        } else {
+            $err = $stmtInsert->error;
+            $stmtInsert->close();
+            echo json_encode(['status' => 'error', 'message' => 'Error al guardar correlatividad: ' . $err]);
+        }
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Error al guardar correlatividad: ' . $db->error]);
+        echo json_encode(['status' => 'error', 'message' => 'Error al preparar sentencia de inserción: ' . $db->error]);
     }
 } catch (Exception $e) {
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);

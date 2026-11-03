@@ -464,7 +464,7 @@ class TCPDFBarcode {
 				} else {
 					$t = false; // space
 				}
-				$w = $chr[$char]{$j};
+				$w = $chr[$char][$j];
 				$bararray['bcode'][$k] = array('t' => $t, 'w' => $w, 'h' => 1, 'p' => 0);
 				$bararray['maxw'] += $w;
 				++$k;
@@ -667,7 +667,7 @@ class TCPDFBarcode {
 				} else {
 					$t = false; // space
 				}
-				$w = $chr[$char]{$j};
+				$w = $chr[$char][$j];
 				$bararray['bcode'][$k] = array('t' => $t, 'w' => $w, 'h' => 1, 'p' => 0);
 				$bararray['maxw'] += $w;
 				++$k;
@@ -929,7 +929,7 @@ class TCPDFBarcode {
 			$seq = '';
 			$chrlen = strlen($chr[$char_bar]);
 			for ($s = 0; $s < $chrlen; $s++){
-				$seq .= $chr[$char_bar]{$s} . $chr[$char_space]{$s};
+				$seq .= $chr[$char_bar][$s] . $chr[$char_space][$s];
 			}
 			$seqlen = strlen($seq);
 			for ($j = 0; $j < $seqlen; ++$j) {
@@ -1180,7 +1180,7 @@ class TCPDFBarcode {
 								}
 							}
 							for ($i = 0; $i < $seq[2]; ++$i) {
-								$char = $seq[1]{$i};
+								$char = $seq[1][$i];
 								$char_id = ord($char);
 								if (($char_id >= 241) AND ($char_id <= 244)) {
 									$code_data[] = $fnc_a[$char_id];
@@ -1223,7 +1223,7 @@ class TCPDFBarcode {
 								}
 							}
 							for ($i = 0; $i < $seq[2]; ++$i) {
-								$char = $seq[1]{$i};
+								$char = $seq[1][$i];
 								$char_id = ord($char);
 								if (($char_id >= 241) AND ($char_id <= 244)) {
 									$code_data[] = $fnc_b[$char_id];
@@ -1240,7 +1240,7 @@ class TCPDFBarcode {
 								$code_data[] = 99;
 							}
 							for ($i = 0; $i < $seq[2]; $i+=2) {
-								$chrnum = $seq[1]{$i}.$seq[1]{$i+1};
+								$chrnum = $seq[1][$i].$seq[1][$i+1];
 								$code_data[] = intval($chrnum);
 							}
 							break;

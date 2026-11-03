@@ -1,13 +1,30 @@
-/pruebas-playwright/
-/pruebas-playwright/node_modules/
-/test-results/
+# Variables de entorno y secretos locales
+.env
+.env.local
+.env.*.local
+tools.yaml
+*.yaml
+*.yml
 
-# Archivos PDF generados o subidos en pruebas
-/archivos/programas/*.pdf
-/uploads/*.pdf
+# Excepciones para archivos de configuración e infraestructura
+!docker-compose.yml
+!docker-compose.*.yml
+!.github/
+!.github/**/*.yml
+!.github/**/*.yaml
+
+# Permitir template de variables de entorno
+!.env.example
+
+# Dependencias Composer y librerías instaladas
+/vendor/
+/tests/e2e/node_modules/
 
 # Backups y volcados de base de datos
 *.sql
+*.sql.gz
+*.bak
+*.dump
 scriptBD/backup_*.sql
 
 # Mantener los scripts base de instalación de la base de datos
@@ -15,3 +32,18 @@ scriptBD/backup_*.sql
 !scriptBD/02_ESTRUCTURA - bdgef_vaspa.sql
 !scriptBD/03_DATOS - bdgef_vaspa.sql
 !scriptBD/04_migracion_circuito_vaspa.sql
+
+# Pruebas y artefactos temporales
+/pruebas-playwright/
+/pruebas-playwright/node_modules/
+/test-results/
+/tests/e2e/test-results/
+/tests/e2e/playwright-report/
+
+# Archivos PDF generados o subidos en pruebas
+/archivos/programas/*.pdf
+/uploads/*.pdf
+
+# Artefactos temporales de subagentes (manteniendo las reglas del proyecto)
+/.agents/teamwork/
+

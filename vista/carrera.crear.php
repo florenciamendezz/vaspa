@@ -21,6 +21,7 @@ ControlAcceso::requierePermiso(PermisosSistema::PERMISO_CARRERAS);
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="carrera.crear.procesar.php" method="post"> 
+                <?= ControlAcceso::campoCsrf(); ?> 
                 <div class="card card-premium">
                     <div class="card-header card-header-premium">
                         <h3>Crear Carrera</h3>

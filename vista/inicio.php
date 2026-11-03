@@ -1252,6 +1252,7 @@ if ($rol == PermisosSistema::ROL_PROFESOR) {
 
     <!-- Formulario POST Oculto para Enviar a Revisión (solo profesores) -->
     <form id="formEnviarRevision" action="../controlSistema/programa.enviar.revision.php" method="POST" style="display:none;">
+        <?= ControlAcceso::campoCsrf(); ?>
         <input type="hidden" name="idPrograma" id="idProgramaEnviar">
     </form>
 

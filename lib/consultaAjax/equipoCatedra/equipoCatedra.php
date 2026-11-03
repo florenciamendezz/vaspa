@@ -1,4 +1,6 @@
 <?php
+include_once '../../../lib/ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
 //  EN ESTE SCRIPT SE MUESTRA UNA TABLA EN LA CUAL SE PRESENTA LAS ASIGNATURAS DEL CORRESPONDIENTE PLAN
 //  Y EL BOTON DE ELIMINAR ASIGNATURA
 include_once '../../../modeloSistema/BDConexionSistema.Class.php';

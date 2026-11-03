@@ -1,9 +1,11 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
+ControlAcceso::requiereCsrf();
 include_once '../modeloSistema/ProgramaPDFDetalle.Class.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['idPrograma'])) {
-    $idPrograma = $_POST['idPrograma'];
+    $idPrograma = intval($_POST['idPrograma']);
     
     $programa = new ProgramaPDFDetalle($idPrograma);
     if (!$programa->getId()) {
@@ -12,14 +14,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['idPrograma'])) {
     }
 
     $idAsignatura = $programa->getIdAsignatura();
+    include_once '../modeloSistema/Asignatura.Class.php';
     
-    if (session_status() == PHP_SESSION_NONE) {
-        session_start();
-    }
-    
-    $rolNombre = '';
-    if (isset($_SESSION['usuario']) && isset($_SESSION['usuario']->roles[0])) {
-        $rolNombre = $_SESSION['usuario']->roles[0]->nombre;
+    $Usuario = $_SESSION['usuario'];
+    $rolNombre = $Usuario->roles[0]->nombre ?? '';
+    $email = strtolower(trim($Usuario->email ?? ''));
+
+    // Validación Anti-IDOR de Jurisdicción (SEC-011)
+    $asignatura = new Asignatura($idAsignatura);
+    if ($rolNombre === 'Director de Departamento') {
+        $idDeptoUsuario = ($email === strtolower(defined('MAIL_DEPTO_CS') ? MAIL_DEPTO_CS : '')) ? 2 : 1;
+        if (intval($asignatura->getIdDepartamento()) !== $idDeptoUsuario) {
+            http_response_code(403);
+            die("Acceso denegado: No tiene jurisdicción sobre asignaturas de este departamento.");
+        }
+    } elseif ($rolNombre === 'Director de Escuela' || $rolNombre === 'Secretario de Escuela') {
+        if ($asignatura->getEsInstitucional() == 1) {
+            http_response_code(403);
+            die("Acceso denegado: Las asignaturas institucionales no corresponden al ámbito de Escuela.");
+        }
+    } elseif ($rolNombre === 'Profesor') {
+        $db = BDConexionSistema::getInstancia();
+        $stmtProf = $db->prepare("SELECT p.id FROM profesor p 
+                                  LEFT JOIN asignatura a ON a.idProfesor = p.id AND a.id = ?
+                                  LEFT JOIN profesor_asignatura pa ON pa.idProfesor = p.id AND pa.idAsignatura = ?
+                                  LEFT JOIN asignatura_responsable ar ON ar.id_profesor = p.id AND ar.id_asignatura = ?
+                                  WHERE p.email = ? AND (a.id IS NOT NULL OR pa.idAsignatura IS NOT NULL OR ar.id_asignatura IS NOT NULL) LIMIT 1");
+        if ($stmtProf) {
+            $stmtProf->bind_param("ssss", $idAsignatura, $idAsignatura, $idAsignatura, $email);
+            $stmtProf->execute();
+            $resProf = $stmtProf->get_result();
+            $esResponsable = ($resProf && $resProf->num_rows > 0);
+            $stmtProf->close();
+            if (!$esResponsable) {
+                http_response_code(403);
+                die("Acceso denegado: Usted no es profesor responsable de esta asignatura.");
+            }
+        }
     }
 
     // Identificar el circuito de la asignatura

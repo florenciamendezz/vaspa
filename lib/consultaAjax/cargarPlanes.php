@@ -1,4 +1,6 @@
 <?php
+include_once '../../lib/ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
 
 include_once '../../controlSistema/ManejadorPlan.php';
 include_once '../../modeloSistema/BDConexionSistema.Class.php';

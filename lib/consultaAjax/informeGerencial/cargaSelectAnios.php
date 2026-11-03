@@ -3,6 +3,10 @@
  * En este script se arman los option con los anios correspondientes a los planes de estudio de la carrera seleccionada
  */
 
+include_once '../../ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
+ControlAcceso::requierePermiso(PermisosSistema::PERMISO_GENERAR_INFORME_GERENCIAL);
+
 include_once '../../../modeloSistema/Carrera.Class.php';
 
 $anios = '';

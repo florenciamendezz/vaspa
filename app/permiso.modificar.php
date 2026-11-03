@@ -32,12 +32,13 @@ $Permiso = new Permiso($id);
                         </p>
                     </div>
                     <div class="card-body">
+                        <?= ControlAcceso::campoCsrf(); ?>
                         <div class="form-group">
                             <label for="inputNombre">Nombre</label>
-                            <input type="text" name="nombre" class="form-control" id="inputNombre" value="<?= $Permiso->getNombre(); ?>" placeholder="Ingrese el nombre del Permiso" required="">
+                            <input type="text" name="nombre" class="form-control" id="inputNombre" value="<?= e($Permiso->getNombre()); ?>" placeholder="Ingrese el nombre del Permiso" required="">
                         </div>
 
-                        <input type="hidden" name="id" class="form-control" id="id" value="<?= $Permiso->getId(); ?>" >
+                        <input type="hidden" name="id" class="form-control" id="id" value="<?= e($Permiso->getId()); ?>" >
                     </div>
                     <div class="card-footer">
                         <button type="submit" class="btn btn-outline-success">

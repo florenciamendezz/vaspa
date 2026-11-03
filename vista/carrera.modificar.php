@@ -25,6 +25,7 @@ $Carrera = new Carrera($codCarrera);
         ?>
         <div class="container">
             <form action="carrera.modificar.procesar.php" method="post">
+                <?= ControlAcceso::campoCsrf(); ?>
                 <div class="card">
                     <div class="card-header">
                         <h3>Actualizar Carrera</h3>

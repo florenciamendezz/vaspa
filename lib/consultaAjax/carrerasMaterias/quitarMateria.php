@@ -8,16 +8,21 @@ if (!ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_CARRERAS)) {
 }
 
 if (isset($_POST['codCarrera']) && isset($_POST['idAsignatura'])) {
-    $codCarrera = $_POST['codCarrera'];
-    $idAsignatura = $_POST['idAsignatura'];
+    $codCarrera = trim($_POST['codCarrera']);
+    $idAsignatura = trim($_POST['idAsignatura']);
     $db = BDConexionSistema::getInstancia();
 
-    $query = "DELETE FROM carrera_asignatura 
-              WHERE idCarrera = '{$codCarrera}' AND idAsignatura = '{$idAsignatura}'";
-    if ($db->query($query)) {
-        echo json_encode(['success' => true]);
+    $stmt = $db->prepare("DELETE FROM carrera_asignatura WHERE idCarrera = ? AND idAsignatura = ?");
+    if ($stmt) {
+        $stmt->bind_param("ss", $codCarrera, $idAsignatura);
+        if ($stmt->execute()) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Error al eliminar en la base de datos: ' . $stmt->error]);
+        }
+        $stmt->close();
     } else {
-        echo json_encode(['success' => false, 'error' => 'Error al eliminar en la base de datos: ' . $db->error]);
+        echo json_encode(['success' => false, 'error' => 'Error al preparar sentencia: ' . $db->error]);
     }
 } else {
     echo json_encode(['success' => false, 'error' => 'Parámetros incompletos.']);

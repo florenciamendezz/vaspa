@@ -22,6 +22,7 @@ $Usuario = new Usuario($id);
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="usuario.eliminar.procesar.php" method="post">
+                <?= ControlAcceso::campoCsrf(); ?>
                 <div class="card card-premium">
                     <div class="card-header card-header-premium">
                         <h3 class="mb-0">Eliminar Usuario</h3>

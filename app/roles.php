@@ -47,19 +47,19 @@ $ColeccionRoles = new ColeccionRoles();
                     <?php foreach ($ColeccionRoles->getRoles() as $Rol) {
                         ?>
                         <tr>
-                            <td><?= $Rol->getNombre(); ?></td>
+                            <td><?= e($Rol->getNombre()); ?></td>
                             <td>
-                                <a title="Ver detalle" href="rol.ver.php?id=<?= $Rol->getId(); ?>">
+                                <a title="Ver detalle" href="rol.ver.php?id=<?= intval($Rol->getId()); ?>">
                                     <button type="button" class="btn btn-outline-info">
                                         <span class="oi oi-zoom-in"></span>
                                     </button>
                                 </a>
-                                <a title="Modificar" href="rol.modificar.php?id=<?= $Rol->getId(); ?>">
+                                <a title="Modificar" href="rol.modificar.php?id=<?= intval($Rol->getId()); ?>">
                                     <button type="button" class="btn btn-outline-warning">
                                         <span class="oi oi-pencil"></span>
                                     </button>
                                 </a>
-                                <a title="Eliminar" href="rol.eliminar.php?id=<?= $Rol->getId(); ?>">
+                                <a title="Eliminar" href="rol.eliminar.php?id=<?= intval($Rol->getId()); ?>">
                                     <button type="button" class="btn btn-outline-danger">
                                         <span class="oi oi-trash"></span>
                                     </button>

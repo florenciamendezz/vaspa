@@ -1,91 +1,123 @@
 <?php
-session_start();
-// Verificamos si el usuario está logueado
-if (!isset($_SESSION['usuario'])) {
-    header("Location: ../app/index.php");
-    exit;
+require_once __DIR__ . '/../lib/ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
+
+// Validación de Autorización por Roles autorizados a consultar documentos en circuito
+$UsuarioSes = $_SESSION['usuario'];
+$rolesUsuario = array_map(function($r) { return $r->nombre; }, $UsuarioSes->roles ?? []);
+$rolesValidos = [
+    PermisosSistema::ROL_ADMIN,
+    PermisosSistema::ROL_VINCULACION_ACADEMICA,
+    PermisosSistema::ROL_DIRECTOR_DEPARTAMENTO,
+    PermisosSistema::ROL_DIRECTOR_ESCUELA,
+    PermisosSistema::ROL_PROFESOR
+];
+$autorizado = count(array_intersect($rolesValidos, $rolesUsuario)) > 0;
+
+if (!$autorizado) {
+    http_response_code(403);
+    die('Acceso denegado: Su rol no posee privilegios para descargar programas analíticos.');
 }
 
-require_once '../modeloSistema/BDConexionSistema.Class.php';
-require_once '../modeloSistema/Programa.Class.php';
+require_once __DIR__ . '/../modeloSistema/BDConexionSistema.Class.php';
+require_once __DIR__ . '/../modeloSistema/Programa.Class.php';
 
-// Validamos que el id del programa este definido
-if (!isset($_GET['id']) || $_GET['id'] == "" || !is_numeric($_GET['id']) || $_GET['id'] < 0){
-    die('No se ha especificado correctamente el ID del programa.');
+// Validación estricta y casteo seguro de ID
+if (!isset($_GET['id']) || !is_numeric($_GET['id']) || intval($_GET['id']) <= 0) {
+    http_response_code(400);
+    die('Parámetro de identificación de programa inválido.');
 }
 
-$idPrograma = $_GET['id'];
-$tipo = isset($_GET['tipo']) ? $_GET['tipo'] : 'legacy'; // 'pdf' o 'legacy'
+$idPrograma = intval($_GET['id']);
+$tipo = isset($_GET['tipo']) && $_GET['tipo'] === 'pdf' ? 'pdf' : 'legacy';
 
-if ($tipo == 'pdf') {
-    // Descarga directa de programa_pdf_detalle
-    $sqlPDF = "SELECT ruta_archivo FROM programa_pdf_detalle WHERE id = {$idPrograma}";
-    $resPDF = BDConexionSistema::getInstancia()->query($sqlPDF);
+$db = BDConexionSistema::getInstancia();
+$baseDir = realpath(__DIR__ . '/../archivos/programas');
+
+if ($tipo === 'pdf') {
+    $stmt = $db->prepare("SELECT ruta_archivo FROM programa_pdf_detalle WHERE id = ?");
+    if (!$stmt) {
+        http_response_code(500);
+        die('Error en el servicio de datos.');
+    }
+    $stmt->bind_param("i", $idPrograma);
+    $stmt->execute();
+    $resPDF = $stmt->get_result();
+    $stmt->close();
 
     if ($resPDF && $resPDF->num_rows > 0) {
         $pdfData = $resPDF->fetch_assoc();
-        $ruta = '../archivos/programas/' . $pdfData['ruta_archivo'];
+        $nombreLimpio = basename($pdfData['ruta_archivo']);
+        $rutaCompleta = realpath(__DIR__ . '/../archivos/programas/' . $nombreLimpio);
 
-        if (file_exists($ruta)) {
+        // Prevención estricta de Path Traversal: asegurar que el archivo resida en archivos/programas
+        if ($rutaCompleta !== false && strpos($rutaCompleta, $baseDir) === 0 && file_exists($rutaCompleta)) {
             header('Content-Description: File Transfer');
             header('Content-Type: application/pdf');
-            header('Content-Disposition: inline; filename="'.basename($ruta).'"');
+            header('Content-Disposition: inline; filename="' . $nombreLimpio . '"');
             header('Expires: 0');
             header('Cache-Control: must-revalidate');
             header('Pragma: public');
-            header('Content-Length: ' . filesize($ruta));
-            readfile($ruta);
+            header('Content-Length: ' . filesize($rutaCompleta));
+            readfile($rutaCompleta);
             exit;
         } else {
-            die('El archivo PDF físico no se encuentra en el servidor.');
+            http_response_code(404);
+            die('El archivo PDF físico no se encuentra disponible.');
         }
     } else {
-        die('No se encontró el registro del programa PDF.');
+        http_response_code(404);
+        die('Registro de programa PDF no encontrado.');
     }
-
 } else {
-    // Lógica Legacy (busca en programa y luego si tiene PDF asociado)
-    // Obtenemos datos del programa base para saber asignatura y año
-    $sql = "SELECT idAsignatura, anio FROM programa WHERE id = {$idPrograma}";
-    $res = BDConexionSistema::getInstancia()->query($sql);
+    // Modo legacy: búsqueda en programa y derivación
+    $stmt = $db->prepare("SELECT idAsignatura, anio FROM programa WHERE id = ?");
+    if (!$stmt) {
+        http_response_code(500);
+        die('Error en el servicio de datos.');
+    }
+    $stmt->bind_param("i", $idPrograma);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $stmt->close();
 
     if ($res && $res->num_rows > 0) {
         $prog = $res->fetch_assoc();
         $idAsignatura = $prog['idAsignatura'];
-        $anio = $prog['anio'];
+        $anio = intval($prog['anio']);
 
-        // Buscamos si existe un PDF asociado en programa_pdf_detalle
-        $sqlPDF = "SELECT ruta_archivo FROM programa_pdf_detalle 
-                   WHERE id_asignatura = '{$idAsignatura}' AND anio = {$anio}";
-        $resPDF = BDConexionSistema::getInstancia()->query($sqlPDF);
+        $stmtPDF = $db->prepare("SELECT ruta_archivo FROM programa_pdf_detalle WHERE id_asignatura = ? AND anio = ?");
+        $stmtPDF->bind_param("si", $idAsignatura, $anio);
+        $stmtPDF->execute();
+        $resPDF = $stmtPDF->get_result();
+        $stmtPDF->close();
 
         if ($resPDF && $resPDF->num_rows > 0) {
-            // Existe PDF, lo descargamos
             $pdfData = $resPDF->fetch_assoc();
-            $ruta = '../archivos/programas/' . $pdfData['ruta_archivo'];
+            $nombreLimpio = basename($pdfData['ruta_archivo']);
+            $rutaCompleta = realpath(__DIR__ . '/../archivos/programas/' . $nombreLimpio);
 
-            if (file_exists($ruta)) {
+            if ($rutaCompleta !== false && strpos($rutaCompleta, $baseDir) === 0 && file_exists($rutaCompleta)) {
                 header('Content-Description: File Transfer');
                 header('Content-Type: application/pdf');
-                header('Content-Disposition: inline; filename="'.basename($ruta).'"');
+                header('Content-Disposition: inline; filename="' . $nombreLimpio . '"');
                 header('Expires: 0');
                 header('Cache-Control: must-revalidate');
                 header('Pragma: public');
-                header('Content-Length: ' . filesize($ruta));
-                readfile($ruta);
+                header('Content-Length: ' . filesize($rutaCompleta));
+                readfile($rutaCompleta);
                 exit;
             } else {
-                die('El archivo PDF físico no se encuentra en el servidor.');
+                http_response_code(404);
+                die('El archivo PDF físico no se encuentra disponible.');
             }
         } else {
-            // No existe PDF, intentamos generar el legacy
-            // Redirigimos a programa.generarPDF.php
+            // Derivación autenticada a programa.generarPDF.php
             header("Location: programa.generarPDF.php?id={$idPrograma}");
             exit;
         }
-
     } else {
+        http_response_code(404);
         die('No existe el programa solicitado.');
     }
 }
-?>

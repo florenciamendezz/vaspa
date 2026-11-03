@@ -1,47 +1,67 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_ROLES);
+ControlAcceso::requiereCsrf();
 include_once '../modelo/BDConexion.Class.php';
 $DatosFormulario = $_POST;
-$nombreRol = trim($DatosFormulario["nombre"]);
+$nombreRol = trim($DatosFormulario["nombre"] ?? '');
 $mensaje = '';
 $consulta = false;
 
 // Comprobar si ya existe un rol con el mismo nombre
-$sql = "SELECT * FROM rol WHERE nombre LIKE '{$nombreRol}'";
-$resultado = BDConexion::getInstancia()->query($sql);
+$db = BDConexion::getInstancia();
+$stmtCheck = $db->prepare("SELECT id FROM rol WHERE nombre = ?");
+if ($stmtCheck) {
+    $stmtCheck->bind_param("s", $nombreRol);
+    $stmtCheck->execute();
+    $resultado = $stmtCheck->get_result();
+    $stmtCheck->close();
+} else {
+    $resultado = false;
+}
 
 if ($resultado && $resultado->num_rows > 0) {
-    $mensaje = "El rol <b>{$nombreRol}</b> ya existe, por favor ingrese otro nombre.";
+    $mensaje = "El rol <b>" . e($nombreRol) . "</b> ya existe, por favor ingrese otro nombre.";
     $consulta = false;
 } else {
-    BDConexion::getInstancia()->autocommit(false);
-    BDConexion::getInstancia()->begin_transaction();
+    $db->autocommit(false);
+    $db->begin_transaction();
 
-    $query = "INSERT INTO rol "
-            . "VALUES (null,'{$nombreRol}')";
-    $consulta = BDConexion::getInstancia()->query($query);
+    $stmtInsert = $db->prepare("INSERT INTO rol (id, nombre) VALUES (null, ?)");
+    if ($stmtInsert) {
+        $stmtInsert->bind_param("s", $nombreRol);
+        $consulta = $stmtInsert->execute();
+        $idRol = $stmtInsert->insert_id;
+        $stmtInsert->close();
+    } else {
+        $consulta = false;
+    }
 
     if (!$consulta) {
-        BDConexion::getInstancia()->rollback();
+        $db->rollback();
         $mensaje = "Error al insertar el rol en la base de datos.";
     } else {
-        $idRol = BDConexion::getInstancia()->insert_id;
         if (isset($DatosFormulario["permiso"]) && is_array($DatosFormulario["permiso"])) {
+            $stmtPerm = $db->prepare("INSERT INTO rol_permiso (id_rol, id_permiso) VALUES (?, ?)");
             foreach ($DatosFormulario["permiso"] as $idPermiso) {
-                $query = "INSERT INTO rol_permiso "
-                        . "VALUES ({$idRol}, {$idPermiso})";
-                $consulta = BDConexion::getInstancia()->query($query);
-                if (!$consulta) {
-                    BDConexion::getInstancia()->rollback();
-                    $mensaje = "Error al asignar los permisos al rol.";
-                    break;
+                $idPermInt = intval($idPermiso);
+                if ($stmtPerm) {
+                    $stmtPerm->bind_param("ii", $idRol, $idPermInt);
+                    $consulta = $stmtPerm->execute();
+                    if (!$consulta) {
+                        $db->rollback();
+                        $mensaje = "Error al asignar los permisos al rol.";
+                        break;
+                    }
                 }
+            }
+            if ($stmtPerm) {
+                $stmtPerm->close();
             }
         }
         if ($consulta) {
-            BDConexion::getInstancia()->commit();
-            BDConexion::getInstancia()->autocommit(true);
+            $db->commit();
+            $db->autocommit(true);
         }
     }
 }

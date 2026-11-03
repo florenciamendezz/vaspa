@@ -1,17 +1,14 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-ini_set('log_errors', 1);
-ini_set('error_log', 'C:/xampp/php/logs/php_error_log');
-include_once '../lib/ControlAcceso.Class.php'; 
+include_once __DIR__ . '/../lib/ControlAcceso.Class.php'; 
 
-$UsuarioSes = $_SESSION['usuario'];
+$UsuarioSes = $_SESSION['usuario'] ?? null;
 $perfil = "";
-if (isset($UsuarioSes->roles[0])) {
+if ($UsuarioSes && isset($UsuarioSes->roles[0])) {
     $perfil = $UsuarioSes->roles[0]->nombre;
 }
 ?>
+
+<meta name="csrf-token" content="<?= ControlAcceso::obtenerCsrfToken(); ?>">
 
 <!-- Lucide Icons local -->
 <script src="../lib/lucide.min.js"></script>
@@ -304,7 +301,7 @@ if (isset($UsuarioSes->roles[0])) {
 <!-- Badge usuario conectado -->
 <div class="user-badge alert alert-dismissible fade show" role="alert">
     <i data-lucide="circle-user" style="width:14px;height:14px;stroke-width:2;color:#6366f1;flex-shrink:0;"></i>
-    Conectad@ como <strong><?= $_SESSION['usuario']->nombre; ?></strong>
+    Conectad@ como <strong><?= e($_SESSION['usuario']->nombre ?? ''); ?></strong>
     <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
         <span aria-hidden="true">&times;</span>
     </button>
@@ -313,5 +310,15 @@ if (isset($UsuarioSes->roles[0])) {
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         lucide.createIcons();
+        if (typeof jQuery !== 'undefined') {
+            var csrfToken = $('meta[name="csrf-token"]').attr('content');
+            if (csrfToken) {
+                $.ajaxSetup({
+                    headers: {
+                        'X-CSRF-Token': csrfToken
+                    }
+                });
+            }
+        }
     });
 </script>

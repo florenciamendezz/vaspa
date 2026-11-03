@@ -67,9 +67,9 @@ $Profesores = $ManejadorProfesor->getColeccion();
                                 <?php
                                 foreach ($Profesores as $Profesor) {
                                     ?>
-                                    <td><?= $Profesor->getApellido(); ?></td>
-                                    <td><?= $Profesor->getNombre(); ?></td>
-                                    <td><?= $Profesor->getEmail(); ?></td>
+                                    <td><?= e($Profesor->getApellido()); ?></td>
+                                    <td><?= e($Profesor->getNombre()); ?></td>
+                                    <td><?= e($Profesor->getEmail()); ?></td>
 
                                     <td>
                                          <a title="Ver Asignaturas de Profesor" href="profesor.asignaturas.php?id=<?= $Profesor->getId(); ?>">

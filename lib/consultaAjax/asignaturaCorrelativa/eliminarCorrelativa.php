@@ -30,31 +30,55 @@ $idAsigEsc = $db->real_escape_string($idAsignatura);
 
 try {
     // Obtener datos antes de borrar para verificar y actualizar tieneCorrelativa
-    $infoSql = "SELECT idAsignatura, idPlan FROM correlativa_de WHERE id = {$idCorrelativaDe}";
-    $infoRes = $db->query($infoSql);
+    $stmtInfo = $db->prepare("SELECT idAsignatura, idPlan FROM correlativa_de WHERE id = ? LIMIT 1");
     $targetMateria = '';
-    if ($infoRes && $infoRow = $infoRes->fetch_assoc()) {
-        $targetMateria = $infoRow['idAsignatura'];
+    if ($stmtInfo) {
+        $stmtInfo->bind_param("i", $idCorrelativaDe);
+        $stmtInfo->execute();
+        $infoRes = $stmtInfo->get_result();
+        if ($infoRes && $infoRow = $infoRes->fetch_assoc()) {
+            $targetMateria = $infoRow['idAsignatura'];
+        }
+        $stmtInfo->close();
     }
 
-    $sqlDelete = "DELETE FROM correlativa_de WHERE id = {$idCorrelativaDe}";
-    if ($db->query($sqlDelete)) {
-        // Verificar si la materia aún tiene correlativas en el plan
-        if (!empty($targetMateria) && !empty($idPlanEsc)) {
-            $countSql = "SELECT COUNT(*) as cant FROM correlativa_de WHERE idPlan = '{$idPlanEsc}' AND idAsignatura = '{$targetMateria}'";
-            $countRes = $db->query($countSql);
-            $cant = 0;
-            if ($countRes && $row = $countRes->fetch_assoc()) {
-                $cant = intval($row['cant']);
-            }
-            if ($cant === 0) {
-                $db->query("UPDATE plan_asignatura SET tieneCorrelativa = 0 WHERE idPlan = '{$idPlanEsc}' AND idAsignatura = '{$targetMateria}'");
-            }
-        }
+    $stmtDelete = $db->prepare("DELETE FROM correlativa_de WHERE id = ?");
+    if ($stmtDelete) {
+        $stmtDelete->bind_param("i", $idCorrelativaDe);
+        if ($stmtDelete->execute()) {
+            $stmtDelete->close();
 
-        echo json_encode(['status' => 'success', 'message' => 'Correlativa eliminada correctamente.']);
+            // Verificar si la materia aún tiene correlativas en el plan
+            if (!empty($targetMateria) && !empty($idPlan)) {
+                $stmtCount = $db->prepare("SELECT COUNT(*) as cant FROM correlativa_de WHERE idPlan = ? AND idAsignatura = ?");
+                $cant = 0;
+                if ($stmtCount) {
+                    $stmtCount->bind_param("ss", $idPlan, $targetMateria);
+                    $stmtCount->execute();
+                    $countRes = $stmtCount->get_result();
+                    if ($countRes && $row = $countRes->fetch_assoc()) {
+                        $cant = intval($row['cant']);
+                    }
+                    $stmtCount->close();
+                }
+                if ($cant === 0) {
+                    $stmtUpd = $db->prepare("UPDATE plan_asignatura SET tieneCorrelativa = 0 WHERE idPlan = ? AND idAsignatura = ?");
+                    if ($stmtUpd) {
+                        $stmtUpd->bind_param("ss", $idPlan, $targetMateria);
+                        $stmtUpd->execute();
+                        $stmtUpd->close();
+                    }
+                }
+            }
+
+            echo json_encode(['status' => 'success', 'message' => 'Correlativa eliminada correctamente.']);
+        } else {
+            $err = $stmtDelete->error;
+            $stmtDelete->close();
+            echo json_encode(['status' => 'error', 'message' => 'Error al eliminar correlatividad: ' . $err]);
+        }
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Error al eliminar correlatividad: ' . $db->error]);
+        echo json_encode(['status' => 'error', 'message' => 'Error al preparar sentencia de eliminación: ' . $db->error]);
     }
 } catch (Exception $e) {
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);

@@ -1,15 +1,4 @@
 <?php
-// HABILITAR ERRORES EN PANTALLA (solo para desarrollo)
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-
-
-
-// (opcional) loguear también a archivo
-ini_set('log_errors', 1);
-ini_set('error_log', 'C:/xampp/php/logs/php_error_log');
-
 include_once __DIR__ . '/../lib/ControlAcceso.Class.php'; 
 ?>
 
@@ -117,8 +106,8 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
 
                 <div class="card-body">
                     <?php
-                            // VERIFICAMOS SI ESTA SETEADO EL USUARIO EN LA SESION Y SI ESTA VACIO (CADENA VACIA) PARA MOSTRAR EL MENSAJE QUE NO ES UN USUARIO REGISTRADO EN EL SISTEMA
-                            if (isset($_SESSION['usuario']) && $_SESSION['usuario'] == "") {
+                            // Verificamos si hubo un fallo de autenticación (usuario no registrado o campos vacíos)
+                            if (!empty($_SESSION['auth_error']) || (isset($_SESSION['usuario']) && $_SESSION['usuario'] == "")) {
 
                                 echo '<p><div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
                                         <span class="oi oi-warning"></span> Usuario No Autenticado.
@@ -126,7 +115,9 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                                           <span aria-hidden="true">&times;</span>
                                         </button>
                                       </div></p>';
-                                session_destroy(); // destruimos la session para evitar que vuelva a mostrar el alert (de todos modos al actualizar la pagina le pide reenvio de formulario)
+                                unset($_SESSION['auth_error']);
+                                unset($_SESSION['usuario']);
+                                session_destroy(); // destruimos la session para evitar que vuelva a mostrar el alert
                             }
                     ?>
                     <p>Estimado usuario: Bienvenido al <b>Sistema</b> para la <b>V</b>isualizaci&oacute;n
@@ -189,10 +180,10 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                 <!-- 
                 ========================================================================
                 [INICIO: ACCESO RÁPIDO PARA PRUEBAS Y DESARROLLO]
-                NOTA PARA EL FUTURO: Esta sección de código (tarjeta y script) debe ser
-                eliminada por completo antes del despliegue a producción.
+                NOTA: Esta sección de código solo se renderiza si el entorno es local/testing
                 ========================================================================
                 -->
+                <?php if (ControlAcceso::esEntornoPruebas()): ?>
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="card border-warning">
@@ -219,7 +210,7 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                                     </script>
                                     <div class="list-group">
                                         <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="iniciarSesionPrueba('accesoriosperlados@gmail.com', 'Profesor Sandra Casas')">
-                                            <span><strong>Profesor:</strong> Sandra Casas</span>
+                                             <span><strong>Profesor:</strong> Sandra Casas</span>
                                             <span class="badge badge-success px-2 py-1">accesoriosperlados@gmail.com</span>
                                         </button>
                                         <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="iniciarSesionPrueba('esstefaniamendez+profesor@gmail.com', 'Profesor Albert Sofia')">
@@ -252,6 +243,7 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
                 <!-- 
                 ========================================================================
                 [FIN: ACCESO RÁPIDO PARA PRUEBAS Y DESARROLLO]

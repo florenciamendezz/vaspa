@@ -59,14 +59,17 @@ class ManejadorCarrera {
             if ($this->chequearExistencia($Carrera->getId())) {
                 //Seteo el nuevo ID como el ID que viene del formulario, completado con 0 a la izquierda
                 $Carrera->setId($this->completaConCeros($Carrera->getId()));
-                $this->query = "INSERT INTO CARRERA "
-                        . "VALUES ('{$Carrera->getId()}','{$Carrera->getNombre()}')";
-                $consulta = BDConexionSistema::getInstancia()->query($this->query);
-                if ($consulta) {
-                    return true;
-                } else {
+                $db = BDConexionSistema::getInstancia();
+                $stmt = $db->prepare("INSERT INTO CARRERA (id, nombre) VALUES (?, ?)");
+                if (!$stmt) {
                     return false;
                 }
+                $idCar = $Carrera->getId();
+                $nomCar = $Carrera->getNombre();
+                $stmt->bind_param("ss", $idCar, $nomCar);
+                $consulta = $stmt->execute();
+                $stmt->close();
+                return $consulta;
             } else {
                 throw new Exception("El c&oacute;digo  " . $Carrera->getId() . " ya corresponde a una carrera en la Base de Datos");
             }
@@ -76,13 +79,15 @@ class ManejadorCarrera {
     }
 
     function baja($id_) {
-        $this->query = "DELETE FROM CARRERA WHERE id = '{$id_}'";
-        $consulta = BDConexionSistema::getInstancia()->query($this->query);
-        if ($consulta) {
-            return true;
-        } else {
+        $db = BDConexionSistema::getInstancia();
+        $stmt = $db->prepare("DELETE FROM CARRERA WHERE id = ?");
+        if (!$stmt) {
             return false;
         }
+        $stmt->bind_param("s", $id_);
+        $consulta = $stmt->execute();
+        $stmt->close();
+        return $consulta;
     }
 
     //Funcion para Modificación de Carreras
@@ -92,28 +97,35 @@ class ManejadorCarrera {
         $Carrera->setId($this->completaConCeros($Carrera->getId()));
 
         if ($this->validaEspaciosEnBlanco($Carrera->getNombre())) {
-            if ($Carrera->getId() == $id_) {
-                $this->query = "UPDATE CARRERA "
-                        . "SET nombre = '{$Carrera->getNombre()}' "
-                        . "WHERE id = '{$id_}'";
+            $db = BDConexionSistema::getInstancia();
+            $nomCar = $Carrera->getNombre();
+            $idCar = $Carrera->getId();
+
+            if ($idCar == $id_) {
+                $stmt = $db->prepare("UPDATE CARRERA SET nombre = ? WHERE id = ?");
+                if (!$stmt) {
+                    return false;
+                }
+                $stmt->bind_param("ss", $nomCar, $id_);
+                $consulta = $stmt->execute();
+                $stmt->close();
+                return $consulta;
             } else {
-                if ($this->chequearExistencia($Carrera->getId())) {
-                    $this->query = "UPDATE CARRERA "
-                            . "SET id = '{$Carrera->getId()}' , nombre = '{$Carrera->getNombre()}' "
-                            . "WHERE id = '{$id_}'";
+                if ($this->chequearExistencia($idCar)) {
+                    $stmt = $db->prepare("UPDATE CARRERA SET id = ?, nombre = ? WHERE id = ?");
+                    if (!$stmt) {
+                        return false;
+                    }
+                    $stmt->bind_param("sss", $idCar, $nomCar, $id_);
+                    $consulta = $stmt->execute();
+                    $stmt->close();
+                    return $consulta;
                 } else {
                     throw new Exception("El c&oacute;digo  " . $Carrera->getId() . " ya corresponde a una carrera en la Base de Datos");
                 }
             }
         } else {
             throw new Exception("El nombre de la carrera no puede estar en blanco");
-        }
-
-        $consulta = BDConexionSistema::getInstancia()->query($this->query);
-        if ($consulta) {
-            return true;
-        } else {
-            return false;
         }
     }
 
@@ -135,14 +147,18 @@ class ManejadorCarrera {
     }
 
     function chequearExistencia($idCarrera_) {
-        $this->resultado = BDConexionSistema::getInstancia()->query("SELECT 1 FROM CARRERA WHERE id = {$idCarrera_} LIMIT 1");
-        if ($this->resultado->num_rows == 1) {
-            //El registro existe en la BD. No se puede insertar
+        $db = BDConexionSistema::getInstancia();
+        $idCarStr = (string) $idCarrera_;
+        $stmt = $db->prepare("SELECT 1 FROM CARRERA WHERE id = ? LIMIT 1");
+        if (!$stmt) {
             return false;
-        } else {
-            //El registro no existe en la BD. Se puede insertar
-            return true;
         }
+        $stmt->bind_param("s", $idCarStr);
+        $stmt->execute();
+        $this->resultado = $stmt->get_result();
+        $existe = ($this->resultado && $this->resultado->num_rows == 1);
+        $stmt->close();
+        return !$existe;
     }
 
     function validaEspaciosEnBlanco($nombre_) {

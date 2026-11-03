@@ -34,6 +34,7 @@ if ($Carreras) {
                 </div>
                 <div class="card-body">
                     <form action="../controlSistema/programa.crear.procesar.pdf.php" method="post" enctype="multipart/form-data" id="form">
+                        <?= ControlAcceso::campoCsrf(); ?>
                         <input type="hidden" name="idAsignatura" value="<?= $Asignatura->getId(); ?>">
                         
                         <div class="form-group">

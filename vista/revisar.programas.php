@@ -32,10 +32,10 @@ if ($rol == PermisosSistema::ROL_ADMIN || $rol == PermisosSistema::ROL_VINCULACI
     $deptoFiltro = "";
     if ($Usuario->email == MAIL_DEPTO_CNE){
         $rol = 'DCNE';
-        $deptoFiltro = " a.idDepartamento = '2' AND ";
+        $deptoFiltro = " a.idDepartamento = '1' AND ";
     } elseif ($Usuario->email == MAIL_DEPTO_CS) {
         $rol = 'DCS';
-        $deptoFiltro = " a.idDepartamento = '1' AND ";
+        $deptoFiltro = " a.idDepartamento = '2' AND ";
     }
     $filtro = " {$deptoFiltro} (
                 (ppd.id IS NOT NULL AND ppd.en_revision = 1 AND ppd.aprobado_va = 1 AND ppd.aprobado_depto IS NULL AND ppd.fue_desaprobado = 0)

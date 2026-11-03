@@ -1,0 +1,37 @@
+# Archivos de control de versiones y agentes
+.git/
+.gitignore
+.agents/
+
+# Secretos y variables locales sensibles
+.env
+.env.local
+.env.*.local
+tools.yaml
+
+# Node y artefactos de pruebas E2E
+node_modules/
+tests/e2e/node_modules/
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+tests/e2e/screenshots/
+test-results/
+pruebas-playwright/
+
+# Respaldos y volcados temporales
+*.sql
+*.bak
+*.dump
+*.tmp
+*.log
+backup_*.sql
+
+# Configuraciones de IDEs
+.vscode/
+.idea/
+nbproject/private/
+
+# Definiciones de Docker para no auto-copiarse
+Dockerfile*
+docker-compose*.yml
+docker-compose*.yaml

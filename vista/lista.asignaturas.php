@@ -2,7 +2,8 @@
 
 $data = json_decode($_POST['vectorElementos']);
 
-session_start();
+require_once __DIR__ . '/../lib/ControlAcceso.Class.php';
+ControlAcceso::iniciarSesionSegura();
 
 $_SESSION['vectorElementos'] = $data;
 header("location: plan.asignaturas.procesar.php");

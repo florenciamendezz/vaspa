@@ -52,17 +52,17 @@ $ColeccionUsuarios = new ColeccionUsuarios();
                         <tr>
                             <?php foreach ($ColeccionUsuarios->getUsuarios() as $Usuario) {
                                 ?>
-                                <td><?= $Usuario->getNombre(); ?><br /><?= $Usuario->getEmail(); ?></td>
+                                <td><?= e($Usuario->getNombre()); ?><br /><?= e($Usuario->getEmail()); ?></td>
                                 <td>
-                                    <a title="Ver detalle" href="usuario.ver.php?id=<?= $Usuario->getId(); ?>">
+                                    <a title="Ver detalle" href="usuario.ver.php?id=<?= intval($Usuario->getId()); ?>">
                                         <button type="button" class="btn btn-outline-info">
                                             <span class="oi oi-zoom-in"></span>
                                         </button></a>
-                                    <a title="Modificar" href="usuario.modificar.php?id=<?= $Usuario->getId(); ?>">
+                                    <a title="Modificar" href="usuario.modificar.php?id=<?= intval($Usuario->getId()); ?>">
                                         <button type="button" class="btn btn-outline-warning">
                                             <span class="oi oi-pencil"></span>
                                         </button></a>
-                                    <a title="Eliminar" href="usuario.eliminar.php?id=<?= $Usuario->getId(); ?>">
+                                    <a title="Eliminar" href="usuario.eliminar.php?id=<?= intval($Usuario->getId()); ?>">
                                         <button type="button" class="btn btn-outline-danger">
                                             <span class="oi oi-trash"></span>
                                         </button></a>

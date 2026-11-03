@@ -1,9 +1,8 @@
 <?php
-
-session_start();
+require_once __DIR__ . '/Env.Class.php';
 include_once __DIR__ . '/Constantes.Class.php';
 include_once __DIR__ . '/../modelo/BDColeccionGenerica.Class.php';
-header('Content-Type: text/html; charset=UTF-8');    
+
 /**
  * Clase de constantes para el uso del sistema de Roles y Permisos.
  * Deben coincidir con los permisos de la base de datos.
@@ -117,21 +116,27 @@ class RolSesion {
     }
 
     public function setPermisos() {
-
-
-        $this->datos = BDConexion::getInstancia()->query(""
-                . "SELECT p.id, nombre "
-                . "FROM " . Constantes::BD_USERS . ".permiso p "
+        $idRol = intval($this->id);
+        $db = BDConexion::getInstancia();
+        $stmt = $db->prepare("SELECT p.id, p.nombre FROM " . Constantes::BD_USERS . ".permiso p "
                 . "JOIN " . Constantes::BD_USERS . ".rol_permiso rp ON p.id = rp.id_permiso "
-                . "WHERE rp.id_rol = {$this->id} ");
-
-        if (!$this->datos) {
-            throw new Exception(ObjetoDatos::getInstancia()->errno, ObjetoDatos::getInstancia()->error);
+                . "WHERE rp.id_rol = ?");
+        if (!$stmt) {
+            error_log("Error al preparar setPermisos: " . $db->error);
+            return;
         }
-
+        $stmt->bind_param("i", $idRol);
+        $stmt->execute();
+        $this->datos = $stmt->get_result();
+        if (!$this->datos) {
+            $stmt->close();
+            error_log("Error al obtener permisos para rol ID: " . $idRol);
+            return;
+        }
         for ($x = 0; $x < $this->datos->num_rows; $x++) {
             $this->permisos[] = $this->datos->fetch_object("PermisoSesion");
         }
+        $stmt->close();
     }
 
 }
@@ -206,22 +211,21 @@ class UsuarioSesion {
     }
 
     public function buscarUsuarioBd() {
-
-        /* Buscar usuario en la BD (traemos también el nombre para mostrarlo correctamente) */
-        $this->datos = BDConexion::getInstancia()->query(""
-                . "SELECT id, nombre "
-                . "FROM " . Constantes::BD_USERS . ".usuario "
-                . "WHERE email = '{$this->email}' ");
-
-        if (!$this->datos) {
-            throw new Exception(BDConexion::getInstancia()->error, BDConexion::getInstancia()->errno);
+        $db = BDConexion::getInstancia();
+        $stmt = $db->prepare("SELECT id, nombre FROM " . Constantes::BD_USERS . ".usuario WHERE email = ? LIMIT 1");
+        if (!$stmt) {
+            error_log("Error al preparar buscarUsuarioBd: " . $db->error);
+            return null;
         }
-
-        $row = $this->datos->fetch_assoc();
+        $stmt->bind_param("s", $this->email);
+        $stmt->execute();
+        $this->datos = $stmt->get_result();
+        $row = $this->datos ? $this->datos->fetch_assoc() : null;
+        $stmt->close();
         if ($row) {
             // Sobreescribir el nombre con el registrado en la BD, no el que viene de Google
             $this->nombre = $row['nombre'];
-            return $row['id'];
+            return (int) $row['id'];
         }
         return null;
     }
@@ -235,46 +239,61 @@ class UsuarioSesion {
      * 
      */
     function registrarUsuario() {
+        $db = BDConexion::getInstancia();
+        $db->autocommit(false);
+        $db->begin_transaction();
 
-        BDConexion::getInstancia()->autocommit(false);
-        BDConexion::getInstancia()->begin_transaction();
-
-        $this->datos = BDConexion::getInstancia()->query(""
-                . "INSERT INTO " . Constantes::BD_USERS . ".usuario "
-                . "VALUES (NULL, '{$this->nombre}', '{$this->email}')");
-
-        if (!$this->datos) {
-            BDConexion::getInstancia()->rollback();
-            throw new Exception(BDConexion::getInstancia()->error, BDConexion::getInstancia()->errno);
+        $stmtIns = $db->prepare("INSERT INTO " . Constantes::BD_USERS . ".usuario (id, nombre, email) VALUES (NULL, ?, ?)");
+        if (!$stmtIns) {
+            $db->rollback();
+            throw new Exception("Error al preparar registrarUsuario: " . $db->error);
         }
-        $this->id = (Int) BDConexion::getInstancia()->insert_id;
-
-        $this->datos = BDConexion::getInstancia()->query(""
-                . "INSERT INTO " . Constantes::BD_USERS . ".usuario_rol "
-                . "SELECT {$this->id}, id "
-                . "FROM " . Constantes::BD_USERS . ".rol "
-                . "WHERE nombre = '" . PermisosSistema::ROL_ESTANDAR . "'");
-
-        if (!$this->datos) {
-            BDConexion::getInstancia()->rollback();
-            throw new Exception(BDConexion::getInstancia()->error, BDConexion::getInstancia()->errno);
+        $stmtIns->bind_param("ss", $this->nombre, $this->email);
+        if (!$stmtIns->execute()) {
+            $stmtIns->close();
+            $db->rollback();
+            throw new Exception("Error al insertar usuario en registrarUsuario: " . $db->error);
         }
+        $this->id = (int) $db->insert_id;
+        $stmtIns->close();
 
-        BDConexion::getInstancia()->commit();
-        BDConexion::getInstancia()->autocommit(true);
+        $rolEstandar = PermisosSistema::ROL_ESTANDAR;
+        $stmtRol = $db->prepare("INSERT INTO " . Constantes::BD_USERS . ".usuario_rol (id_usuario, id_rol) "
+                . "SELECT ?, id FROM " . Constantes::BD_USERS . ".rol WHERE nombre = ?");
+        if (!$stmtRol) {
+            $db->rollback();
+            throw new Exception("Error al preparar usuario_rol en registrarUsuario: " . $db->error);
+        }
+        $stmtRol->bind_param("is", $this->id, $rolEstandar);
+        if (!$stmtRol->execute()) {
+            $stmtRol->close();
+            $db->rollback();
+            throw new Exception("Error al asignar rol en registrarUsuario: " . $db->error);
+        }
+        $stmtRol->close();
+
+        $db->commit();
+        $db->autocommit(true);
     }
 
     public function setRoles() {
-
-        $this->datos = BDConexion::getInstancia()->query(""
-                . "SELECT r.id, r.nombre "
+        $idUsuario = intval($this->id);
+        $db = BDConexion::getInstancia();
+        $stmt = $db->prepare("SELECT r.id, r.nombre "
                 . "FROM " . Constantes::BD_USERS . ".usuario u "
                 . "JOIN " . Constantes::BD_USERS . ".usuario_rol ur ON (u.id = ur.id_usuario) "
                 . "JOIN " . Constantes::BD_USERS . ".rol r ON (r.id = ur.id_rol) "
-                . "WHERE u.id = {$this->id} ");
-
-        for ($x = 0; $x < $this->datos->num_rows; $x++) {
-            $this->roles[] = $this->datos->fetch_object("RolSesion");
+                . "WHERE u.id = ?");
+        if ($stmt) {
+            $stmt->bind_param("i", $idUsuario);
+            $stmt->execute();
+            $this->datos = $stmt->get_result();
+            if ($this->datos) {
+                for ($x = 0; $x < $this->datos->num_rows; $x++) {
+                    $this->roles[] = $this->datos->fetch_object("RolSesion");
+                }
+            }
+            $stmt->close();
         }
     }
 
@@ -297,9 +316,17 @@ class ControlAcceso {
      * Desactiva el autoregistro de usuarios.
      * 
      * @author Eder dos Santos <esantos@uarg.unpa.edu.ar>
-     * @todo [14/08/2017] Terminar el tratamiento de error caso el Usuario no exista.
+    /**
+     * Determina si el entorno actual corresponde a desarrollo local o testing.
+     * Aplica política 'Fail-Closed': si no está definido o hay dudas, asume 'production'.
      * 
+     * @return bool
      */
+    public static function esEntornoPruebas(): bool {
+        Env::cargar();
+        return Env::esLocal();
+    }
+
     function __construct() {
 
         $this->ubicacion = Constantes::SERVER . $_SERVER["PHP_SELF"];
@@ -319,11 +346,23 @@ class ControlAcceso {
          * Crea la sesión del Usuario caso la página de origen de los datos pasados por formulario sea el index.
          */
         if (isset($_SESSION["HTTP_REFERER"]) && $_SESSION["HTTP_REFERER"] == Constantes::HOMEURL && isset($_POST['email'])) {
+            if (!self::esEntornoPruebas()) {
+                // En producción se bloquea de forma tajante el bypass por POST directo
+                error_log("[SEGURIDAD][SEC-002] Intento no autorizado de login de pruebas bloqueado en entorno no local. IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'desconocida'));
+                http_response_code(403);
+                $_SESSION['auth_error'] = true;
+                unset($_SESSION['usuario']);
+                header("Location: " . Constantes::HOMEURL);
+                exit;
+            }
+
+            $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+            $nombre = filter_input(INPUT_POST, 'nombre', FILTER_DEFAULT) ?? '';
+
             try {
-                $this->creaSesion($_POST['email'], $_POST['nombre']);
+                $this->creaSesion($email, $nombre);
             } catch (Exception $e) {
-                echo "<script>alert('{$e->getMessage()}');</script>";
-                die($e->getMessage());
+                error_log("Error en creaSesion: " . $e->getMessage());
             }
             $this->redireccionaIndex();
         }
@@ -418,11 +457,17 @@ class ControlAcceso {
         }
         
         /* la sesion se asigna cuando el usuario existe */
-        if($Usuario->id != NULL){
+        if ($Usuario->id != NULL) {
+            session_regenerate_id(true);
             $_SESSION['usuario'] = $Usuario;
-        }else{
-            //session_unset();
-            $_SESSION['usuario'] = ""; // SI EL USUARIO NO ESTA REGISTRADO EN EL SISTEMA DEVOLVEMOS LA SESION DEL USUARIO CON LA CADENA VACIA
+            $_SESSION['auth_time'] = time();
+            if (!isset($_SESSION['csrf_token'])) {
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            }
+            unset($_SESSION['auth_error']);
+        } else {
+            unset($_SESSION['usuario']);
+            $_SESSION['auth_error'] = true;
         }
         
         //$_SESSION['usuario'] = $Usuario;
@@ -478,5 +523,148 @@ class ControlAcceso {
         
     }
 
+    /**
+     * Configura el reporte de errores y cabeceras de seguridad globales según el entorno (.env).
+     */
+    public static function configurarEntorno(): void {
+        Env::cargar();
+        $debug = Env::get('APP_DEBUG', false);
+        $esDebug = ($debug === true || $debug === 'true' || $debug === '1');
+
+        if ($esDebug) {
+            error_reporting(E_ALL);
+            ini_set('display_errors', '1');
+            ini_set('display_startup_errors', '1');
+        } else {
+            error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
+            ini_set('display_errors', '0');
+            ini_set('display_startup_errors', '0');
+        }
+        ini_set('log_errors', '1');
+
+        // Cabeceras HTTP de seguridad (defensa en profundidad a nivel aplicación)
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=UTF-8');
+            header('X-Content-Type-Options: nosniff');
+            header('X-Frame-Options: SAMEORIGIN');
+            header('Referrer-Policy: strict-origin-when-cross-origin');
+        }
+    }
+
+    /**
+     * Inicia la sesión PHP con parámetros seguros de cookies (HttpOnly, SameSite, Secure condicional).
+     */
+    public static function iniciarSesionSegura(): void {
+        if (session_status() === PHP_SESSION_NONE) {
+            $esHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+                       (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+
+            ini_set('session.use_only_cookies', '1');
+            ini_set('session.cookie_httponly', '1');
+            ini_set('session.cookie_samesite', 'Lax');
+            if ($esHttps) {
+                ini_set('session.cookie_secure', '1');
+            }
+
+            session_set_cookie_params([
+                'lifetime' => 0,
+                'path' => '/',
+                'domain' => '',
+                'secure' => $esHttps,
+                'httponly' => true,
+                'samesite' => 'Lax'
+            ]);
+
+            session_start();
+        }
+    }
+
+    /**
+     * Retorna el token CSRF activo de la sesión o genera uno nuevo si no existe.
+     * @return string Token CSRF criptográficamente seguro de 64 caracteres.
+     */
+    public static function obtenerCsrfToken(): string {
+        self::iniciarSesionSegura();
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        return $_SESSION['csrf_token'];
+    }
+
+    /**
+     * Retorna el campo HTML input oculto para incrustar en formularios POST.
+     * @return string Tag input hidden con el token CSRF.
+     */
+    public static function campoCsrf(): string {
+        $token = self::obtenerCsrfToken();
+        return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($token, ENT_QUOTES, 'UTF-8') . '" />';
+    }
+
+    /**
+     * Valida el token CSRF recibido contra el token guardado en sesión usando comparación en tiempo constante.
+     * @param string|null $token Token a verificar (opcional, si es null se extrae de POST o cabecera HTTP).
+     * @return bool True si el token coincide exactamente, false en caso contrario.
+     */
+    public static function validarCsrfToken(?string $token = null): bool {
+        self::iniciarSesionSegura();
+        $tokenSesion = $_SESSION['csrf_token'] ?? '';
+        if (empty($tokenSesion)) {
+            return false;
+        }
+
+        if ($token === null) {
+            if (!empty($_POST['csrf_token'])) {
+                $token = (string)$_POST['csrf_token'];
+            } elseif (!empty($_SERVER['HTTP_X_CSRF_TOKEN'])) {
+                $token = (string)$_SERVER['HTTP_X_CSRF_TOKEN'];
+            }
+        }
+
+        if (empty($token)) {
+            return false;
+        }
+
+        return hash_equals($tokenSesion, $token);
+    }
+
+    /**
+     * Middleware estricto para procesadores de formulario: rechaza peticiones POST que no presenten token CSRF válido.
+     * @return void
+     */
+    public static function requiereCsrf(): void {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!self::validarCsrfToken()) {
+                http_response_code(403);
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_encode(['error' => 'Error de validación CSRF. Petición no autorizada.']);
+                } else {
+                    header('Content-Type: text/html; charset=utf-8');
+                    echo '<div style="font-family:sans-serif;padding:20px;color:#721c24;background:#f8d7da;border:1px solid #f5c6cb;border-radius:4px;margin:20px;">' .
+                         '<h3>403 Prohibido</h3>' .
+                         '<p>La validación de seguridad Anti-CSRF ha fallado o su sesión ha caducado. Por favor, vuelva a cargar la página e intente nuevamente.</p>' .
+                         '<a href="javascript:history.back()">Volver atrás</a>' .
+                         '</div>';
+                }
+                exit;
+            }
+        }
+    }
+
 }
+ControlAcceso::configurarEntorno();
+ControlAcceso::iniciarSesionSegura();
 $ControlAcceso = new ControlAcceso();
+
+if (!function_exists('e')) {
+    /**
+     * Helper universal de escape contextual para prevención de Cross-Site Scripting (XSS).
+     *
+     * @param mixed $valor Valor a escapar para contexto HTML.
+     * @return string Cadena saneada con codificación de entidades UTF-8.
+     */
+    function e($valor): string {
+        return htmlspecialchars((string)($valor ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+}
+

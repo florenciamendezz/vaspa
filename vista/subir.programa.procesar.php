@@ -4,6 +4,7 @@
  */
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_SUBIR_PROGRAMA_FIRMADO);
+ControlAcceso::requiereCsrf();
 include_once '../modeloSistema/BDconexionSistema.Class.php';
 
 //Obtenemos los datos del archivo a traves del array global _FILES y del Formulario
@@ -22,15 +23,16 @@ $tipo = $_FILES['programa']['type'];
 // Buscamos el tipo de archivo que es realmente (aunque se le haya cambiado la extension) el que se esta por subir al sistema
 $finfo = finfo_open(FILEINFO_MIME_TYPE); // buscaremos mimetype
 $mimetype = finfo_file($finfo, $archivo);
+finfo_close($finfo);
 
 //Obtenemos los datos del formulario
-$descripcion = $_POST['descripcion'];
-//Si la descripcion del formulario esta vacia, le asignamos NULL, caso contrario su valor original.
-//$descripcion = (empty($descripcion) ? 'NULL' : $descripcion);
+$descripcion = $_POST['descripcion'] ?? null;
 
-$anio = $_POST['anio'];
-$codAsignatura = $_POST['asignatura'];
-$codCarrera = $_POST['carrera'];
+$anio = intval($_POST['anio'] ?? 0);
+$codAsignatura = preg_replace('/[^a-zA-Z0-9]/', '', $_POST['asignatura'] ?? '');
+$codCarrera = preg_replace('/[^a-zA-Z0-9]/', '', $_POST['carrera'] ?? '');
+
+$extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
 
 /* ESTRUCTURA DEL NOMBRE DE UN PROGRAMA EN EL SERVIDOR
  *  prg_XXXX_YYY_uarg_pact.pdf
@@ -39,26 +41,19 @@ $codCarrera = $_POST['carrera'];
  */
 
 //nombre del archivo en el servidor
-$nombrePrograma = 'prg_'.$codAsignatura.'_'.$codCarrera.'_uarg_pact.pdf';
+$nombrePrograma = 'prg_' . basename($codAsignatura) . '_' . basename($codCarrera) . '_uarg_pact.pdf';
 
-// Constante que nos indica el tamaño maximo del archivo a subir al sistema
-define('tamanioMaximo', 2097152);
+// Constante que nos indica el tamaño maximo del archivo a subir al sistema (10 MB)
+define('tamanioMaximo', 10485760);
         
-// variable nombre del archivo en el servidor
-// Esta variable nos servira para comprobar si ya se encuentra el programa para ese anio, con lo cual no se deberia resubir
-$rutaDestino = '../programas/'.$anio.'/'.$nombrePrograma;
-//$rutaDestino = $_SERVER['DOCUMENT_ROOT'].'/pruebauargflow/programas/'.$anio.'/'.$name;
+$dirAnio = '../programas/' . $anio;
+if (!file_exists($dirAnio)) {
+    mkdir($dirAnio, 0755, true);
+}
+$rutaDestino = $dirAnio . '/' . $nombrePrograma;
 
 // ruta donde se encuentra el programa y que se almacenara en la BD
-$ruta = 'programas/'.$anio.'/'.$nombrePrograma;
-$ruta = utf8_decode($ruta);
-
-/*
- * Muestra la extension del archivo dando la ruta del mismo o el nombre
-echo '<br>'.pathinfo($rutaDestino, PATHINFO_EXTENSION);
-echo '<br>'.pathinfo($name, PATHINFO_EXTENSION);
-echo '<br>'.$tipo;
-*/
+$ruta = 'programas/' . $anio . '/' . $nombrePrograma;
 
 $subido = false;
 $cargadoBD = false;
@@ -66,24 +61,28 @@ $mensajeExito = '';
 $mensajeError = '';
 
 //Comprobamos si no existe el programa para subirlo, sino se muestra un mensaje de error
-if (!file_exists($rutaDestino)) {
+if ($anio < 2000 || $anio > 2100 || empty($codAsignatura) || empty($codCarrera)) {
+    $mensajeError = 'Parámetros del formulario inválidos o fuera de rango permitido.';
+} elseif (!file_exists($rutaDestino)) {
     //Comprobamos si se subio el programa
     if (is_uploaded_file($archivo)) {
-        //comprobamos que sea un archivo PDF
-        if ($tipo == "application/pdf" && $mimetype == "application/pdf") {
+        //comprobamos que sea un archivo PDF tanto por extensión como por magic bytes
+        if ($extension === "pdf" && $mimetype === "application/pdf") {
             //Comprobamos que no exceda el tamaño permitido por el servidor
             if (tamanioMaximo >= $tamanio){
                 if (move_uploaded_file($archivo, $rutaDestino)) {  //movemos el archivo a su ubicacion   
                     $subido = true;
                     $mensajeExito = 'El programa fue subido correctamente.';
-                    //Guardamos los datos del programa en la BD
-                    $nombrePrograma = utf8_decode($nombrePrograma);
 
-                    //$query = "INSERT INTO programa_pdf VALUES ('{$nombrePrograma}', '{$anio}', '{$descripcion}', '{$ruta}', '{$tamanio}')";
-                    $query = "INSERT INTO programa_pdf VALUES ('{$nombrePrograma}', '{$anio}', ".(empty($descripcion) ? "NULL" : "'$descripcion'").", '{$ruta}', '{$tamanio}')";
-                    $consulta = BDConexionSistema::getInstancia()->query($query);
-                    if ($consulta) {
-                        $cargaBD = true;
+                    // Guardamos los datos del programa en la BD de forma parametrizada
+                    $db = BDConexionSistema::getInstancia();
+                    $stmt = $db->prepare("INSERT INTO programa_pdf (nombre, anio, descripcion, ruta, tamanio) VALUES (?, ?, ?, ?, ?)");
+                    if ($stmt) {
+                        $descParam = empty($descripcion) ? null : $descripcion;
+                        $stmt->bind_param("sissi", $nombrePrograma, $anio, $descParam, $ruta, $tamanio);
+                        $consulta = $stmt->execute();
+                        $cargaBD = $consulta;
+                        $stmt->close();
                     } else {
                         $cargaBD = false;
                     }

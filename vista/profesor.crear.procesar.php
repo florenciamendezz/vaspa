@@ -1,6 +1,7 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PROFESORES);
+ControlAcceso::requiereCsrf();
 include_once '../controlSistema/ManejadorProfesor.php';
 include_once '../lib/Constantes.Class.php';
 

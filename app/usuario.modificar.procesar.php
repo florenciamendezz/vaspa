@@ -1,21 +1,27 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_USUARIOS);
+ControlAcceso::requiereCsrf();
 include_once '../modelo/BDConexion.Class.php';
 include_once '../modelo/Usuario.Class.php';
 $DatosFormulario = $_POST;
-$idUsuario = $DatosFormulario["id"];
+$db = BDConexion::getInstancia();
+$idUsuario = intval($DatosFormulario["id"] ?? 0);
+$nombreInput = trim($DatosFormulario["nombre"] ?? '');
+$emailInput = trim($DatosFormulario["email"] ?? '');
 
 $Usuario = new Usuario($idUsuario);
 
-
 // chequeamos si ya existe tanto el nombre de Usuario como el email en "otros" usuarios del Sistema.
-$sql = "SELECT * FROM usuario WHERE "
-        . "id <> '{$idUsuario}' AND "
-        . "(nombre LIKE '{$DatosFormulario["nombre"]}' "
-        . "OR email LIKE '{$DatosFormulario["email"]}')";
-        
-$resultado = BDConexion::getInstancia()->query($sql);
+$stmtCheck = $db->prepare("SELECT id, nombre, email FROM usuario WHERE id <> ? AND (nombre = ? OR email = ?)");
+if ($stmtCheck) {
+    $stmtCheck->bind_param("iss", $idUsuario, $nombreInput, $emailInput);
+    $stmtCheck->execute();
+    $resultado = $stmtCheck->get_result();
+    $stmtCheck->close();
+} else {
+    $resultado = false;
+}
 
 $mensaje = '';
 
@@ -29,13 +35,15 @@ if (!$resultado){
 
         $nombre = $registro["nombre"];
         $email = $registro["email"];
+        $nombreEsc = e($nombre);
+        $emailEsc = e($email);
         
-        if ($DatosFormulario["nombre"] == $nombre && $DatosFormulario["email"] == $email){
-            $mensaje = "El nombre de usuario: <b>$nombre</b> y el email: <b>$email</b> ya existen, por favor ingrese otro nombre de usuario y otro email.";
-        } elseif ($DatosFormulario["nombre"] == $nombre) {
-            $mensaje = "El nombre de usuario: <b>$nombre</b> ya existe, por favor ingrese otro nombre de usuario.";
-        } elseif ($DatosFormulario["email"] == $email) {
-            $mensaje = "El email: <b>$email</b> ya existe, por favor ingrese otro email";
+        if ($nombreInput == $nombre && $emailInput == $email){
+            $mensaje = "El nombre de usuario: <b>{$nombreEsc}</b> y el email: <b>{$emailEsc}</b> ya existen, por favor ingrese otro nombre de usuario y otro email.";
+        } elseif ($nombreInput == $nombre) {
+            $mensaje = "El nombre de usuario: <b>{$nombreEsc}</b> ya existe, por favor ingrese otro nombre de usuario.";
+        } elseif ($emailInput == $email) {
+            $mensaje = "El email: <b>{$emailEsc}</b> ya existe, por favor ingrese otro email";
         }
         
         $consulta = FALSE;
@@ -43,80 +51,119 @@ if (!$resultado){
     } elseif ($resultado->num_rows == 2) {
         // si hay dos registros esto quiere decir que se repiten tanto el nombre como el correo.
         $consulta = FALSE;
-        $mensaje = "El nombre de usuario: <b>{$DatosFormulario["nombre"]}</b> y el email: <b>{$DatosFormulario["email"]}</b> ya existen, por favor ingrese otro nombre de usuario y otro email.";
+        $nombreInputEsc = e($nombreInput);
+        $emailInputEsc = e($emailInput);
+        $mensaje = "El nombre de usuario: <b>{$nombreInputEsc}</b> y el email: <b>{$emailInputEsc}</b> ya existen, por favor ingrese otro nombre de usuario y otro email.";
     } elseif ($resultado->num_rows == 0) { // no se encontraron coincidencias en la BD, por lo tanto se debe proceder con la insercion
         
         // obtenemos el rol del Usuario a modificar
-        $rolUsuario = $Usuario->getRoles()[0]->getNombre();
+        $roles = $Usuario->getRoles();
+        $rolUsuario = (!empty($roles) && isset($roles[0])) ? $roles[0]->getNombre() : '';
         
         // comprobamos si el Rol es de Profesor (No se modifica el Rol, pero si hay que modificar el mail de la tabla profesor).
         if ($rolUsuario == "Profesor"){
             // es profesor --> hay que actualizar el email en la tabla profesor
-            BDConexion::getInstancia()->autocommit(false);
-            BDConexion::getInstancia()->begin_transaction();
+            $db->autocommit(false);
+            $db->begin_transaction();
 
-            $query = "UPDATE usuario "
-            . "SET nombre = '{$DatosFormulario["nombre"]}', email = '{$DatosFormulario["email"]}' "
-            . "WHERE id = {$idUsuario}";
-            $consulta = BDConexion::getInstancia()->query($query);
-            if (!$consulta) {
-                BDConexion::getInstancia()->rollback();
-                //arrojar una excepcion
-                die(BDConexion::getInstancia()->errno);
+            $stmtUsr = $db->prepare("UPDATE usuario SET nombre = ?, email = ? WHERE id = ?");
+            if (!$stmtUsr) {
+                $db->rollback();
+                $consulta = false;
+                $mensaje = "Error al preparar la actualización de usuario.";
+            } else {
+                $stmtUsr->bind_param("ssi", $nombreInput, $emailInput, $idUsuario);
+                if (!$stmtUsr->execute()) {
+                    $stmtUsr->close();
+                    $db->rollback();
+                    $consulta = false;
+                    $mensaje = "Error al actualizar los datos del usuario.";
+                } else {
+                    $stmtUsr->close();
+
+                    $emailAnterior = $Usuario->getEmail();
+                    $stmtProf = $db->prepare("UPDATE " . Constantes::BD_SCHEMA . ".profesor SET email = ? WHERE email = ?");
+                    if (!$stmtProf) {
+                        $db->rollback();
+                        $consulta = false;
+                        $mensaje = "Error al preparar la actualización del profesor.";
+                    } else {
+                        $stmtProf->bind_param("ss", $emailInput, $emailAnterior);
+                        if (!$stmtProf->execute()) {
+                            $stmtProf->close();
+                            $db->rollback();
+                            $consulta = false;
+                            $mensaje = "Error al actualizar el correo del profesor.";
+                        } else {
+                            $stmtProf->close();
+                            $db->commit();
+                            $db->autocommit(true);
+                            $consulta = true;
+                        }
+                    }
+                }
             }
-            
-            $query = "UPDATE ".Constantes::BD_SCHEMA.".profesor "
-                    . "SET email = '{$DatosFormulario["email"]}' "
-                    . "WHERE email = '{$Usuario->getEmail()}'";
-            $consulta = BDConexion::getInstancia()->query($query);
-            //var_dump($query);
-            if (!$consulta) {
-                BDConexion::getInstancia()->rollback();
-                //arrojar una excepcion
-                die(BDConexion::getInstancia()->errno);
-            }
-                        
-            BDConexion::getInstancia()->commit();
-            BDConexion::getInstancia()->autocommit(true);
             
         } else {
             // no es profesor, procedemos a actualizar los campos
-            
-            BDConexion::getInstancia()->autocommit(false);
-            BDConexion::getInstancia()->begin_transaction();
+            $db->autocommit(false);
+            $db->begin_transaction();
 
-            $query = "UPDATE usuario "
-            . "SET nombre = '{$DatosFormulario["nombre"]}', email = '{$DatosFormulario["email"]}' "
-            . "WHERE id = {$idUsuario}";
-            $consulta = BDConexion::getInstancia()->query($query);
-            if (!$consulta) {
-                BDConexion::getInstancia()->rollback();
-                //arrojar una excepcion
-                die(BDConexion::getInstancia()->errno);
-            }
+            $stmtUsr = $db->prepare("UPDATE usuario SET nombre = ?, email = ? WHERE id = ?");
+            if (!$stmtUsr) {
+                $db->rollback();
+                $consulta = false;
+                $mensaje = "Error al preparar la actualización de usuario.";
+            } else {
+                $stmtUsr->bind_param("ssi", $nombreInput, $emailInput, $idUsuario);
+                if (!$stmtUsr->execute()) {
+                    $stmtUsr->close();
+                    $db->rollback();
+                    $consulta = false;
+                    $mensaje = "Error al actualizar los datos del usuario.";
+                } else {
+                    $stmtUsr->close();
 
-            $query = "DELETE FROM usuario_rol "
-                    . "WHERE id_usuario = {$idUsuario}";
-            $consulta = BDConexion::getInstancia()->query($query);
-            if (!$consulta) {
-                BDConexion::getInstancia()->rollback();
-                //arrojar una excepcion
-                die(BDConexion::getInstancia()->errno);
+                    $stmtDelRol = $db->prepare("DELETE FROM usuario_rol WHERE id_usuario = ?");
+                    if (!$stmtDelRol) {
+                        $db->rollback();
+                        $consulta = false;
+                        $mensaje = "Error al preparar la limpieza de roles.";
+                    } else {
+                        $stmtDelRol->bind_param("i", $idUsuario);
+                        if (!$stmtDelRol->execute()) {
+                            $stmtDelRol->close();
+                            $db->rollback();
+                            $consulta = false;
+                            $mensaje = "Error al eliminar roles anteriores.";
+                        } else {
+                            $stmtDelRol->close();
+
+                            $idRol = intval($DatosFormulario["rol"] ?? 0);
+                            $stmtInsRol = $db->prepare("INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)");
+                            if (!$stmtInsRol) {
+                                $db->rollback();
+                                $consulta = false;
+                                $mensaje = "Error al preparar la asignación de rol.";
+                            } else {
+                                $stmtInsRol->bind_param("ii", $idUsuario, $idRol);
+                                if (!$stmtInsRol->execute()) {
+                                    $stmtInsRol->close();
+                                    $db->rollback();
+                                    $consulta = false;
+                                    $mensaje = "Error al asignar el rol al usuario.";
+                                } else {
+                                    $stmtInsRol->close();
+                                    $db->commit();
+                                    $db->autocommit(true);
+                                    $consulta = true;
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            
-            $query = "INSERT INTO usuario_rol "
-                     . "VALUES ({$idUsuario}, {$DatosFormulario["rol"]})";
-            $consulta = BDConexion::getInstancia()->query($query);
-            if (!$consulta) {
-                BDConexion::getInstancia()->rollback();
-                //arrojar una excepcion
-                die(BDConexion::getInstancia()->errno);
-            }
-            
-            BDConexion::getInstancia()->commit();
-            BDConexion::getInstancia()->autocommit(true);
         }
-        
         
     }
 }

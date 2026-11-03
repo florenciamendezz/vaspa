@@ -1,8 +1,7 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 include_once '../../ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
+ControlAcceso::requierePermiso(PermisosSistema::PERMISO_GENERAR_INFORME_GERENCIAL);
 include_once '../../../modeloSistema/BDConexionSistema.Class.php';
 include_once '../../../modeloSistema/Carrera.Class.php';
 include_once '../../../modeloSistema/Asignatura.Class.php';

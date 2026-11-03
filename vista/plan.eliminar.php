@@ -21,6 +21,7 @@ $idCarrera = "?id=".$Plan->getIdCarrera();
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="plan.eliminar.procesar.php" method="post">
+                <?= ControlAcceso::campoCsrf(); ?>
                 <div class="card">
                     <div class="card-header">
                         <h3>Eliminar Revisi&oacute;n de Plan</h3>

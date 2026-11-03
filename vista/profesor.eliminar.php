@@ -25,6 +25,7 @@ header('Content-Type: text/html; charset=UTF-8');
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="profesor.eliminar.procesar.php" method="post">
+                <?= ControlAcceso::campoCsrf(); ?>
                 <div class="card card-premium">
                     <div class="card-header card-header-premium">
                         <h3>Eliminar Profesor</h3>

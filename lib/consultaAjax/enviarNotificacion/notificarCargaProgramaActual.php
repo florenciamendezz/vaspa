@@ -1,4 +1,10 @@
 <?php
+include_once __DIR__ . '/../../ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
+if (!ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_ENVIAR_NOTIFICACION) && !ControlAcceso::verificaPermiso(PermisosSistema::PERMISO_VER_VIGENCIA_PROGRAMAS)) {
+    http_response_code(403);
+    die('Acceso denegado: No posee permisos para enviar notificaciones.');
+}
 
 include_once __DIR__.'/../../notificacionesMail/notificaciones.php';
 //include_once __DIR__.'/notificacionesMail/notificaciones.php';

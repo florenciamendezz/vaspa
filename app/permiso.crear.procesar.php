@@ -1,11 +1,16 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_PERMISOS);
+ControlAcceso::requiereCsrf();
 include_once '../modelo/BDConexion.Class.php';
-$DatosFormulario = $_POST;
-$query = "INSERT INTO permiso "
-        . "VALUES (null,'{$DatosFormulario["nombre"]}')";
-$consulta = BDConexion::getInstancia()->query($query);
+$nombre = trim($_POST['nombre'] ?? '');
+$stmt = BDConexion::getInstancia()->prepare("INSERT INTO permiso (nombre) VALUES (?)");
+$consulta = false;
+if ($stmt && $nombre !== '') {
+    $stmt->bind_param("s", $nombre);
+    $consulta = $stmt->execute();
+    $stmt->close();
+}
 ?>
 <html>
     <head>

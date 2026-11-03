@@ -1,4 +1,6 @@
 <?php
+include_once '../../../lib/ControlAcceso.Class.php';
+ControlAcceso::verificaLogin();
 //  EN ESTE SCRIPT SE MUESTRA UNA TABLA EN LA CUAL SE PRESENTAN LAS ASIGNATURAS CORRELATIVAS DE LA ASIGNATURA SELECCIONADA
 
 include_once '../../../modeloSistema/BDConexionSistema.Class.php';

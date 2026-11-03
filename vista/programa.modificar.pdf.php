@@ -60,6 +60,7 @@ $conexion->query($sqlMarkRead);
                     </div>
                 
                     <form action="../controlSistema/programa.modificar.procesar.pdf.php" method="post" enctype="multipart/form-data">
+                        <?= ControlAcceso::campoCsrf(); ?>
                         <input type="hidden" name="idAsignatura" value="<?= $Asignatura->getId(); ?>">
                         <input type="hidden" name="anio" value="<?= $ProgramaPDF->getAnio(); ?>">
                         

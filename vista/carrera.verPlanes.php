@@ -46,11 +46,11 @@ $planes = $ManejadorPlan->getPlanesSegunCarrera($codigoCarrera);
             <p></p>
             <div class="card card-premium">
                 <div class="card-header card-header-premium">
-                    <h3>Planes de Estudio de <span style="color: #60a5fa; font-weight: 600;"><?= $carrera->getId();?> - <?= $carrera->getNombre();?></span></h3>
+                    <h3>Planes de Estudio de <span style="color: #60a5fa; font-weight: 600;"><?= e($carrera->getId());?> - <?= e($carrera->getNombre());?></span></h3>
                 </div>
                 <div class="card-body">
                     <p>
-                        <a href="plan.crear.php?id=<?= $carrera->getId(); ?>">
+                        <a href="plan.crear.php?id=<?= urlencode((string)$carrera->getId()); ?>">
                             <button type="button" class="btn btn-success">
                                 <span class="oi oi-plus"></span> Nuevo Plan
                             </button>
@@ -83,21 +83,21 @@ $planes = $ManejadorPlan->getPlanesSegunCarrera($codigoCarrera);
                                     foreach ($planes as $plan) {
                                 ?>
                                         <tr>
-                                            <td><?= $plan->getId(); ?></td>
-                                            <td><?= $plan->getAnio_inicio(); ?></td>
-                                            <td><?= $plan->getAnio_fin(); ?></td>
+                                            <td><?= e($plan->getId()); ?></td>
+                                            <td><?= e($plan->getAnio_inicio()); ?></td>
+                                            <td><?= e($plan->getAnio_fin()); ?></td>
                                             <td>
-                                                <a title="Ver Asignaturas" href="plan.asignaturas.php?id=<?= $plan->getId(); ?>&idCarrera=<?= $codigoCarrera ?>">
+                                                <a title="Ver Asignaturas" href="plan.asignaturas.php?id=<?= urlencode((string)$plan->getId()); ?>&idCarrera=<?= urlencode((string)$codigoCarrera); ?>">
                                                     <button type="button" class="btn btn-outline-info">
                                                         <span class="oi oi-list"></span>
                                                     </button>
                                                 </a>
-                                                <a title="Modificar" href="plan.modificar.php?id=<?= $plan->getId(); ?>">
+                                                <a title="Modificar" href="plan.modificar.php?id=<?= urlencode((string)$plan->getId()); ?>">
                                                     <button type="button" class="btn btn-outline-warning">
                                                         <span class="oi oi-pencil"></span>
                                                     </button>
                                                 </a>
-                                                <a title="Eliminar" href="plan.eliminar.php?id=<?= $plan->getId(); ?>">
+                                                <a title="Eliminar" href="plan.eliminar.php?id=<?= urlencode((string)$plan->getId()); ?>">
                                                     <button type="button" class="btn btn-outline-danger">
                                                         <span class="oi oi-trash"></span>
                                                     </button>

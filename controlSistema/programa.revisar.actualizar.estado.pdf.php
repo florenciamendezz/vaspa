@@ -6,24 +6,83 @@ require_once '../modeloSistema/Asignatura.Class.php';
 
 // Validar permisos
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_REVISAR_PROGRAMA);
+ControlAcceso::requiereCsrf();
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST"){
     header("location: ../vista/revisar.programas.php");
     exit;
 }
 
-$idProgramaPDF = $_POST["idPrograma"];
+$idProgramaPDF = intval($_POST["idPrograma"] ?? 0);
 $programaPDF = new ProgramaPDFDetalle($idProgramaPDF);
 
 if (!$programaPDF->getId()) {
     die("Error: Programa PDF no encontrado.");
 }
 
-$asignatura = new Asignatura($programaPDF->getIdAsignatura());
+$idAsignatura = $programaPDF->getIdAsignatura();
+$asignatura = new Asignatura($idAsignatura);
 $datosAsig = "<b>{$asignatura->getNombre()} - {$asignatura->getId()}</b>";
 
 $Usuario = $_SESSION['usuario'];
 $rol = $Usuario->roles[0]->nombre;
+$email = strtolower(trim($Usuario->email ?? ''));
+
+// Validación contextual de Jurisdicción (Anti-IDOR - SEC-011)
+if ($rol === 'Director de Departamento') {
+    $idDeptoUsuario = null;
+    if (defined('MAIL_DEPTO_CNE') && $email === strtolower(MAIL_DEPTO_CNE)) {
+        $idDeptoUsuario = 1;
+    } elseif (defined('MAIL_DEPTO_CS') && $email === strtolower(MAIL_DEPTO_CS)) {
+        $idDeptoUsuario = 2;
+    } else {
+        $db = BDConexionSistema::getInstancia();
+        $stmt = $db->prepare("SELECT idDepartamento FROM profesor WHERE email = ? LIMIT 1");
+        if ($stmt) {
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            if ($res && $row = $res->fetch_assoc()) {
+                $idDeptoUsuario = intval($row['idDepartamento']);
+            }
+            $stmt->close();
+        }
+    }
+
+    $idDeptoAsignatura = intval($asignatura->getIdDepartamento());
+    if ($idDeptoUsuario === null || $idDeptoUsuario !== $idDeptoAsignatura) {
+        error_log("[SEGURIDAD][SEC-011] IDOR bloqueado: Director Depto {$email} (Depto {$idDeptoUsuario}) intentó operar sobre asignatura {$idAsignatura} (Depto {$idDeptoAsignatura}).");
+        http_response_code(403);
+        die("Acceso denegado: No tiene jurisdicción sobre asignaturas de este departamento.");
+    }
+} elseif ($rol === 'Director de Escuela' || $rol === 'Secretario de Escuela') {
+    if ($asignatura->getEsInstitucional() == 1) {
+        http_response_code(403);
+        die("Acceso denegado: Las asignaturas institucionales no corresponden al ámbito de Escuela.");
+    }
+    if (isset($_SESSION['usuario']->idEscuela) && intval($_SESSION['usuario']->idEscuela) !== intval($asignatura->getIdEscuela())) {
+        http_response_code(403);
+        die("Acceso denegado: La asignatura no pertenece a su Escuela asignada.");
+    }
+} elseif ($rol === 'Profesor') {
+    $db = BDConexionSistema::getInstancia();
+    $stmtProf = $db->prepare("SELECT p.id FROM profesor p 
+                              LEFT JOIN asignatura a ON a.idProfesor = p.id AND a.id = ?
+                              LEFT JOIN profesor_asignatura pa ON pa.idProfesor = p.id AND pa.idAsignatura = ?
+                              LEFT JOIN asignatura_responsable ar ON ar.id_profesor = p.id AND ar.id_asignatura = ?
+                              WHERE p.email = ? AND (a.id IS NOT NULL OR pa.idAsignatura IS NOT NULL OR ar.id_asignatura IS NOT NULL) LIMIT 1");
+    if ($stmtProf) {
+        $stmtProf->bind_param("ssss", $idAsignatura, $idAsignatura, $idAsignatura, $email);
+        $stmtProf->execute();
+        $resProf = $stmtProf->get_result();
+        $esResponsable = ($resProf && $resProf->num_rows > 0);
+        $stmtProf->close();
+        if (!$esResponsable) {
+            http_response_code(403);
+            die("Acceso denegado: Usted no es profesor responsable de esta asignatura.");
+        }
+    }
+}
 
 $mailLib = '../lib/notificacionesMail/notificacionCircuitoVaspa.php';
 

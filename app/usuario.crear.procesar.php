@@ -1,6 +1,7 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::requierePermiso(PermisosSistema::PERMISO_USUARIOS);
+ControlAcceso::requiereCsrf();
 include_once '../modelo/BDConexion.Class.php';
 include_once '../modelo/Rol.Class.php';
 $DatosFormulario = $_POST;
@@ -18,11 +19,19 @@ $DatosFormulario = $_POST;
 //}
 
 // chequeamos si ya existe tanto el nombre de Usuario como el email.
-$sql = "SELECT * FROM usuario WHERE "
-        . "nombre LIKE '{$DatosFormulario["nombre"]}' "
-        . "OR email LIKE '{$DatosFormulario["mail"]}'";
-        
-$resultado = BDConexion::getInstancia()->query($sql);
+$db = BDConexion::getInstancia();
+$nombreInput = trim($DatosFormulario["nombre"] ?? '');
+$emailInput = trim($DatosFormulario["mail"] ?? '');
+
+$stmtCheck = $db->prepare("SELECT * FROM usuario WHERE nombre = ? OR email = ?");
+if ($stmtCheck) {
+    $stmtCheck->bind_param("ss", $nombreInput, $emailInput);
+    $stmtCheck->execute();
+    $resultado = $stmtCheck->get_result();
+    $stmtCheck->close();
+} else {
+    $resultado = false;
+}
 
 $mensaje = '';
 
@@ -36,13 +45,15 @@ if (!$resultado){
 
         $nombre = $registro["nombre"];
         $email = $registro["email"];
+        $nombreEsc = e($nombre);
+        $emailEsc = e($email);
         
-        if ($DatosFormulario["nombre"] == $nombre && $DatosFormulario["mail"] == $email){
-            $mensaje = "El nombre de usuario: <b>$nombre</b> y el email: <b>$email</b> ya existen, por favor ingrese otro nombre de usuario y otro email.";
-        } elseif ($DatosFormulario["nombre"] == $nombre) {
-            $mensaje = "El nombre de usuario: <b>$nombre</b> ya existe, por favor ingrese otro nombre de usuario.";
-        } elseif ($DatosFormulario["mail"] == $email) {
-            $mensaje = "El email: <b>$email</b> ya existe, por favor ingrese otro email";
+        if ($nombreInput == $nombre && $emailInput == $email){
+            $mensaje = "El nombre de usuario: <b>{$nombreEsc}</b> y el email: <b>{$emailEsc}</b> ya existen, por favor ingrese otro nombre de usuario y otro email.";
+        } elseif ($nombreInput == $nombre) {
+            $mensaje = "El nombre de usuario: <b>{$nombreEsc}</b> ya existe, por favor ingrese otro nombre de usuario.";
+        } elseif ($emailInput == $email) {
+            $mensaje = "El email: <b>{$emailEsc}</b> ya existe, por favor ingrese otro email";
         }
         
         $consulta = FALSE;
@@ -50,49 +61,64 @@ if (!$resultado){
     } elseif ($resultado->num_rows == 2) {
         // si hay dos registros esto quiere decir que se repiten tanto el nombre como el correo.
         $consulta = FALSE;
-        $mensaje = "El nombre de usuario: <b>{$DatosFormulario["nombre"]}</b> y el email: <b>{$DatosFormulario["mail"]}</b> ya existen, por favor ingrese otro nombre de usuario y otro email.";
+        $nombreInputEsc = e($nombreInput);
+        $emailInputEsc = e($emailInput);
+        $mensaje = "El nombre de usuario: <b>{$nombreInputEsc}</b> y el email: <b>{$emailInputEsc}</b> ya existen, por favor ingrese otro nombre de usuario y otro email.";
     } elseif ($resultado->num_rows == 0) { // no se encontraron coincidencias en la BD, por lo tanto se debe proceder con la insercion
 
         // Comprobamos si el Rol seleccionado es de Profesor, de serlo redireccionamos
-        $idRol = $DatosFormulario["rol"]; //obtenemos el id del rol
+        $idRol = intval($DatosFormulario["rol"] ?? 0); //obtenemos el id del rol
         $rol = new Rol($idRol); // creamos objeto rol
 
         if ($rol->getNombre() == "Profesor") {
-            $_SESSION["usuarioNombre"] = $DatosFormulario["nombre"];
-            $_SESSION["usuarioEmail"] = $DatosFormulario["mail"];
-            $_SESSION["usuarioRol"] = $DatosFormulario["rol"];
+            $_SESSION["usuarioNombre"] = $nombreInput;
+            $_SESSION["usuarioEmail"] = $emailInput;
+            $_SESSION["usuarioRol"] = $idRol;
             header("Location: ../vista/profesor.crear.php");
             exit();
         }
 
         // iniciamos transaccion para insertar el usuario y su rol en la BD
-        BDConexion::getInstancia()->autocommit(false);
-        BDConexion::getInstancia()->begin_transaction();
+        $db->autocommit(false);
+        $db->begin_transaction();
 
-        $query = "INSERT INTO usuario "
-                . "VALUES (null,'{$DatosFormulario["nombre"]}','{$DatosFormulario["mail"]}')";
-        $consulta = BDConexion::getInstancia()->query($query);
-        if (!$consulta) {
-            BDConexion::getInstancia()->rollback();
-            //arrojar una excepcion
-            die(BDConexion::getInstancia()->errno);
-        }
-        $idUsuario = BDConexion::getInstancia()->insert_id;
-//foreach ($DatosFormulario["rol"] as $idRol) {
-        //$query = "INSERT INTO usuario_rol "
-        //        . "VALUES ({$idUsuario}, {$idRol})";
-        $query = "INSERT INTO usuario_rol "
-                . "VALUES ({$idUsuario}, {$DatosFormulario["rol"]})";
-        $consulta = BDConexion::getInstancia()->query($query);
-        if (!$consulta) {
-            BDConexion::getInstancia()->rollback();
-            //arrojar una excepcion
-            die(BDConexion::getInstancia()->errno);
-        }
-//}   
+        $stmtIns = $db->prepare("INSERT INTO usuario (id, nombre, email) VALUES (NULL, ?, ?)");
+        if (!$stmtIns) {
+            $db->rollback();
+            $consulta = false;
+            $mensaje = "Error al preparar la creación del usuario.";
+        } else {
+            $stmtIns->bind_param("ss", $nombreInput, $emailInput);
+            if (!$stmtIns->execute()) {
+                $stmtIns->close();
+                $db->rollback();
+                $consulta = false;
+                $mensaje = "Error al insertar el usuario.";
+            } else {
+                $idUsuario = (int) $db->insert_id;
+                $stmtIns->close();
 
-        BDConexion::getInstancia()->commit();
-        BDConexion::getInstancia()->autocommit(true);
+                $stmtRol = $db->prepare("INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)");
+                if (!$stmtRol) {
+                    $db->rollback();
+                    $consulta = false;
+                    $mensaje = "Error al preparar la asignación de rol.";
+                } else {
+                    $stmtRol->bind_param("ii", $idUsuario, $idRol);
+                    if (!$stmtRol->execute()) {
+                        $stmtRol->close();
+                        $db->rollback();
+                        $consulta = false;
+                        $mensaje = "Error al asignar el rol al usuario.";
+                    } else {
+                        $stmtRol->close();
+                        $db->commit();
+                        $db->autocommit(true);
+                        $consulta = true;
+                    }
+                }
+            }
+        }
     }
 }
 

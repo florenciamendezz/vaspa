@@ -60,6 +60,7 @@ if (!is_dir($directorio)){
 
         <div class="container">
             <form enctype="multipart/form-data" action="subir.programa.procesar.php" method="post" id="form">
+                <?= ControlAcceso::campoCsrf(); ?>
                 <div class="card">
                     <div class="card-header">
                         <h3>Subir Programa al Sistema</h3>

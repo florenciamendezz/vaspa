@@ -32,6 +32,7 @@ $Profesor = new Profesor($idProfesor, null);
         <?php include_once '../gui/navbar.php'; ?>
         <div class="container">
             <form action="profesor.modificar.procesar.php" method="post"> 
+                <?= ControlAcceso::campoCsrf(); ?> 
                 <div class="card card-premium">
                     <div class="card-header card-header-premium">
                         <h3>Modificar Profesor</h3>
