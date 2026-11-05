@@ -54,8 +54,8 @@
   - Archivos: `lib/ControlAcceso.Class.php`, `gui/navbar.php`, formularios POST en `app/` y `vista/`, y procesadores en `app/`, `vista/` y `controlSistema/`.
   - Acción: Generación de token sincronizado con `random_bytes(32)`, inyección en meta tag y cabecera global jQuery (`X-CSRF-Token`), campo `ControlAcceso::campoCsrf()` en todos los formularios POST, y validación estricta con `ControlAcceso::requiereCsrf()`. *(Implementado y verificado en 35/35 tests E2E)*.
 - [x] **SEC-013 (Dependencias obsoletas en `lib/`)**:
-  - Archivos: `lib/PHPMailer/extras/htmlfilter.php:351`, limpieza de backups huérfanos.
-  - Acción: Corrección de sintaxis de llaves deprecada a corchetes (`$attary[$attname]`) para compatibilidad completa con PHP 8.2+. *(Implementado y verificado con php -l)*.
+  - Archivos: `composer.json`, `composer.lock`, `lib/PHPMailer/PHPMailerAutoload.php`, `modeloSistema/MYPDF.php`, `lib/JQuery/jquery-3.3.1.js`.
+  - Acción: Instalación vía Composer de `phpmailer/phpmailer` (v6.12.0), `tecnickcom/tcpdf` (v6.11.4) y `vlucas/phpdotenv` (v5.8.0), puente retrocompatible en `PHPMailerAutoload.php` y `MYPDF.php`, y actualización de jQuery a v3.7.1. *(Implementado y verificado con `composer audit` = 0 vulnerabilidades)*.
 
 ### Prioridad 3 — Media (Fase 3)
 - [x] **SEC-007 (Manejo de sesiones y flags de cookies `HttpOnly`, `SameSite`, regeneración de ID)**:

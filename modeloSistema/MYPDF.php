@@ -1,7 +1,11 @@
 <?php
 
 require_once('BDConexionSistema.Class.php');
-include('../lib/tcpdf/tcpdf.php');
+if (file_exists(__DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php')) {
+    require_once(__DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php');
+} else {
+    include('../lib/tcpdf/tcpdf.php');
+}
 include_once 'Programa.Class.php';
 include_once 'Asignatura.Class.php';
 include_once 'Libro.Class.php';

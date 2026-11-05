@@ -4,6 +4,26 @@ Todos los cambios relevantes realizados en este proyecto (remediaciones de segur
 
 ---
 
+## [2026-11-04] — Post-Fase 4: Instalación Efectiva de Dependencias Composer (`vendor/`), Actualización de jQuery 3.7.1 y Limpieza (`SEC-013`)
+
+### Modificado / Seguridad y Dependencias
+- **`composer.json` y `composer.lock` (Modificado / Creado)**:
+  - Añadido `tecnickcom/tcpdf: ^6.7` y ejecutado `composer update`, instalando en `vendor/` las versiones actualizadas `phpmailer/phpmailer` (`v6.12.0`), `tecnickcom/tcpdf` (`v6.11.4`) y `vlucas/phpdotenv` (`v5.8.0`).
+- **`lib/PHPMailer/PHPMailerAutoload.php` (Modificado)**:
+  - Conectado automáticamente a `vendor/autoload.php` registrando alias retrocompatibles (`PHPMailer`, `SMTP`, `phpmailerException`) hacia `\PHPMailer\PHPMailer\*` (v6.12.0), manteniendo fallback local si `vendor/` no existe.
+- **`modeloSistema/MYPDF.php` (Modificado)**:
+  - Actualizado para cargar prioritariamente `vendor/tecnickcom/tcpdf/tcpdf.php` (`v6.11.4`), con fallback a `lib/tcpdf/tcpdf.php`.
+- **`lib/JQuery/jquery-3.3.1.js` (Actualizado)**:
+  - Reemplazado el contenido por **jQuery v3.7.1** oficial conservando el nombre de archivo para compatibilidad con todas las vistas existentes y mitigando `CVE-2019-11358` y `CVE-2020-11022`.
+- **`.agents/teamwork/` (Eliminado)**:
+  - Limpiado el directorio local de logs intermedios de subagentes para liberar espacio en disco.
+
+### Verificación
+- **`composer audit`**: `No security vulnerability advisories found` (0 vulnerabilidades en dependencias instaladas).
+- **`php scripts/lint.php`**: 301/301 archivos PHP validados sin errores de sintaxis.
+
+---
+
 ## [2026-11-03] — Fase 4: Mantenimiento Continuo, DevOps, Docker, Composer y CI/CD
 
 ### Añadido / DevOps y Configuración

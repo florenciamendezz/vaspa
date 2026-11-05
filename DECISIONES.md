@@ -276,3 +276,18 @@ Este documento registra las decisiones arquitectónicas, de seguridad y de calid
   3. Renovar y expandir la suite de pruebas E2E incorporando el módulo `tests/e2e/specs/10-seguridad-endurecimiento.spec.js` con 5 nuevos casos de prueba automatizados (`CP-E2E-36` a `CP-E2E-40`), alcanzando 40 pruebas automatizadas que cubren exhaustivamente cabeceras de seguridad, flags de sesión, bloqueo de scripts CLI, denegación perimetral a bases de datos y protección Anti-CSRF.
 - **Consecuencias:** Se establece una garantía continua de calidad, estabilidad y seguridad respaldada por pruebas automatizadas y trazabilidad completa.
 
+---
+
+## ADR-020: Integración Retrocompatible de PHPMailer 6.12, TCPDF 6.11 y jQuery 3.7.1 (`SEC-013`)
+- **Fecha:** 2026-11-04
+- **Estado:** Implementada
+- **Hallazgo:** `SEC-013`
+- **Contexto:** Tras crear `composer.json`, las vistas y clases de envío de correo y generación de PDF seguían apuntando a las copias antiguas en `lib/PHPMailer` (v5.2), `lib/tcpdf` (v6.2) y `lib/JQuery/jquery-3.3.1.js` (v3.3.1). Cambiar el nombre de archivo de jQuery o reescribir todas las instanciaciones `new PHPMailer` implicaba tocar decenas de vistas innecesariamente.
+- **Decisión:**
+  1. Instalar vía Composer `phpmailer/phpmailer` (`v6.12.0`), `tecnickcom/tcpdf` (`v6.11.4`) y `vlucas/phpdotenv` (`v5.8.0`), versionando `composer.lock`.
+  2. Adaptar `lib/PHPMailer/PHPMailerAutoload.php` para que cargue `vendor/autoload.php` y declare `class_alias` de `\PHPMailer\PHPMailer\PHPMailer` a `PHPMailer`, actualizando transparentemente toda la aplicación a PHPMailer 6.12 sin romper código existente.
+  3. Actualizar `modeloSistema/MYPDF.php` para cargar `vendor/tecnickcom/tcpdf/tcpdf.php` cuando esté disponible.
+  4. Actualizar `lib/JQuery/jquery-3.3.1.js` in-place con el código oficial de **jQuery v3.7.1**, eliminando las vulnerabilidades de Prototype Pollution/XSS sin romper los `<script src>` de las vistas.
+- **Consecuencias:** `composer audit` reporta 0 vulnerabilidades y la aplicación ejecuta las últimas versiones estables de PHPMailer, TCPDF y jQuery con compatibilidad total.
+
+
