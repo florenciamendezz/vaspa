@@ -9,22 +9,79 @@ require_once __DIR__ . '/../../modeloSistema/Profesor.Class.php';
 class notificacionCircuitoVaspa {
 
     /**
+     * Normaliza una cadena o arreglo de destinatarios separando por comas o punto y coma.
+     *
+     * @param string|array $destinatario
+     * @return array
+     */
+    public static function normalizarDestinatarios($destinatario): array {
+        $lista = [];
+        if (is_array($destinatario)) {
+            foreach ($destinatario as $item) {
+                $lista = array_merge($lista, self::normalizarDestinatarios($item));
+            }
+        } elseif (is_string($destinatario)) {
+            foreach (preg_split('/[,;]+/', $destinatario) as $correo) {
+                $correoLimpio = strtolower(trim($correo));
+                if ($correoLimpio !== '' && filter_var($correoLimpio, FILTER_VALIDATE_EMAIL)) {
+                    $lista[] = $correoLimpio;
+                }
+            }
+        }
+        return array_values(array_unique($lista));
+    }
+
+    /**
+     * Obtiene todos los correos registrados para el rol de Vinculación Académica (Secretaría + Vinculación).
+     * Combina los correos asociados al rol 11 en la tabla usuario con la constante MAIL_SA.
+     *
+     * @return string Lista de correos separados por coma.
+     */
+    public static function obtenerDestinatariosVA(): string {
+        $correos = self::normalizarDestinatarios(defined('MAIL_SA') ? MAIL_SA : '');
+        try {
+            $conexion = BDConexionSistema::getInstancia();
+            $sql = "SELECT u.email FROM usuario u 
+                    JOIN usuario_rol ur ON u.id = ur.id_usuario 
+                    WHERE ur.id_rol = 11";
+            $res = $conexion->query($sql);
+            if ($res && $res->num_rows > 0) {
+                while ($row = $res->fetch_assoc()) {
+                    $correos = array_merge($correos, self::normalizarDestinatarios($row['email'] ?? ''));
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Error al obtener destinatarios de Vinculación Académica: " . $e->getMessage());
+        }
+        $correosUnicos = array_values(array_unique($correos));
+        return implode(', ', $correosUnicos);
+    }
+
+    /**
      * Envía un correo electrónico unificado utilizando la plantilla base
      */
-    private static function enviarCorreo($destinatario, $asunto, $saludo, $introduccion, $cuerpo, $idAsignatura, $anio, $botonHTML = "") {
+    private static function enviarCorreo($destinatario, $asunto, $saludo, $introduccion, $cuerpo, $idAsignatura, $anio, $botonHTML = "", $rutaAdjunto = "") {
         // Cargar información de la asignatura para el bloque destacado
         $asignatura = new Asignatura($idAsignatura);
         $nombreAsignatura = $asignatura->getNombre();
+
+        $listaDestinatarios = self::normalizarDestinatarios($destinatario);
+        $destinatariosTexto = !empty($listaDestinatarios) ? implode(', ', $listaDestinatarios) : (string) $destinatario;
 
         // En desarrollo/localhost evitamos el delay de conectarse a un SMTP externo que puede fallar,
         // a menos que se defina la constante FORZAR_ENVIO_MAIL como true en constantesMail.php
         // Además, si detectamos que la petición viene de Playwright, simulamos el envío siempre para no ralentizar los tests.
         $isPlaywright = isset($_SERVER['HTTP_X_PLAYWRIGHT_TEST']) || (isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'Playwright') !== false);
         if ($isPlaywright || (defined('Constantes::SERVER') && strpos(Constantes::SERVER, 'localhost') !== false && (!defined('FORZAR_ENVIO_MAIL') || !FORZAR_ENVIO_MAIL))) {
-            error_log("DESARROLLO: Simulación de correo enviado a {$destinatario} con asunto: '{$asunto}'");
+            $infoAdjunto = (!empty($rutaAdjunto) && file_exists($rutaAdjunto)) ? " [Adjunto: " . basename($rutaAdjunto) . "]" : "";
+            error_log("DESARROLLO: Simulación de correo enviado a {$destinatariosTexto} con asunto: '{$asunto}'{$infoAdjunto}");
             return true;
         }
 
+        if (empty($listaDestinatarios)) {
+            error_log("Advertencia: No se encontraron destinatarios válidos para enviar el asunto '{$asunto}'");
+            return false;
+        }
 
         $mail = new PHPMailer;
         $mail->isSMTP();
@@ -36,7 +93,14 @@ class notificacionCircuitoVaspa {
         $mail->Port = 587;
         $mail->Timeout = 10; // Timeout de conexión de 10 segundos
         $mail->FromName = "Sistema VASPA";
-        $mail->addAddress($destinatario);
+        foreach ($listaDestinatarios as $correoDestino) {
+            $mail->addAddress($correoDestino);
+        }
+
+        // Adjuntar archivo PDF si se indicó y existe en disco
+        if (!empty($rutaAdjunto) && file_exists($rutaAdjunto)) {
+            $mail->addAttachment($rutaAdjunto, basename($rutaAdjunto));
+        }
         
         // Cargar plantilla base
         $templatePath = __DIR__ . '/plantillaMail/mail_circuito_base.html';
@@ -67,7 +131,7 @@ class notificacionCircuitoVaspa {
             // Fallback a la función mail() local de PHP por si falla SMTP de Gmail
             $mail->isMail();
             if (!$mail->send()) {
-                error_log("Error al enviar correo a {$destinatario}: " . $mail->ErrorInfo);
+                error_log("Error al enviar correo a {$destinatariosTexto}: " . $mail->ErrorInfo);
                 return false;
             }
         }
@@ -109,7 +173,7 @@ class notificacionCircuitoVaspa {
         $cuerpo = "El circuito avanzó desde el rol: {$origen}. Por favor, ingrese al sistema para acreditar el contenido o realizar la firma definitiva según corresponda.";
         $botonHTML = '<div class="button-container"><a href="' . Constantes::HOME_SISTEMA . '" class="btn">Ir al Sistema VASPA</a></div>';
         
-        return self::enviarCorreo(MAIL_SA, $asunto, $saludo, $introduccion, $cuerpo, $idAsignatura, $anio, $botonHTML);
+        return self::enviarCorreo(self::obtenerDestinatariosVA(), $asunto, $saludo, $introduccion, $cuerpo, $idAsignatura, $anio, $botonHTML);
     }
 
     /**
@@ -125,8 +189,7 @@ class notificacionCircuitoVaspa {
             
             $emailDepto = "";
             $nombreDepto = "";
-            $deptoCNE = ['6', '7', '8', '11'];
-            if (in_array($idDepto, $deptoCNE)) {
+            if (in_array((string) $idDepto, ['1', '6', '7', '8', '11'], true)) {
                 $emailDepto = MAIL_DEPTO_CNE;
                 $nombreDepto = "Ciencias Naturales y Exactas";
             } else {
@@ -148,7 +211,23 @@ class notificacionCircuitoVaspa {
     }
 
     /**
+     * Obtiene los correos de Educación a Distancia / Rectorado y Biblioteca para el envío en el último paso del circuito.
+     *
+     * @return string Lista de correos separados por coma.
+     */
+    public static function obtenerDestinatariosFinales(): string {
+        $correos = [];
+        $mailEdDistancia = defined('MAIL_EDUCACION_DISTANCIA') && MAIL_EDUCACION_DISTANCIA !== '' ? MAIL_EDUCACION_DISTANCIA : 'rfarias@unpa.edu.ar';
+        $mailBiblioteca = defined('MAIL_BIBLIOTECA') && MAIL_BIBLIOTECA !== '' ? MAIL_BIBLIOTECA : 'biblioteca@uarg.unpa.edu.ar';
+
+        $correos = array_merge($correos, self::normalizarDestinatarios($mailEdDistancia));
+        $correos = array_merge($correos, self::normalizarDestinatarios($mailBiblioteca));
+        return implode(', ', array_values(array_unique($correos)));
+    }
+
+    /**
      * M11.4 - VA firma final -> Notificar a Profesor (Aprobación final con link de descarga)
+     * y enviar el programa aprobado a Educación a Distancia / Rectorado (rfarias@unpa.edu.ar) y Biblioteca (biblioteca@uarg.unpa.edu.ar).
      */
     public static function notificarAprobacionFinal($idAsignatura, $anio, $emailDocente, $idProgramaPDF) {
         $asunto = "VASPA: ¡Su programa analítico ha sido aprobado definitivamente!";
@@ -156,11 +235,37 @@ class notificacionCircuitoVaspa {
         $introduccion = "Nos complace informarle que el circuito de revisión para su asignatura ha concluido exitosamente. El programa analítico ha recibido la aprobación definitiva de Vinculación Académica.";
         $cuerpo = "Puede descargar el PDF final firmado a través del siguiente botón o desde su panel de asignaturas en el sistema.";
         
+        // Obtener ruta física del PDF aprobado si existe para adjuntarlo
+        $rutaFisicaPDF = "";
+        if ($idProgramaPDF > 0) {
+            require_once __DIR__ . '/../../modeloSistema/ProgramaPDFDetalle.Class.php';
+            $progDetalle = new ProgramaPDFDetalle($idProgramaPDF);
+            if ($progDetalle->getId() && !empty($progDetalle->getRutaArchivo())) {
+                $posibleRuta = realpath(__DIR__ . '/../../archivos/programas/' . basename($progDetalle->getRutaArchivo()));
+                if ($posibleRuta && file_exists($posibleRuta)) {
+                    $rutaFisicaPDF = $posibleRuta;
+                }
+            }
+        }
+
         // Link de descarga
         $downloadUrl = "http://localhost/vaspa/vista/programa.descargarPDF.php?id=" . $idProgramaPDF;
         $botonHTML = '<div class="button-container"><a href="' . $downloadUrl . '" class="btn">Descargar Programa Aprobado (PDF)</a></div>';
         
-        return self::enviarCorreo($emailDocente, $asunto, $saludo, $introduccion, $cuerpo, $idAsignatura, $anio, $botonHTML);
+        $envioDocente = true;
+        if (!empty($emailDocente)) {
+            $envioDocente = self::enviarCorreo($emailDocente, $asunto, $saludo, $introduccion, $cuerpo, $idAsignatura, $anio, $botonHTML, $rutaFisicaPDF);
+        }
+
+        // Enviar el programa aprobado a Educación a Distancia / Rectorado (rfarias@unpa.edu.ar) y Biblioteca (biblioteca@uarg.unpa.edu.ar)
+        $destinatariosAreas = self::obtenerDestinatariosFinales();
+        $asuntoAreas = "VASPA: Programa analítico aprobado disponible ({$idAsignatura} - Año {$anio})";
+        $saludoAreas = "Estimados/as referentes de Educación a Distancia / Rectorado y Biblioteca,";
+        $introduccionAreas = "Le informamos que el programa analítico de la asignatura indicada ha completado el circuito de revisión y cuenta con la aprobación y firma definitiva de Vinculación Académica.";
+        $cuerpoAreas = "Se adjunta el documento PDF aprobado del programa analítico (y también puede consultarse o descargarse mediante el enlace inferior).";
+        $envioAreas = self::enviarCorreo($destinatariosAreas, $asuntoAreas, $saludoAreas, $introduccionAreas, $cuerpoAreas, $idAsignatura, $anio, $botonHTML, $rutaFisicaPDF);
+
+        return $envioDocente && $envioAreas;
     }
 
     /**
@@ -214,7 +319,7 @@ class notificacionCircuitoVaspa {
         $cuerpo = "Observaciones del Departamento:\n\"" . $comentario . "\"\n\nPor favor, actúe como intermediario para comunicar estas observaciones al Profesor responsable fuera del sistema.";
         $botonHTML = '<div class="button-container"><a href="' . Constantes::HOME_SISTEMA . '" class="btn">Ver en Monitoreo</a></div>';
         
-        return self::enviarCorreo(MAIL_SA, $asunto, $saludo, $introduccion, $cuerpo, $idAsignatura, $anio, $botonHTML);
+        return self::enviarCorreo(self::obtenerDestinatariosVA(), $asunto, $saludo, $introduccion, $cuerpo, $idAsignatura, $anio, $botonHTML);
     }
 
     /**
@@ -245,8 +350,11 @@ class notificacionCircuitoVaspa {
      * M11.8 - Cron: Retraso automático (15 días) -> Solo a VA
      */
     public static function notificarAvisoAutomatico($programasRetrasados) {
-        $destinatario = MAIL_SA;
+        $listaDestinatarios = self::normalizarDestinatarios(self::obtenerDestinatariosVA());
         $asunto = "VASPA: Reporte diario de programas analíticos retrasados";
+        if (empty($listaDestinatarios)) {
+            return false;
+        }
         
         $mail = new PHPMailer;
         $mail->isSMTP();
@@ -257,7 +365,9 @@ class notificacionCircuitoVaspa {
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->FromName = "Sistema VASPA";
-        $mail->addAddress($destinatario);
+        foreach ($listaDestinatarios as $correoDestino) {
+            $mail->addAddress($correoDestino);
+        }
         
         $cuerpo = "<p>Estimado/a Revisor/a de Vinculación Académica,</p>";
         $cuerpo .= "<p>El sistema ha detectado los siguientes programas analíticos activos en revisión sin movimientos durante los últimos 15 días:</p>";
@@ -287,7 +397,7 @@ class notificacionCircuitoVaspa {
      * M11.9 - VA activa/desactiva vacancia -> Notificar a VA (Confirmación)
      */
     public static function notificarVacanciaCambio($vacanciaActiva) {
-        $destinatario = MAIL_SA;
+        $destinatario = self::obtenerDestinatariosVA();
         $asunto = "VASPA: Cambio en el estado de Vacancia de Escuela";
         $saludo = "Estimado/a Revisor/a de Vinculación Académica,";
         
@@ -324,7 +434,8 @@ class notificacionCircuitoVaspa {
      * Notifica a Vinculación Académica una solicitud de modificación de situación de revista
      */
     public static function notificarModificacionRevista($profesorNombre, $profesorEmail, $tipo, $detalleAsignatura, $comentario) {
-        $destinatario = MAIL_SA;
+        $listaDestinatarios = self::normalizarDestinatarios(self::obtenerDestinatariosVA());
+        $destinatario = implode(', ', $listaDestinatarios);
         $asunto = "VASPA: Solicitud de modificacion de situacion de revista";
         
         // Simulación en desarrollo
@@ -332,6 +443,10 @@ class notificacionCircuitoVaspa {
         if ($isPlaywright || (defined('Constantes::SERVER') && strpos(Constantes::SERVER, 'localhost') !== false && (!defined('FORZAR_ENVIO_MAIL') || !FORZAR_ENVIO_MAIL))) {
             error_log("DESARROLLO: Simulación de correo enviado a {$destinatario} con asunto: '{$asunto}'");
             return true;
+        }
+
+        if (empty($listaDestinatarios)) {
+            return false;
         }
 
         $mail = new PHPMailer;
@@ -344,7 +459,9 @@ class notificacionCircuitoVaspa {
         $mail->Port = 587;
         $mail->Timeout = 10;
         $mail->FromName = "Sistema VASPA";
-        $mail->addAddress($destinatario);
+        foreach ($listaDestinatarios as $correoDestino) {
+            $mail->addAddress($correoDestino);
+        }
         
         $cuerpo = "<p>Estimado/a Revisor/a de Vinculación Académica,</p>";
         $cuerpo .= "<p>El profesor <strong>" . htmlspecialchars($profesorNombre) . "</strong> (" . htmlspecialchars($profesorEmail) . ") ha enviado una solicitud de modificación de situación de revista.</p>";

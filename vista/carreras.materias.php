@@ -41,11 +41,11 @@ if ($resProfs && $resProfs->num_rows > 0) {
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
       <script type="text/javascript" src="../lib/JQuery/jquery-3.3.1.js"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+      <script src="../lib/popper/popper.min.js"></script>
       <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>
       <link rel="stylesheet" href="../lib/bootstrap-4.1.1-dist/css/bootstrap.css" />
-      <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.8/css/bootstrap-select.min.css" rel="stylesheet"/>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.8/js/bootstrap-select.min.js"></script>
+      <link href="../lib/bootstrap-select/bootstrap-select.min.css" rel="stylesheet"/>
+      <script src="../lib/bootstrap-select/bootstrap-select.min.js"></script>
       <link rel="stylesheet" href="../lib/open-iconic-master/font/css/open-iconic-bootstrap.css" />
       <link rel="stylesheet" href="../lib/datatable/dataTables.bootstrap4.min.css" />
       <script type="text/javascript" src="../lib/datatable/jquery.dataTables.min.js"></script>
@@ -111,22 +111,24 @@ if ($resProfs && $resProfs->num_rows > 0) {
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="row justify-content-center mb-4">
-                        <div class="col-sm-5">
-                            <label for="carreraSelect" class="font-weight-bold">Seleccione la Carrera</label>
-                            <select id="carreraSelect" class="selectpicker" data-width="100%" data-live-search="true" required title="Seleccione una Carrera" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
-                                <?php if (!empty($carreras)) {
-                                    foreach ($carreras as $c) {
-                                        echo '<option value="'.$c->getId().'">'.$c->getId().' - '.$c->getNombre().'</option>';
-                                    }
-                                } ?>
-                            </select>
-                        </div>
-                        <div class="col-sm-5">
-                            <label for="planSelect" class="font-weight-bold">Plan de Estudio</label>
-                            <select id="planSelect" class="selectpicker" data-width="100%" data-live-search="true" title="Todos los planes" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
-                                <option value="todos">Todos los planes</option>
-                            </select>
+                    <div class="filtro-box">
+                        <div class="row align-items-end">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="carreraSelect" class="font-weight-bold d-block mb-2">Seleccione la Carrera</label>
+                                <select id="carreraSelect" class="selectpicker form-control" data-width="100%" data-live-search="true" required title="Seleccione una Carrera" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
+                                    <?php if (!empty($carreras)) {
+                                        foreach ($carreras as $c) {
+                                            echo '<option value="'.$c->getId().'">'.$c->getId().' - '.$c->getNombre().'</option>';
+                                        }
+                                    } ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="planSelect" class="font-weight-bold d-block mb-2">Plan de Estudio</label>
+                                <select id="planSelect" class="selectpicker form-control" data-width="100%" data-live-search="true" title="Todos los planes" data-none-results-text="No se encontraron resultados" data-size="7" data-container="body">
+                                    <option value="todos">Todos los planes</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     

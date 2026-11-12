@@ -290,4 +290,46 @@ Este documento registra las decisiones arquitectónicas, de seguridad y de calid
   4. Actualizar `lib/JQuery/jquery-3.3.1.js` in-place con el código oficial de **jQuery v3.7.1**, eliminando las vulnerabilidades de Prototype Pollution/XSS sin romper los `<script src>` de las vistas.
 - **Consecuencias:** `composer audit` reporta 0 vulnerabilidades y la aplicación ejecuta las últimas versiones estables de PHPMailer, TCPDF y jQuery con compatibilidad total.
 
+---
+
+## ADR-021: Soporte de Múltiples Correos Institucionales (Secretaría + Vinculación) para el Rol Vinculación Académica
+- **Fecha:** 2026-11-05
+- **Estado:** Implementada
+- **Contexto:** El usuario con rol **Vinculación Académica** (`id_rol = 11`) representa institucionalmente tanto a **Secretaría Académica** como a **Vinculación Académica**. El formulario de alta y modificación de usuarios solo admitía un único correo con regex estricta `^[a-z]+@uarg.unpa.edu.ar$`, y tanto el login (`ControlAcceso.Class.php`) como las notificaciones (`notificacionCircuitoVaspa.php`) operaban sobre un único string de correo.
+- **Decisión:**
+  1. En `app/usuario.crear.php` y `app/usuario.modificar.php`, detectar dinámicamente la selección del rol **Vinculación Académica** para exigir **al menos 2 correos institucionales** (`@uarg.unpa.edu.ar`) con posibilidad de agregar correos institucionales adicionales, permitiendo caracteres válidos de cuentas institucionales (`^[a-zA-Z0-9._%+-]+@uarg\.unpa\.edu\.ar$`).
+  2. En `app/usuario.crear.procesar.php` y `app/usuario.modificar.procesar.php`, validar en backend que cuando el rol es Vinculación Académica se reciban mínimo 2 correos institucionales distintos, comprobar que ninguno colisione con correos ya asignados a otros usuarios, y persistirlos normalizados (`correo1@uarg.unpa.edu.ar, correo2@uarg.unpa.edu.ar`) en la columna `usuario.email` (`VARCHAR(255)`), manteniendo total compatibilidad con el esquema de base de datos actual.
+  3. En `lib/ControlAcceso.Class.php` (`UsuarioSesion::buscarUsuarioBd()`), admitir coincidencia exacta o búsqueda sobre listas de correos separados por coma/punto y coma, permitiendo que tanto Secretaría Académica como Vinculación Académica inicien sesión con su propio correo institucional.
+  4. En `lib/notificacionesMail/notificacionCircuitoVaspa.php`, implementar `normalizarDestinatarios()` y `obtenerDestinatariosVA()` para que todas las notificaciones dirigidas a Vinculación Académica / Secretaría Académica se envíen a todos los correos institucionales asociados al rol.
+- **Consecuencias:** El rol de Vinculación Académica soporta de extremo a extremo (ABM, login y notificaciones por correo) al menos 2 correos institucionales representando a Secretaría y Vinculación sin requerir migraciones destructivas de base de datos.
+
+---
+
+## ADR-022: Despacho Automático del Programa Aprobado a Educación a Distancia / Rectorado y Biblioteca en el Cierre del Circuito
+- **Fecha:** 2026-11-05
+- **Estado:** Implementada
+- **Contexto:** Al finalizar el circuito de aprobación (Paso 5: Firma Final de Vinculación Académica), el sistema únicamente enviaba el correo de aprobación final al profesor responsable. Se requiere que en ese último paso el programa aprobado se envíe automáticamente también a **Educación a Distancia / Rectorado** (`rfarias@unpa.edu.ar`) y a **Biblioteca** (`biblioteca@uarg.unpa.edu.ar`).
+- **Decisión:**
+  1. Incorporar las constantes `MAIL_EDUCACION_DISTANCIA` (`rfarias@unpa.edu.ar`) y `MAIL_BIBLIOTECA` (`biblioteca@uarg.unpa.edu.ar`) en `constantesMail.php` y `.env.example`.
+  2. Extender `notificacionCircuitoVaspa::enviarCorreo()` para admitir adjuntos (`$mail->addAttachment()`) del archivo PDF final firmado.
+  3. Actualizar `notificacionCircuitoVaspa::notificarAprobacionFinal()` y `notificacionProgramaAprobadoDesaprobado.php` para que, al confirmarse la aprobación definitiva, se despache automáticamente el programa aprobado (con su archivo PDF adjunto y enlace de descarga) a `rfarias@unpa.edu.ar` y `biblioteca@uarg.unpa.edu.ar`.
+- **Consecuencias:** Cada vez que un programa alcanza la aprobación final en el último paso del circuito, Educación a Distancia / Rectorado y Biblioteca reciben automáticamente el programa aprobado.
+
+---
+
+## ADR-023: Adopción de la Identidad Visual Institucional UNPA-UARG (`SIT UNPA-UARG`)
+- **Fecha:** 2026-11-12
+- **Estado:** Implementada
+- **Contexto:** Se solicitó alinear el diseño visual de VASPA con el estándar institucional de los sistemas de la UNPA-UARG (como `eRecibo UARG` — `SIT UNPA-UARG`), además de corregir los selectores de filtros que se veían desalineados por el bloqueo de CDN externo en CSP.
+- **Decisión:**
+  1. Reemplazar todas las referencias externas a `cdnjs.cloudflare.com` (`popper.min.js`, `bootstrap-select.min.css`, `bootstrap-select.min.js`) por las copias locales en `lib/popper/` y `lib/bootstrap-select/` en las 14 vistas del sistema.
+  2. Rediseñar `lib/css/premium.css`, `gui/navbar.php`, `gui/footer.php`, `app/index.php` y `vista/inicio.php` siguiendo la paleta y estructura oficial de **SIT UNPA-UARG**:
+     - Barra superior oscura (`#1d262d`) con línea inferior verde lima institucional (`#9ab300`), título `VASPA UARG`, subtítulo `SIT UNPA-UARG` y pestañas activas/hover en bloque verde lima (`#9ab300`).
+     - Fondo general gris claro plano (`#f2f2f2`) y tarjetas blancas rectangulares (`#ffffff`, `border-radius: 2px`, sombra suave) con títulos en azul marino institucional (`#003366`) y subtítulos de sección en azul celeste (`#0088cc`).
+     - Pie de página institucional oscuro (`#1d262d`) con borde superior verde lima (`#9ab300`), leyenda `© Servicio de Informática y Telecomunicaciones (SIT) - UARG` y enlaces institucionales (`Portal UARG :: Manual de Uso`).
+- **Consecuencias:** Todo el sistema VASPA comparte la misma estética institucional de los sistemas oficiales de la UNPA-UARG sin romper ningún flujo funcional ni prueba automatizada E2E.
+
+
+
+
 

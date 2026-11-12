@@ -26,6 +26,10 @@ if (!defined('CONTRASENA_PROF')) define('CONTRASENA_PROF', Env::get('MAIL_PROFES
 // MAIL DE ESCUELA
 if (!defined('MAIL_ESCUELA')) define('MAIL_ESCUELA', Env::get('MAIL_ESCUELA_USER', ''));
 
+// MAIL DE EDUCACION A DISTANCIA / RECTORADO Y BIBLIOTECA (DESTINATARIOS FINALES)
+if (!defined('MAIL_EDUCACION_DISTANCIA')) define('MAIL_EDUCACION_DISTANCIA', Env::get('MAIL_EDUCACION_DISTANCIA_USER', 'rfarias@unpa.edu.ar'));
+if (!defined('MAIL_BIBLIOTECA')) define('MAIL_BIBLIOTECA', Env::get('MAIL_BIBLIOTECA_USER', 'biblioteca@uarg.unpa.edu.ar'));
+
 // Define si se fuerza el envio real en desarrollo/localhost
 $forzarEnvio = filter_var(Env::get('FORZAR_ENVIO_MAIL', false), FILTER_VALIDATE_BOOLEAN);
 if (!defined('FORZAR_ENVIO_MAIL')) define('FORZAR_ENVIO_MAIL', $forzarEnvio);

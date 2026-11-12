@@ -4,6 +4,7 @@ ControlAcceso::requierePermiso(PermisosSistema::PERMISO_USUARIOS);
 include_once '../modelo/Usuario.Class.php';
 
 $Usuario = new Usuario($_GET["id"]);
+$correosLista = array_values(array_filter(array_map('trim', preg_split('/[,;]+/', (string) $Usuario->getEmail()))));
 ?>
 <html>
     <head>
@@ -28,14 +29,22 @@ $Usuario = new Usuario($_GET["id"]);
                 </div>
                 <div class="card-body">
                     <h4 class="card-text">Nombre</h4>
-                    <p> <?= $Usuario->getNombre(); ?></p>
+                    <p><?= e($Usuario->getNombre()); ?></p>
                     <hr />
-                    <h4 class="card-text">Email</h4>
-                    <p> <?= $Usuario->getEmail(); ?></p>
+                    <h4 class="card-text"><?= count($correosLista) > 1 ? 'Emails Institucionales' : 'Email'; ?></h4>
+                    <?php if (count($correosLista) > 1) { ?>
+                        <ul class="mb-2">
+                            <?php foreach ($correosLista as $correoItem) { ?>
+                                <li><?= e($correoItem); ?></li>
+                            <?php } ?>
+                        </ul>
+                    <?php } else { ?>
+                        <p><?= e($Usuario->getEmail()); ?></p>
+                    <?php } ?>
                     <hr />
                     <h4 class="card-text">Roles</h4>
                     <?php foreach ($Usuario->getRoles() as $Rol) { ?>
-                        <p> <?= $Rol->getNombre(); ?> </p>
+                        <p><?= e($Rol->getNombre()); ?></p>
                     <?php } ?> 
 
                     <hr />

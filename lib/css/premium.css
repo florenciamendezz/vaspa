@@ -1,96 +1,132 @@
-body {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    color: #1e293b;
-    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    min-height: 100vh;
+/* ==========================================================================
+   Estilos VASPA adaptados a la Identidad Institucional UNPA-UARG
+   Mantiene las proporciones, tarjetas y cabeceras de sección de VASPA
+   con la tipografía y paleta de colores de la UNPA-UARG (#1d262d, #9ab300, #0088cc)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+html {
+    position: relative;
+    min-height: 100%;
 }
 
+body {
+    background: #f2f2f2;
+    color: #263238;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    font-size: 1rem;
+    min-height: 100vh;
+    padding-bottom: 75px;
+}
+
+/* Evitar el doble recuadro blanco heredado de UARGFlow en bootstrap.css sobre .container */
+.container {
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* ── Tarjetas de Sección con Barra Superior Sólida UNPA-UARG ── */
 .card-premium {
-    background: rgba(255, 255, 255, 0.9);
-    border: none;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-    backdrop-filter: blur(10px);
+    background: #ffffff;
+    border: 1px solid #dcdcdc;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     margin-top: 2rem;
     margin-bottom: 2rem;
-    /* overflow: visible para que los dropdowns (selectpicker) no queden recortados */
     overflow: visible;
 }
 
-.card-header-premium {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: white;
-    border-bottom: none;
-    padding: 1.5rem 2rem;
-    /* Bordes redondeados solo arriba para compensar que el card no tiene overflow hidden */
-    border-radius: 16px 16px 0 0;
+.card-header-premium,
+.card-header-gradient {
+    background: linear-gradient(135deg, #1d262d 0%, #263238 100%) !important;
+    color: #ffffff !important;
+    border-bottom: 3px solid #9ab300 !important;
+    padding: 1.35rem 2rem !important;
+    border-radius: 9px 9px 0 0 !important;
     overflow: hidden;
 }
 
-.card-header-premium h3 {
+.card-header-premium h1,
+.card-header-premium h2,
+.card-header-premium h3,
+.card-header-premium h4,
+.card-header-premium h5,
+.card-header-gradient h3,
+.card-header-gradient h4 {
     margin: 0;
+    color: #ffffff !important;
     font-weight: 700;
-    font-size: 1.50rem;
-    letter-spacing: -0.02em;
+    font-size: 1.45rem;
+    letter-spacing: -0.01em;
 }
 
+.card-header-premium h3 span {
+    color: #d5dce0 !important;
+}
+
+/* ── Tablas amplias y legibles con acento UNPA-UARG ── */
 .table-premium {
     border-collapse: separate;
-    border-spacing: 0 0.5rem;
+    border-spacing: 0 0.45rem;
     width: 100%;
+    font-size: 0.98rem;
 }
 
 .table-premium thead th {
-    background-color: #f1f5f9;
-    color: #475569;
+    background-color: #263238;
+    color: #ffffff;
     font-weight: 600;
     border: none;
-    padding: 0.75rem 1rem;
+    border-bottom: 3px solid #9ab300;
+    padding: 0.85rem 1rem;
+    font-size: 0.95rem;
 }
 
 .table-premium tbody tr {
-    background-color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .table-premium tbody tr:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.04);
-    background-color: #fafbfd !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+    background-color: #f9fbe7 !important;
 }
 
 .table-premium td {
     padding: 1rem;
     vertical-align: middle;
-    border-top: 1px solid #f1f5f9;
-    border-bottom: 1px solid #f1f5f9;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.96rem;
 }
 
 .table-premium td:first-child {
-    border-left: 1px solid #f1f5f9;
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
+    border-left: 1px solid #e2e8f0;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
 }
 
 .table-premium td:last-child {
-    border-right: 1px solid #f1f5f9;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
+    border-right: 1px solid #e2e8f0;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
 }
 
 .badge {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Roboto', sans-serif;
     font-weight: 600;
-    padding: 0.35em 0.65em;
-    border-radius: 6px;
+    padding: 0.4em 0.7em;
+    border-radius: 5px;
 }
 
-/* Botones de acción Premium */
+/* ── Botones de Acción ── */
 .btn-premium-icon {
-    border-radius: 8px;
-    width: 32px;
-    height: 32px;
+    border-radius: 6px;
+    width: 34px;
+    height: 34px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -103,28 +139,71 @@ body {
 }
 
 .btn-outline-purple {
-    color: #6366f1;
-    border-color: #e0e7ff;
-    background-color: #f5f3ff;
+    color: #0088cc;
+    border-color: #b3e5fc;
+    background-color: #f0f9ff;
 }
 
 .btn-outline-purple:hover {
-    color: white;
-    background-color: #6366f1;
-    border-color: #6366f1;
+    color: #ffffff;
+    background-color: #0088cc;
+    border-color: #0088cc;
 }
 
+/* ── Recuadros de Filtro y Selectores (bootstrap-select) ── */
 .filtro-box {
     background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 1rem;
+    border: 1px solid #d5dce0;
+    border-left: 4px solid #9ab300;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
     margin-bottom: 1.5rem;
 }
 
-/* ── Fix: dropdown de bootstrap-select no queda recortado por ningún contenedor ── */
+.filtro-box label,
+.card-premium label:not(.form-check-label):not(.custom-control-label):not(.custom-file-label):not(.toggle-switch):not(.btn) {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #1d262d;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* Fallback limpio para select nativo o antes de inicializar selectpicker */
+select.selectpicker,
+.card-premium select.form-control {
+    display: block;
+    width: 100%;
+    height: 44px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0.5rem 0.9rem;
+    background-color: #ffffff;
+    color: #1e293b;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.98rem;
+}
+
+/* Fix: dropdown de bootstrap-select no queda recortado por ningún contenedor */
+.bootstrap-select:not([class*="col-"]):not([class*="form-control"]):not(.input-group-btn) {
+    width: 100% !important;
+}
+
+.bootstrap-select.form-control {
+    border: none !important;
+    padding: 0 !important;
+    height: auto !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
 .bootstrap-select .dropdown-menu {
     z-index: 9999 !important;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.96rem;
 }
 
 .bootstrap-select.open,
@@ -132,7 +211,45 @@ body {
     z-index: 9999 !important;
 }
 
-/* El botón del selectpicker hereda la fuente premium */
 .bootstrap-select > .dropdown-toggle {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Roboto', sans-serif;
+    background-color: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    padding: 0.55rem 0.95rem !important;
+    min-height: 44px;
+    color: #1e293b !important;
+    font-size: 0.98rem;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.bootstrap-select > .dropdown-toggle.bs-placeholder,
+.bootstrap-select > .dropdown-toggle.bs-placeholder:hover,
+.bootstrap-select > .dropdown-toggle.bs-placeholder:focus,
+.bootstrap-select > .dropdown-toggle.bs-placeholder:active {
+    color: #64748b !important;
+}
+
+.bootstrap-select > .dropdown-toggle:hover {
+    border-color: #94a3b8 !important;
+    background-color: #ffffff !important;
+}
+
+.bootstrap-select > .dropdown-toggle:focus,
+.bootstrap-select.show > .dropdown-toggle {
+    border-color: #9ab300 !important;
+    box-shadow: 0 0 0 3px rgba(154, 179, 0, 0.2) !important;
+    outline: none !important;
+    background-color: #ffffff !important;
+}
+
+.bootstrap-select .dropdown-item.active,
+.bootstrap-select .dropdown-item:active {
+    background-color: #0088cc !important;
+    color: #ffffff !important;
 }

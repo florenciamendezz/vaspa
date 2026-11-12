@@ -4,159 +4,216 @@ ControlAcceso::requierePermiso(PermisosSistema::PERMISO_USUARIOS);
 ControlAcceso::requiereCsrf();
 include_once '../modelo/BDConexion.Class.php';
 include_once '../modelo/Usuario.Class.php';
+include_once '../modelo/Rol.Class.php';
 $DatosFormulario = $_POST;
 $db = BDConexion::getInstancia();
 $idUsuario = intval($DatosFormulario["id"] ?? 0);
 $nombreInput = trim($DatosFormulario["nombre"] ?? '');
-$emailInput = trim($DatosFormulario["email"] ?? '');
+$emailPrincipalInput = trim($DatosFormulario["email"] ?? '');
 
 $Usuario = new Usuario($idUsuario);
+$rolesActuales = $Usuario->getRoles();
+$rolUsuarioActual = (!empty($rolesActuales) && isset($rolesActuales[0])) ? $rolesActuales[0]->getNombre() : '';
 
-// chequeamos si ya existe tanto el nombre de Usuario como el email en "otros" usuarios del Sistema.
-$stmtCheck = $db->prepare("SELECT id, nombre, email FROM usuario WHERE id <> ? AND (nombre = ? OR email = ?)");
-if ($stmtCheck) {
-    $stmtCheck->bind_param("iss", $idUsuario, $nombreInput, $emailInput);
-    $stmtCheck->execute();
-    $resultado = $stmtCheck->get_result();
-    $stmtCheck->close();
-} else {
-    $resultado = false;
+$idRolSeleccionado = intval($DatosFormulario["rol"] ?? 0);
+$rolNuevoObj = $idRolSeleccionado > 0 ? new Rol($idRolSeleccionado) : null;
+$nombreRolFinal = ($rolUsuarioActual === "Profesor") ? "Profesor" : ($rolNuevoObj ? $rolNuevoObj->getNombre() : $rolUsuarioActual);
+$esRolVinculacion = ($idRolSeleccionado === 11 || stripos($nombreRolFinal, 'Vinculaci') !== false);
+
+// Recolectar todos los correos ingresados
+$emailsIngresados = [];
+foreach (preg_split('/[,;]+/', $emailPrincipalInput) as $parte) {
+    $parteLimpia = strtolower(trim($parte));
+    if ($parteLimpia !== '') {
+        $emailsIngresados[] = $parteLimpia;
+    }
+}
+
+if ($esRolVinculacion && !empty($DatosFormulario["email_adicional"]) && is_array($DatosFormulario["email_adicional"])) {
+    foreach ($DatosFormulario["email_adicional"] as $mailExtra) {
+        foreach (preg_split('/[,;]+/', (string) $mailExtra) as $parte) {
+            $parteLimpia = strtolower(trim($parte));
+            if ($parteLimpia !== '') {
+                $emailsIngresados[] = $parteLimpia;
+            }
+        }
+    }
 }
 
 $mensaje = '';
+$consulta = FALSE;
+$validacionPreviaOk = true;
+$patronInstitucional = '/^[a-zA-Z0-9._%+-]+@uarg\.unpa\.edu\.ar$/';
 
-if (!$resultado){
-    $mensaje = 'Error al realizar petici&oacute;n a la Base de Datos';
-    $consulta = FALSE;
-} else {
-    
-    if ($resultado->num_rows == 1) { // Si hay un registro esto puede significar que ya existe el nombre de usuario o correo
-        $registro = $resultado->fetch_assoc();
-
-        $nombre = $registro["nombre"];
-        $email = $registro["email"];
-        $nombreEsc = e($nombre);
-        $emailEsc = e($email);
-        
-        if ($nombreInput == $nombre && $emailInput == $email){
-            $mensaje = "El nombre de usuario: <b>{$nombreEsc}</b> y el email: <b>{$emailEsc}</b> ya existen, por favor ingrese otro nombre de usuario y otro email.";
-        } elseif ($nombreInput == $nombre) {
-            $mensaje = "El nombre de usuario: <b>{$nombreEsc}</b> ya existe, por favor ingrese otro nombre de usuario.";
-        } elseif ($emailInput == $email) {
-            $mensaje = "El email: <b>{$emailEsc}</b> ya existe, por favor ingrese otro email";
+if ($esRolVinculacion) {
+    if (count($emailsIngresados) < 2) {
+        $validacionPreviaOk = false;
+        $mensaje = "El rol <b>Vinculaci&oacute;n Acad&eacute;mica</b> representa a Secretar&iacute;a y Vinculaci&oacute;n, por lo que debe ingresar <b>al menos 2 correos institucionales</b> (@uarg.unpa.edu.ar).";
+    } elseif (count($emailsIngresados) !== count(array_unique($emailsIngresados))) {
+        $validacionPreviaOk = false;
+        $mensaje = "Los correos institucionales ingresados para <b>Vinculaci&oacute;n Acad&eacute;mica</b> deben ser distintos entre s&iacute;.";
+    } else {
+        foreach ($emailsIngresados as $correoEval) {
+            if (!preg_match($patronInstitucional, $correoEval)) {
+                $validacionPreviaOk = false;
+                $correoEsc = e($correoEval);
+                $mensaje = "El correo <b>{$correoEsc}</b> no es un correo institucional v&aacute;lido (debe finalizar en <code>@uarg.unpa.edu.ar</code>).";
+                break;
+            }
         }
-        
-        $consulta = FALSE;
-         
-    } elseif ($resultado->num_rows == 2) {
-        // si hay dos registros esto quiere decir que se repiten tanto el nombre como el correo.
-        $consulta = FALSE;
-        $nombreInputEsc = e($nombreInput);
-        $emailInputEsc = e($emailInput);
-        $mensaje = "El nombre de usuario: <b>{$nombreInputEsc}</b> y el email: <b>{$emailInputEsc}</b> ya existen, por favor ingrese otro nombre de usuario y otro email.";
-    } elseif ($resultado->num_rows == 0) { // no se encontraron coincidencias en la BD, por lo tanto se debe proceder con la insercion
-        
-        // obtenemos el rol del Usuario a modificar
-        $roles = $Usuario->getRoles();
-        $rolUsuario = (!empty($roles) && isset($roles[0])) ? $roles[0]->getNombre() : '';
-        
-        // comprobamos si el Rol es de Profesor (No se modifica el Rol, pero si hay que modificar el mail de la tabla profesor).
-        if ($rolUsuario == "Profesor"){
-            // es profesor --> hay que actualizar el email en la tabla profesor
-            $db->autocommit(false);
-            $db->begin_transaction();
+    }
+} else {
+    if (empty($emailsIngresados)) {
+        $validacionPreviaOk = false;
+        $mensaje = "Debe ingresar un correo electr&oacute;nico v&aacute;lido.";
+    }
+}
 
-            $stmtUsr = $db->prepare("UPDATE usuario SET nombre = ?, email = ? WHERE id = ?");
-            if (!$stmtUsr) {
-                $db->rollback();
-                $consulta = false;
-                $mensaje = "Error al preparar la actualización de usuario.";
-            } else {
-                $stmtUsr->bind_param("ssi", $nombreInput, $emailInput, $idUsuario);
-                if (!$stmtUsr->execute()) {
-                    $stmtUsr->close();
+$emailInput = implode(', ', array_unique($emailsIngresados));
+
+if ($validacionPreviaOk) {
+    // Chequeamos si ya existe tanto el nombre de Usuario como alguno de los emails en "otros" usuarios del Sistema.
+    $stmtCheck = $db->prepare("SELECT id, nombre, email FROM usuario WHERE id <> ?");
+    if ($stmtCheck) {
+        $stmtCheck->bind_param("i", $idUsuario);
+        $stmtCheck->execute();
+        $resultado = $stmtCheck->get_result();
+        $stmtCheck->close();
+    } else {
+        $resultado = false;
+    }
+
+    if (!$resultado) {
+        $mensaje = 'Error al realizar petici&oacute;n a la Base de Datos';
+        $consulta = FALSE;
+    } else {
+        $existeNombre = false;
+        $emailColisionado = '';
+
+        while ($registro = $resultado->fetch_assoc()) {
+            if (strcasecmp(trim($registro["nombre"]), $nombreInput) === 0) {
+                $existeNombre = true;
+            }
+            $emailsExistentesFila = array_filter(array_map('strtolower', array_map('trim', preg_split('/[,;]+/', (string) $registro["email"]))));
+            foreach ($emailsIngresados as $correoNuevo) {
+                if (in_array($correoNuevo, $emailsExistentesFila, true)) {
+                    $emailColisionado = $correoNuevo;
+                    break;
+                }
+            }
+        }
+
+        if ($existeNombre && $emailColisionado !== '') {
+            $nombreEsc = e($nombreInput);
+            $emailEsc = e($emailColisionado);
+            $mensaje = "El nombre de usuario: <b>{$nombreEsc}</b> y el email: <b>{$emailEsc}</b> ya existen, por favor ingrese otro nombre de usuario y otro email.";
+            $consulta = FALSE;
+        } elseif ($existeNombre) {
+            $nombreEsc = e($nombreInput);
+            $mensaje = "El nombre de usuario: <b>{$nombreEsc}</b> ya existe, por favor ingrese otro nombre de usuario.";
+            $consulta = FALSE;
+        } elseif ($emailColisionado !== '') {
+            $emailEsc = e($emailColisionado);
+            $mensaje = "El email: <b>{$emailEsc}</b> ya existe, por favor ingrese otro email";
+            $consulta = FALSE;
+        } else {
+            // No se encontraron coincidencias en otros usuarios, procedemos con la actualización
+            if ($rolUsuarioActual == "Profesor") {
+                // Es profesor --> hay que actualizar el email en la tabla profesor
+                $db->autocommit(false);
+                $db->begin_transaction();
+
+                $stmtUsr = $db->prepare("UPDATE usuario SET nombre = ?, email = ? WHERE id = ?");
+                if (!$stmtUsr) {
                     $db->rollback();
                     $consulta = false;
-                    $mensaje = "Error al actualizar los datos del usuario.";
+                    $mensaje = "Error al preparar la actualización de usuario.";
                 } else {
-                    $stmtUsr->close();
-
-                    $emailAnterior = $Usuario->getEmail();
-                    $stmtProf = $db->prepare("UPDATE " . Constantes::BD_SCHEMA . ".profesor SET email = ? WHERE email = ?");
-                    if (!$stmtProf) {
+                    $stmtUsr->bind_param("ssi", $nombreInput, $emailInput, $idUsuario);
+                    if (!$stmtUsr->execute()) {
+                        $stmtUsr->close();
                         $db->rollback();
                         $consulta = false;
-                        $mensaje = "Error al preparar la actualización del profesor.";
+                        $mensaje = "Error al actualizar los datos del usuario.";
                     } else {
-                        $stmtProf->bind_param("ss", $emailInput, $emailAnterior);
-                        if (!$stmtProf->execute()) {
-                            $stmtProf->close();
+                        $stmtUsr->close();
+
+                        $emailAnterior = $Usuario->getEmail();
+                        $stmtProf = $db->prepare("UPDATE " . Constantes::BD_SCHEMA . ".profesor SET email = ? WHERE email = ?");
+                        if (!$stmtProf) {
                             $db->rollback();
                             $consulta = false;
-                            $mensaje = "Error al actualizar el correo del profesor.";
+                            $mensaje = "Error al preparar la actualización del profesor.";
                         } else {
-                            $stmtProf->close();
-                            $db->commit();
-                            $db->autocommit(true);
-                            $consulta = true;
+                            $stmtProf->bind_param("ss", $emailInput, $emailAnterior);
+                            if (!$stmtProf->execute()) {
+                                $stmtProf->close();
+                                $db->rollback();
+                                $consulta = false;
+                                $mensaje = "Error al actualizar el correo del profesor.";
+                            } else {
+                                $stmtProf->close();
+                                $db->commit();
+                                $db->autocommit(true);
+                                $consulta = true;
+                            }
                         }
                     }
                 }
-            }
-            
-        } else {
-            // no es profesor, procedemos a actualizar los campos
-            $db->autocommit(false);
-            $db->begin_transaction();
-
-            $stmtUsr = $db->prepare("UPDATE usuario SET nombre = ?, email = ? WHERE id = ?");
-            if (!$stmtUsr) {
-                $db->rollback();
-                $consulta = false;
-                $mensaje = "Error al preparar la actualización de usuario.";
             } else {
-                $stmtUsr->bind_param("ssi", $nombreInput, $emailInput, $idUsuario);
-                if (!$stmtUsr->execute()) {
-                    $stmtUsr->close();
+                // No es profesor, procedemos a actualizar los campos
+                $db->autocommit(false);
+                $db->begin_transaction();
+
+                $stmtUsr = $db->prepare("UPDATE usuario SET nombre = ?, email = ? WHERE id = ?");
+                if (!$stmtUsr) {
                     $db->rollback();
                     $consulta = false;
-                    $mensaje = "Error al actualizar los datos del usuario.";
+                    $mensaje = "Error al preparar la actualización de usuario.";
                 } else {
-                    $stmtUsr->close();
-
-                    $stmtDelRol = $db->prepare("DELETE FROM usuario_rol WHERE id_usuario = ?");
-                    if (!$stmtDelRol) {
+                    $stmtUsr->bind_param("ssi", $nombreInput, $emailInput, $idUsuario);
+                    if (!$stmtUsr->execute()) {
+                        $stmtUsr->close();
                         $db->rollback();
                         $consulta = false;
-                        $mensaje = "Error al preparar la limpieza de roles.";
+                        $mensaje = "Error al actualizar los datos del usuario.";
                     } else {
-                        $stmtDelRol->bind_param("i", $idUsuario);
-                        if (!$stmtDelRol->execute()) {
-                            $stmtDelRol->close();
+                        $stmtUsr->close();
+
+                        $stmtDelRol = $db->prepare("DELETE FROM usuario_rol WHERE id_usuario = ?");
+                        if (!$stmtDelRol) {
                             $db->rollback();
                             $consulta = false;
-                            $mensaje = "Error al eliminar roles anteriores.";
+                            $mensaje = "Error al preparar la limpieza de roles.";
                         } else {
-                            $stmtDelRol->close();
-
-                            $idRol = intval($DatosFormulario["rol"] ?? 0);
-                            $stmtInsRol = $db->prepare("INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)");
-                            if (!$stmtInsRol) {
+                            $stmtDelRol->bind_param("i", $idUsuario);
+                            if (!$stmtDelRol->execute()) {
+                                $stmtDelRol->close();
                                 $db->rollback();
                                 $consulta = false;
-                                $mensaje = "Error al preparar la asignación de rol.";
+                                $mensaje = "Error al eliminar roles anteriores.";
                             } else {
-                                $stmtInsRol->bind_param("ii", $idUsuario, $idRol);
-                                if (!$stmtInsRol->execute()) {
-                                    $stmtInsRol->close();
+                                $stmtDelRol->close();
+
+                                $idRol = intval($DatosFormulario["rol"] ?? 0);
+                                $stmtInsRol = $db->prepare("INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)");
+                                if (!$stmtInsRol) {
                                     $db->rollback();
                                     $consulta = false;
-                                    $mensaje = "Error al asignar el rol al usuario.";
+                                    $mensaje = "Error al preparar la asignación de rol.";
                                 } else {
-                                    $stmtInsRol->close();
-                                    $db->commit();
-                                    $db->autocommit(true);
-                                    $consulta = true;
+                                    $stmtInsRol->bind_param("ii", $idUsuario, $idRol);
+                                    if (!$stmtInsRol->execute()) {
+                                        $stmtInsRol->close();
+                                        $db->rollback();
+                                        $consulta = false;
+                                        $mensaje = "Error al asignar el rol al usuario.";
+                                    } else {
+                                        $stmtInsRol->close();
+                                        $db->commit();
+                                        $db->autocommit(true);
+                                        $consulta = true;
+                                    }
                                 }
                             }
                         }
@@ -164,11 +221,8 @@ if (!$resultado){
                 }
             }
         }
-        
     }
 }
-
-
 ?>
 <html>
     <head>

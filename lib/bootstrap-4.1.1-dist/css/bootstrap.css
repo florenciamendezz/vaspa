@@ -558,12 +558,6 @@ pre code {
     padding-left: 15px;
     margin-right: auto;
     margin-left: auto;
-    /* Estilos UARGFlow */
-    background-color: #fff;
-    box-shadow: 0 0 10px rgba(0,0,0,.1);
-    margin-top: 15px;
-    padding-bottom: 15px;
-    padding-top: 15px;
 }
 
 @media (min-width: 576px) {
@@ -3945,7 +3939,7 @@ input[type="button"].btn-block {
     justify-content: space-between;
     padding: 0.5rem 1rem;
     /* UARGFlow BS */
-    border-bottom: 5px solid #17a2b8;
+    border-bottom: 4px solid #9ab300;
 }
 
 .navbar > .container,

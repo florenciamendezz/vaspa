@@ -62,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     } elseif ($programaPdf->getAprobadoVa() === null) {
                         // Está en manos de VA (primer paso)
                         $rolRevisor = "Vinculación Académica";
+                        $emailRevisor = notificacionCircuitoVaspa::obtenerDestinatariosVA();
                     } elseif ($programaPdf->getAprobadoDepto() === null) {
                         // Está en manos de Departamento.
                         // Obtener el departamento de la asignatura para saber a qué email enviar
@@ -72,8 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             $idDepto = $rowAD['idDepartamento'];
                             
                             include_once '../lib/funcionesUtiles/constantesMail.php';
-                            $deptoCNE = ['6', '7', '8', '11'];
-                            if (in_array($idDepto, $deptoCNE)) {
+                            if (in_array((string) $idDepto, ['1', '6', '7', '8', '11'], true)) {
                                 $emailRevisor = MAIL_DEPTO_CNE;
                             } else {
                                 $emailRevisor = MAIL_DEPTO_CS;
@@ -83,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     } elseif ($programaPdf->getAprobadoVaFirma() === null) {
                         // Está en manos de VA (firma final)
                         $rolRevisor = "Vinculación Académica (Firma Final)";
+                        $emailRevisor = notificacionCircuitoVaspa::obtenerDestinatariosVA();
                     }
                     
                     // Llamamos a la función de notificación para cada uno de los responsables

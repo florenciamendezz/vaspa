@@ -2,6 +2,7 @@
 include_once '../lib/ControlAcceso.Class.php';
 ControlAcceso::verificaLogin();
 ControlAcceso::requiereCsrf();
+include_once '../lib/notificacionesMail/constantesMail.php';
 include_once '../modeloSistema/ProgramaPDFDetalle.Class.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['idPrograma'])) {
@@ -36,12 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['idPrograma'])) {
     } elseif ($rolNombre === 'Profesor') {
         $db = BDConexionSistema::getInstancia();
         $stmtProf = $db->prepare("SELECT p.id FROM profesor p 
-                                  LEFT JOIN asignatura a ON a.idProfesor = p.id AND a.id = ?
                                   LEFT JOIN profesor_asignatura pa ON pa.idProfesor = p.id AND pa.idAsignatura = ?
-                                  LEFT JOIN asignatura_responsable ar ON ar.id_profesor = p.id AND ar.id_asignatura = ?
-                                  WHERE p.email = ? AND (a.id IS NOT NULL OR pa.idAsignatura IS NOT NULL OR ar.id_asignatura IS NOT NULL) LIMIT 1");
+                                  LEFT JOIN asignatura_responsable ar ON ar.idProfesor = p.id AND ar.idAsignatura = ?
+                                  WHERE p.email = ? AND (pa.idAsignatura IS NOT NULL OR ar.idAsignatura IS NOT NULL) LIMIT 1");
         if ($stmtProf) {
-            $stmtProf->bind_param("ssss", $idAsignatura, $idAsignatura, $idAsignatura, $email);
+            $stmtProf->bind_param("sss", $idAsignatura, $idAsignatura, $email);
             $stmtProf->execute();
             $resProf = $stmtProf->get_result();
             $esResponsable = ($resProf && $resProf->num_rows > 0);

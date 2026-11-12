@@ -4,6 +4,80 @@ Todos los cambios relevantes realizados en este proyecto (remediaciones de segur
 
 ---
 
+## [2026-11-12] — Rediseño Visual Institucional Estilo UNPA-UARG (`SIT UNPA-UARG`) y Corrección de Filtros de Selección
+
+### Modificado / Identidad Visual y Estilos
+- **`app/index.php`, `gui/navbar.php`, `gui/footer.php`, `lib/css/premium.css`, `vista/inicio.php`, `vista/asignaturas.departamentos.php` y `vista/asignaturas.profesores.php` (Modificados)**:
+  - Aplicada la identidad visual oficial de los sistemas de la **UNPA-UARG (`SIT UNPA-UARG`)**, siguiendo el diseño de referencia (`eRecibo UARG`):
+    - **Encabezado (`navbar`)**: Fondo carbón institucional (`#1d262d`), franja inferior verde lima (`border-bottom: 4px solid #9ab300`), marca `VASPA UARG` con subtítulo `SIT UNPA-UARG` y botones activos/hover en bloque verde lima (`#9ab300`).
+    - **Portada y Tarjetas (`.card-premium`, `.uarg-main-card`)**: Fondo de página gris claro (`#f2f2f2`), tarjetas blancas rectangulares con sombra suave, encabezados limpios en azul marino (`#003366`), subtítulos en azul celeste (`#0088cc`), aviso importante en rojo y botonera de acceso estilo UARG (`Manual` + Google Sign-In).
+    - **Pie de página (`footer`)**: Fondo `#1d262d` con borde superior verde lima (`#9ab300`), copyright `© Servicio de Informática y Telecomunicaciones (SIT) - UARG` y enlaces `Portal UARG :: Manual de Uso`.
+- **`app/salir.php`, `gui/navbar.php`, `gui/footer.php` y `lib/bootstrap-4.1.1-dist/css/bootstrap.css` (Corregidos)**:
+  - Eliminado el recuadro blanco duplicado en `.container` (`background-color: #fff; box-shadow: ...`) dentro de `bootstrap.css` y `premium.css`, que generaba un marco blanco extra alrededor de todas las tarjetas `.card-premium`.
+  - Corregido el `Warning: Undefined array key "usuario"` en `gui/footer.php` al visitar `app/salir.php` (donde la sesión ya fue destruida), y ocultado el cartel vacío `Conectad@ como` y el botón `Salir` en `gui/navbar.php` cuando no hay sesión activa.
+- **`vista/revisar.programas.php` y `vista/carreras.materias.php` (Modificados)**:
+  - Reestructurados los bloques de filtros de **Carrera** y **Plan de Estudio** dentro de un contenedor `.filtro-box` con grilla alineada (`row align-items-end`, `col-md-6`), etiquetas superiores de bloque (`d-block mb-2`) y controles `.selectpicker.form-control` de ancho completo (`100%`).
+- **`lib/css/premium.css` (Modificado)**:
+  - Añadidos estilos unificados para `.filtro-box`, etiquetas de filtros y botones desplegables de `.bootstrap-select > .dropdown-toggle` (altura uniforme de `42px`, bordes redondeados de `10px`, borde `#cbd5e1`, sombra sutil y anillo de foco `#6366f1`), además de estilos de respaldo para `<select>` nativos.
+- **Reemplazo de CDN externo por librerías locales en 14 vistas (`vista/*.php`) y ajuste de CSP (`.htaccess`)**:
+  - Detectado que la cabecera `Content-Security-Policy` de `.htaccess` bloqueaba la carga de `popper.min.js` y `bootstrap-select` desde `cdnjs.cloudflare.com`, provocando que los selectores se renderizaran como `<select>` nativos sin estilos y desalineados.
+  - Reemplazadas las referencias CDN por las copias locales `../lib/popper/popper.min.js`, `../lib/bootstrap-select/bootstrap-select.min.css` y `../lib/bootstrap-select/bootstrap-select.min.js` en `vista/revisar.programas.php`, `vista/panelVA.php`, `vista/carreras.materias.php`, `vista/informeGerencial.programas.php`, `vista/asignatura.equipoCatedra.php`, `vista/asignaturas.correlativas.php`, `vista/asignaturas.departamentos.php`, `vista/asignaturas.profesores.php`, `vista/monitoreo.circuito.php`, `vista/plan.asignaturas.php`, `vista/programa.formulario.cargaMasiva.php`, `vista/programa.procesar.cargaMasiva.php`, `vista/programa.seguirPdf.php`, `vista/subir.programa.formulario.php` y `vista/visualizar.programaPdf.listar.ubicacion.php`.
+  - Actualizada la directiva `Content-Security-Policy` en `.htaccess` para permitir también `https://cdnjs.cloudflare.com` y `https://www.gstatic.com` (requerido por Google Charts en Informe Gerencial).
+
+### Verificación
+- **Linting PHP (`php -l`)**: 0 errores de sintaxis en las vistas modificadas.
+- **Suite Automatizada E2E**: Verificada la navegación y el circuito de revisión de programas sin regresiones.
+
+---
+
+## [2026-11-05] — Mejora Funcional: Envío Automático del Programa Aprobado en el Último Paso a Educación a Distancia / Rectorado (`rfarias@unpa.edu.ar`) y Biblioteca (`biblioteca@uarg.unpa.edu.ar`)
+
+### Modificado / Notificaciones del Circuito
+- **`lib/notificacionesMail/constantesMail.php`, `lib/funcionesUtiles/constantesMail.php` y `.env.example` (Modificados)**:
+  - Definidas las constantes `MAIL_EDUCACION_DISTANCIA` (por defecto `rfarias@unpa.edu.ar`) y `MAIL_BIBLIOTECA` (por defecto `biblioteca@uarg.unpa.edu.ar`), configurables mediante variables de entorno `MAIL_EDUCACION_DISTANCIA_USER` y `MAIL_BIBLIOTECA_USER`.
+- **`lib/notificacionesMail/notificacionCircuitoVaspa.php` (Modificado)**:
+  - Añadido soporte en `enviarCorreo()` para adjuntar el archivo PDF físico (`$mail->addAttachment()`) del programa aprobado.
+  - Añadido `obtenerDestinatariosFinales()` y actualizado `notificarAprobacionFinal()` (invocado en el último paso cuando Vinculación Académica confirma la firma final) para que, además de notificar al profesor responsable, envíe el programa aprobado (con el PDF adjunto y enlace de descarga) a **Educación a Distancia / Rectorado** (`rfarias@unpa.edu.ar`) y **Biblioteca** (`biblioteca@uarg.unpa.edu.ar`).
+- **`lib/notificacionesMail/notificacionProgramaAprobadoDesaprobado.php` (Modificado)**:
+  - Actualizado `enviarNotificacionProfesor()` en el flujo legacy para despachar también el aviso de programa aprobado a `rfarias@unpa.edu.ar` y `biblioteca@uarg.unpa.edu.ar`.
+- **`vista/revisar.programa.pdf.php` y `controlSistema/programa.revisar.actualizar.estado.pdf.php` (Modificados)**:
+  - Actualizado el texto del modal de **Confirmar Aprobación Final** y el mensaje de éxito para informar explícitamente que el programa aprobado se envía al docente responsable, a Educación a Distancia / Rectorado (`rfarias@unpa.edu.ar`) y a Biblioteca (`biblioteca@uarg.unpa.edu.ar`), mostrando dinámicamente los correos configurados en `.env`.
+- **`controlSistema/programa.enviar.revision.php` y `controlSistema/programa.revisar.actualizar.estado.pdf.php` (Corregidos)**:
+  - Corregidos los nombres de columnas en la consulta de validación de profesor responsable (`ar.idProfesor` y `ar.idAsignatura` en `asignatura_responsable`, y eliminado `a.idProfesor` inexistente en `asignatura`).
+- **`controlSistema/programa.enviar.revision.php`, `controlSistema/programa.actualizar.pdf.php`, `controlSistema/programa.revisar.actualizar.estado.pdf.php` y `lib/consultaAjax/revisarPrograma/tablaProgramasAsignaturas.php` (Corregidos)**:
+  - Añadida la inclusión explícita de `constantesMail.php` antes de evaluar `MAIL_DEPTO_CS` / `MAIL_DEPTO_CNE` en la validación de jurisdicción del Director de Departamento (evitando que `defined('MAIL_DEPTO_CS')` diera `false` y asignara por error el departamento `1` al Director de Ciencias Sociales `2`).
+  - Corregido también el filtro de departamento en `tablaProgramasAsignaturas.php` (`DCNE = 1`, `DCS = 2`).
+
+### Verificación
+- **Linting PHP (`php -l`)**: 0 errores de sintaxis en los 6 archivos modificados.
+- **Verificación de destinatarios**: `notificacionCircuitoVaspa::obtenerDestinatariosFinales()` devuelve `rfarias@unpa.edu.ar, biblioteca@uarg.unpa.edu.ar`.
+
+---
+
+## [2026-11-05] — Mejora Funcional: Soporte de Múltiples Correos Institucionales (mínimo 2) para el Rol Vinculación Académica (Secretaría + Vinculación)
+
+### Modificado / Funcionalidad y Notificaciones
+- **`app/usuario.crear.php` y `app/usuario.modificar.php` (Modificados)**:
+  - Al seleccionar el rol **Vinculación Académica** (`id_rol = 11`), la interfaz despliega dinámicamente un segundo campo obligatorio de correo institucional (`@uarg.unpa.edu.ar`) junto con la opción de agregar correos institucionales adicionales (`+ Agregar otro email institucional`), dado que este usuario representa tanto a **Secretaría Académica** como a **Vinculación Académica**.
+  - En `usuario.modificar.php`, los correos institucionales guardados se desglosan automáticamente en los campos correspondientes al editar el usuario.
+- **`app/usuario.crear.procesar.php` y `app/usuario.modificar.procesar.php` (Modificados)**:
+  - Validación de negocio en servidor: para el rol **Vinculación Académica** se exige que se ingresen **al menos 2 correos institucionales distintos** con dominio `@uarg.unpa.edu.ar`.
+  - Verificación de unicidad individual de cada correo ingresado contra todos los correos existentes en la tabla `usuario` (evitando colisiones parciales o totales) y almacenamiento normalizado separado por comas en `usuario.email`.
+- **`app/usuario.ver.php` (Modificado)**:
+  - Visualización estructurada en lista (`<ul><li>`) cuando el usuario posee múltiples correos institucionales asociados.
+- **`lib/ControlAcceso.Class.php` (Modificado)**:
+  - Actualizado `UsuarioSesion::buscarUsuarioBd()` para permitir que un usuario con múltiples correos institucionales registrados (separados por coma o punto y coma en `usuario.email`) pueda autenticarse e iniciar sesión con cualquiera de sus correos institucionales configurados.
+- **`lib/notificacionesMail/notificacionCircuitoVaspa.php` y `controlSistema/programa.aviso.manual.php` (Modificados)**:
+  - Añadidos los métodos `normalizarDestinatarios()` y `obtenerDestinatariosVA()` en `notificacionCircuitoVaspa`, que recopilan todos los correos configurados en `MAIL_SA` y todos los correos asociados al rol **Vinculación Académica** (`id_rol = 11`) en la base de datos, agregando cada dirección mediante `$mail->addAddress()` en los envíos a Vinculación Académica / Secretaría Académica.
+- **`tests/e2e/specs/06-operaciones-crud.spec.js` (Modificado)**:
+  - Añadido caso de prueba automatizado `CP-E2E-26B` que verifica la obligatoriedad de al menos 2 correos institucionales para el rol Vinculación Académica, el alta exitosa y el inicio de sesión efectivo con ambos correos institucionales (`secretaria.qa@uarg.unpa.edu.ar` y `vinculacion.qa@uarg.unpa.edu.ar`).
+
+### Verificación
+- **Linting PHP (`php -l`)**: 0 errores de sintaxis en los 8 archivos PHP intervenidos.
+- **Suite Automatizada E2E (`specs/06-operaciones-crud.spec.js`)**: Ejecutados los 11 tests del módulo CRUD (incluyendo `CP-E2E-26B`) con 100% de aprobación.
+
+---
+
 ## [2026-11-04] — Post-Fase 4: Instalación Efectiva de Dependencias Composer (`vendor/`), Actualización de jQuery 3.7.1 y Limpieza (`SEC-013`)
 
 ### Modificado / Seguridad y Dependencias

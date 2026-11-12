@@ -26,7 +26,12 @@ function sendemail($mail_username, $mail_userpassword, $mail_addAddress, $mail_s
 	//$mail->setFrom($mail_setFromEmail, $mail_setFromName);//Introduzca la dirección de la que debe aparecer el correo electrónico. Puede utilizar cualquier dirección que el servidor SMTP acepte como válida. El segundo parámetro opcional para esta función es el nombre que se mostrará como el remitente en lugar de la dirección de correo electrónico en sí.
         $mail->FromName = "Sistema VASPA";
 	//$mail->addReplyTo($mail_setFromEmail, $mail_setFromName);//Introduzca la dirección de la que debe responder. El segundo parámetro opcional para esta función es el nombre que se mostrará para responder
-	$mail->addAddress($mail_addAddress);   // Agregar quien recibe el e-mail enviado
+	foreach (preg_split('/[,;]+/', (string) $mail_addAddress) as $correoDest) {
+		$correoLimpio = trim($correoDest);
+		if ($correoLimpio !== '') {
+			$mail->addAddress($correoLimpio);
+		}
+	}
 	$message = utf8_decode($mensaje);
 	$mail->isHTML(true);  // Establecer el formato de correo electrónico en HTML
 	
@@ -110,4 +115,19 @@ function enviarNotificacionProfesor($idPrograma) {
     $mail_subject = "Resultado de la revisión del programa de: {$asignatura->getId()} - $nombreAsignatura";
 
     sendemail($mail_username, $mail_userpassword, $mail_addAddress, $mail_subject, $mensaje); //Enviar el correo
+
+    // Si el programa fue aprobado definitivamente, enviar también a Educación a Distancia / Rectorado y Biblioteca
+    if ($aprobado === 'aprobado') {
+        $mailEdDistancia = defined('MAIL_EDUCACION_DISTANCIA') && MAIL_EDUCACION_DISTANCIA !== '' ? MAIL_EDUCACION_DISTANCIA : 'rfarias@unpa.edu.ar';
+        $mailBiblioteca = defined('MAIL_BIBLIOTECA') && MAIL_BIBLIOTECA !== '' ? MAIL_BIBLIOTECA : 'biblioteca@uarg.unpa.edu.ar';
+        $destinatariosFinales = $mailEdDistancia . ', ' . $mailBiblioteca;
+        $asuntoAreas = "VASPA: Programa analítico aprobado disponible ({$asignatura->getId()} - {$nombreAsignatura})";
+        $mensajeAreas = '<html><body><div>'
+            . '<p>Estimados/as referentes de Educaci&oacute;n a Distancia / Rectorado y Biblioteca,</p>'
+            . '<p>Se informa que el programa anal&iacute;tico de la asignatura <b>' . $asignatura->getId() . ' - ' . $asignatura->getNombre() . '</b> (A&ntilde;o ' . $programa->getAnio() . ') ha sido aprobado definitivamente en el Sistema VASPA.</p>'
+            . '<p>Puede consultarse y descargarse desde el <a href="' . Constantes::HOMEURL . '">Sistema VASPA</a>.</p>'
+            . '<br><p>Saludos,<br>Sistema VASPA</p>'
+            . '</div></body></html>';
+        sendemail($mail_username, $mail_userpassword, $destinatariosFinales, $asuntoAreas, $mensajeAreas);
+    }
 }

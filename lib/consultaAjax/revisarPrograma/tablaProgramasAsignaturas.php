@@ -10,6 +10,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR . $path);
 
 include_once '../../../lib/ControlAcceso.Class.php';
 ControlAcceso::verificaLogin();
+include_once '../../../lib/notificacionesMail/constantesMail.php';
 
 include_once '../../../modeloSistema/BDConexionSistema.Class.php';
 include '../../../modeloSistema/Carrera.Class.php';
@@ -276,10 +277,10 @@ if (isset($_POST['codCarrera'])){
                 } elseif ($rol == 'DCNE' || $rol == 'DCS' || $rol == 'Director de Departamento' || $rol == 10) {
                     // Departamento: en_revision = 1 y aprobado_va = 1 y aprobado_depto IS NULL
                     if ($data['enRevision'] == 1 && $data['aprobadoVa'] == 1 && $data['aprobadoDepto'] === null && $data['fueDesaprobado'] == 0) {
-                        // Filtrar por ID de Departamento del docente si corresponde
-                        if ($rol == 'DCNE' && $asignatura['idDepartamento'] != '2') {
+                        // Filtrar por ID de Departamento del docente si corresponde (1 = CNE, 2 = CS)
+                        if ($rol == 'DCNE' && $asignatura['idDepartamento'] != '1') {
                             $esPendiente = false;
-                        } elseif ($rol == 'DCS' && $asignatura['idDepartamento'] != '1') {
+                        } elseif ($rol == 'DCS' && $asignatura['idDepartamento'] != '2') {
                             $esPendiente = false;
                         } else {
                             $esPendiente = true;

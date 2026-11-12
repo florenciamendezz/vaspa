@@ -24,31 +24,32 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
 
         <title><?php echo Constantes::NOMBRE_SISTEMA; ?> - Bienvenida</title>
         
-        <!-- Google Fonts Outfit y Estilos Premium -->
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="../lib/css/premium.css" />
         <style>
             .card-welcome {
-                background: rgba(255, 255, 255, 0.95);
-                border: 1px solid rgba(0, 0, 0, 0.08);
-                border-radius: 16px;
-                box-shadow: 0 10px 30px -10 rgba(0, 0, 0, 0.1);
-                font-family: 'Outfit', sans-serif;
+                background: #ffffff;
+                border: 1px solid #dcdcdc;
+                border-radius: 10px;
+                box-shadow: 0 6px 22px rgba(0, 0, 0, 0.09);
+                font-family: 'Roboto', sans-serif;
+                margin-top: 1.5rem;
+                margin-bottom: 2rem;
             }
             .card-welcome-header {
-                background: linear-gradient(135deg, #1e293b, #0f172a);
+                background: linear-gradient(135deg, #1d262d 0%, #263238 100%);
                 color: #ffffff;
-                border-top-left-radius: 15px;
-                border-top-right-radius: 15px;
+                border-bottom: 3px solid #9ab300;
+                border-top-left-radius: 9px;
+                border-top-right-radius: 9px;
                 padding: 1.5rem 2rem;
             }
-            /* Estilos premium para Navbar y Footer específicos */
             .navbar-premium {
-                background-color: #0f172a !important;
-                font-family: 'Outfit', sans-serif;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                padding: 0.6rem 1.5rem;
+                background-color: #1d262d !important;
+                font-family: 'Roboto', sans-serif;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                border-bottom: 4px solid #9ab300 !important;
+                padding: 0.65rem 1.5rem;
             }
             .navbar-premium .container {
                 background: transparent !important;
@@ -58,42 +59,51 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
             .navbar-premium .navbar-brand {
                 font-weight: 700;
                 font-size: 1.35rem;
-                letter-spacing: -0.02em;
-                color: #f8fafc !important;
+                color: #ffffff !important;
                 display: inline-flex;
                 align-items: center;
-                gap: 0.5rem;
+                gap: 0.65rem;
                 background: transparent !important;
                 border: none !important;
                 box-shadow: none !important;
             }
+            .navbar-premium .brand-text-wrap {
+                display: flex;
+                flex-direction: column;
+                line-height: 1.15;
+            }
+            .navbar-premium .brand-sub {
+                font-size: 0.72rem;
+                font-weight: 400;
+                color: #9ba6ae;
+            }
             .footer-premium {
-                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-                font-family: 'Outfit', sans-serif;
-                border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-                color: #94a3b8 !important;
-                height: 55px;
-                line-height: 53px;
+                background: #1d262d !important;
+                font-family: 'Roboto', sans-serif;
+                border-top: 4px solid #9ab300 !important;
+                box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+                color: #e2e8f0 !important;
+                height: 58px;
+                line-height: 54px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 gap: 0.5rem;
-                font-size: 0.9rem;
+                font-size: 0.95rem;
                 font-weight: 500;
-            }
-            .footer-premium img {
-                filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.4));
             }
         </style>
     </head>
     <body>
         
         <nav class="navbar navbar-expand-lg navbar-dark navbar-premium">
-            <div class="container align-items-center">
+            <div class="container align-items-center justify-content-between">
                 <a class="navbar-brand" href="#">
                     <img src="../lib/img/VASPA_isotipo.png" width="40" height="30" class="d-inline-block align-top" alt="">
-                    &nbsp;&nbsp;<?php echo Constantes::NOMBRE_SISTEMA; ?>
+                    <span class="brand-text-wrap">
+                        <span><?php echo Constantes::NOMBRE_SISTEMA; ?> UARG</span>
+                        <span class="brand-sub">SIT UNPA-UARG</span>
+                    </span>
                 </a>
             </div>
         </nav>
@@ -104,9 +114,8 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                     <h3 class="mb-0 font-weight-bold"><?php echo Constantes::NOMBRE_SISTEMA; ?> - Bienvenida</h3>
                 </div>
 
-                <div class="card-body">
+                <div class="card-body p-4">
                     <?php
-                            // Verificamos si hubo un fallo de autenticación (usuario no registrado o campos vacíos)
                             if (!empty($_SESSION['auth_error']) || (isset($_SESSION['usuario']) && $_SESSION['usuario'] == "")) {
 
                                 echo '<p><div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
@@ -117,10 +126,10 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                                       </div></p>';
                                 unset($_SESSION['auth_error']);
                                 unset($_SESSION['usuario']);
-                                session_destroy(); // destruimos la session para evitar que vuelva a mostrar el alert
+                                session_destroy();
                             }
                     ?>
-                    <p>Estimado usuario: Bienvenido al <b>Sistema</b> para la <b>V</b>isualizaci&oacute;n
+                    <p style="font-size: 1.02rem;">Estimado usuario: Bienvenido al <b>Sistema</b> para la <b>V</b>isualizaci&oacute;n,
                         <b>A</b>dministraci&oacute;n y <b>S</b>eguimiento de <b>P</b>rogramas de 
                         <b>A</b>signaturas <b>(VASPA)</b>,
                         una aplicaci&oacute;n desarrollada en la UARG - UNPA.</p>  
@@ -129,11 +138,11 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                     <div class="row">
                         <div class="col-md-12 mb-4">                                
                             <form action="visualizar.programa.listar.php" method="post"> 
-                                <div class="card card-premium">
+                                <div class="card card-premium mt-2 mb-2">
                                     
                                     <div class="card-header card-header-premium">
                                         <h5 class="mb-0"><span class="oi oi-magnifying-glass mr-2"></span> Visualizar Programa de Asignatura</h5>
-                                        <p class="mb-0 mt-2 text-white" style="opacity: 0.85;">
+                                        <p class="mb-0 mt-2 text-white" style="opacity: 0.9;">
                                             Seleccione A&ntilde;o y Carrera.
                                         </p>
                                     </div>
@@ -141,8 +150,7 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                                     <div class="card-body text-dark">
                                         <div class="form-group">
                                             <label for="selectAnio" class="font-weight-bold">A&ntilde;o</label>
-                                            <br>
-                                            <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="anio" id="selectAnio" title="Seleccione un a&ntilde;o" required="" data-size="7" data-container="body">
+                                            <select class="selectpicker show-tick form-control" data-live-search="true" data-width="100%" name="anio" id="selectAnio" title="Seleccione un a&ntilde;o" required="" data-size="7" data-container="body">
                                                 <?php for ($i = date('Y'); $i >= 2011; $i--) { ?>
                                                     <option value="<?= $i; ?>"><?= $i; ?></option>
                                                 <?php } ?>
@@ -150,8 +158,7 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                                         </div>
                                         <div class="form-group">
                                             <label for="selectCarrera" class="font-weight-bold">Carrera</label>
-                                            <br>
-                                            <select class="selectpicker show-tick" data-live-search="true" data-width="100%" name="idCarrera" id="selectCarrera" title="Seleccione una carrera" required="" data-size="7" data-container="body">
+                                            <select class="selectpicker show-tick form-control" data-live-search="true" data-width="100%" name="idCarrera" id="selectCarrera" title="Seleccione una carrera" required="" data-size="7" data-container="body">
                                             </select>
                                         </div>
                                         <div id="programasAsignaturas"></div>
@@ -163,7 +170,7 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
 
                     <div class="row">
                         <div class="col-md-12 mb-4">
-                            <div class="card card-premium">
+                            <div class="card card-premium mt-0 mb-2">
                                 <div class="card-header card-header-premium">
                                     <h5 class="card-title mb-0"><span class="oi oi-account-login mr-2"></span> Ingreso al Sistema</h5>
                                 </div>
@@ -193,7 +200,7 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                             </div>
                             <div id="collapseLoginPruebas" class="collapse">
                                 <div class="card-body">
-                                    <p class="text-muted" style="font-size: 0.85rem;">
+                                    <p class="text-muted" style="font-size: 0.9rem;">
                                         <strong>[ENTORNO DE PRUEBAS]</strong> Utilice estos accesos rápidos para simular inicios de sesión sin necesidad del login de Google.
                                     </p>
                                     <form id="formLoginPruebas" method="POST" action="index.php">
@@ -201,7 +208,6 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                                         <input type="hidden" name="nombre" id="nombrePrueba">
                                     </form>
                                     <script>
-                                        // Función de autenticación simulada de prueba (Eliminar en producción)
                                         function iniciarSesionPrueba(email, nombre) {
                                             document.getElementById('emailPrueba').value = email;
                                             document.getElementById('nombrePrueba').value = nombre;
@@ -254,10 +260,10 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
         </div>
     </div>
         
-         <footer class="footer footer-premium">
+        <footer class="footer footer-premium">
             <?php echo Constantes::NOMBRE_SISTEMA; ?> 
-            <img src="../lib/img/VASPA_isotipo.png" width="25" height="20"  alt="">
-             UNPA-UARG
+            <img src="../lib/img/VASPA_isotipo.png" width="25" height="20" alt="">
+            &copy; Servicio de Inform&aacute;tica y Telecomunicaciones (SIT) - UNPA-UARG
         </footer>
         
         <script type="text/javascript">$('.selectpicker').selectpicker({
@@ -268,13 +274,11 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                 
         <script>
             $(document).ready(function(){
-                // Corrección del Stacking Context para modales de Bootstrap
                 $(document).on('show.bs.modal', '.modal', function () {
                     $(this).appendTo('body');
                 });
 
-                  // actualiza la lista carreras
-                  $('#selectAnio').change(function () {
+                $('#selectAnio').change(function () {
                     var anio = $('#selectAnio').val();
                     $("#programasAsignaturas").html('');
                     if (!anio) {
@@ -292,11 +296,9 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                     .fail(function(){
                       alert('Hubo un error al cargar las carreras')
                     });
-                  });
+                });
                   
-                  // Envia por ajax el año y la carrera para luego obtener una tabla con los programas de asignaturas para el año y carrera seleccionados
-                  $('#selectCarrera').change(function () {
-                    // Recuperamos el anio y la carrera
+                $('#selectCarrera').change(function () {
                     var anio = $('#selectAnio').val();
                     var idCarrera = $('#selectCarrera').val();
                     
@@ -317,14 +319,8 @@ include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
                     .fail(function(){
                       alert('Hubo un error al cargar los programas de asignaturas.')
                     });
-                  });
-                  
-              });
-    </script>
-    
- 
-    
+                });
+            });
+        </script>
     </body>
-</html>
-  </body>
 </html>

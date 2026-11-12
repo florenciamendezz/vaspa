@@ -212,12 +212,17 @@ class UsuarioSesion {
 
     public function buscarUsuarioBd() {
         $db = BDConexion::getInstancia();
-        $stmt = $db->prepare("SELECT id, nombre FROM " . Constantes::BD_USERS . ".usuario WHERE email = ? LIMIT 1");
+        $emailBuscado = strtolower(trim((string) $this->email));
+        if ($emailBuscado === '') {
+            return null;
+        }
+
+        $stmt = $db->prepare("SELECT id, nombre FROM " . Constantes::BD_USERS . ".usuario WHERE LOWER(TRIM(email)) = ? LIMIT 1");
         if (!$stmt) {
             error_log("Error al preparar buscarUsuarioBd: " . $db->error);
             return null;
         }
-        $stmt->bind_param("s", $this->email);
+        $stmt->bind_param("s", $emailBuscado);
         $stmt->execute();
         $this->datos = $stmt->get_result();
         $row = $this->datos ? $this->datos->fetch_assoc() : null;
@@ -227,6 +232,28 @@ class UsuarioSesion {
             $this->nombre = $row['nombre'];
             return (int) $row['id'];
         }
+
+        // Soporte para usuarios con múltiples correos institucionales (ej. rol Vinculación Académica: Secretaría + Vinculación)
+        $stmtMulti = $db->prepare("SELECT id, nombre, email FROM " . Constantes::BD_USERS . ".usuario WHERE email LIKE ? OR email LIKE ?");
+        if ($stmtMulti) {
+            $likeComa = '%,%';
+            $likePuntoComa = '%;%';
+            $stmtMulti->bind_param("ss", $likeComa, $likePuntoComa);
+            $stmtMulti->execute();
+            $resMulti = $stmtMulti->get_result();
+            if ($resMulti) {
+                while ($fila = $resMulti->fetch_assoc()) {
+                    $correosUsuario = array_filter(array_map('strtolower', array_map('trim', preg_split('/[,;]+/', (string) $fila['email']))));
+                    if (in_array($emailBuscado, $correosUsuario, true)) {
+                        $stmtMulti->close();
+                        $this->nombre = $fila['nombre'];
+                        return (int) $fila['id'];
+                    }
+                }
+            }
+            $stmtMulti->close();
+        }
+
         return null;
     }
 

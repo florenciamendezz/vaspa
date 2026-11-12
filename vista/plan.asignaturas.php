@@ -54,14 +54,14 @@ if ($resAsig) {
     <link rel="stylesheet" href="../lib/bootstrap-4.1.1-dist/css/bootstrap.css" />
     <link rel="stylesheet" href="../lib/open-iconic-master/font/css/open-iconic-bootstrap.css" />
     <link rel="stylesheet" href="../lib/datatable/dataTables.bootstrap4.min.css" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.8/css/bootstrap-select.min.css" rel="stylesheet"/>
+    <link href="../lib/bootstrap-select/bootstrap-select.min.css" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../lib/css/premium.css" />
 
     <script type="text/javascript" src="../lib/JQuery/jquery-3.3.1.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="../lib/popper/popper.min.js"></script>
     <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.8/js/bootstrap-select.min.js"></script>
+    <script src="../lib/bootstrap-select/bootstrap-select.min.js"></script>
     <script type="text/javascript" src="../lib/datatable/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="../lib/datatable/dataTables.bootstrap4.min.js"></script>
     <script src="../lib/bootbox/bootbox.js"></script>

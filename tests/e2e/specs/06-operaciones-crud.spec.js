@@ -262,4 +262,51 @@ test.describe('Módulo 06: Operaciones CRUD y Validaciones de Formularios', () =
     await monitor.tomarCaptura('validacion_solo_texto_profesor');
   });
 
+  test('CP-E2E-26B: Rol Vinculación Académica exige y acepta al menos 2 correos institucionales (Secretaría + Vinculación)', async ({ page }) => {
+    const monitor = crearMonitor(page, 'CP-E2E-26B');
+    const u = USUARIOS_PRUEBA.admin;
+
+    await iniciarSesionComo(page, u.email, u.nombre);
+    await page.goto('app/usuario.crear.php');
+    await page.waitForLoadState('networkidle');
+
+    await page.fill('input#inputNombre', 'TEST_E2E_VA_Secretaria_Vinculacion');
+    await page.fill('input#inputMail', 'secretaria.qa@uarg.unpa.edu.ar');
+
+    // Seleccionar el rol Vinculación Académica (value="11")
+    const radioVA = page.locator('input[name="rol"][value="11"]');
+    await radioVA.check({ force: true });
+
+    // Verificar que se despliegue el bloque de segundo correo institucional y sea obligatorio
+    const inputMail2 = page.locator('input#inputMail2');
+    await expect(inputMail2).toBeVisible();
+    await expect(inputMail2).toHaveAttribute('required', '');
+
+    // Completar el segundo correo institucional
+    await inputMail2.fill('vinculacion.qa@uarg.unpa.edu.ar');
+
+    await monitor.tomarCaptura('formulario_va_dos_mails_institucionales');
+
+    await page.click('button[type="submit"]');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page).toHaveURL(/usuario\.crear\.procesar\.php|usuarios\.php/);
+    await expect(page.locator('body')).toContainText(/Operación realizada con éxito/i);
+
+    // Cerrar sesión como admin y verificar que AMBOS correos institucionales pueden iniciar sesión como Vinculación Académica
+    await page.goto('app/salir.php');
+    await page.waitForLoadState('networkidle');
+
+    await iniciarSesionComo(page, 'secretaria.qa@uarg.unpa.edu.ar', 'TEST_E2E_VA_Secretaria_Vinculacion');
+    await expect(page).toHaveURL(/vista\/inicio\.php/);
+
+    await page.goto('app/salir.php');
+    await page.waitForLoadState('networkidle');
+
+    await iniciarSesionComo(page, 'vinculacion.qa@uarg.unpa.edu.ar', 'TEST_E2E_VA_Secretaria_Vinculacion');
+    await expect(page).toHaveURL(/vista\/inicio\.php/);
+
+    await monitor.tomarCaptura('login_va_segundo_mail_institucional_exitoso');
+  });
+
 });

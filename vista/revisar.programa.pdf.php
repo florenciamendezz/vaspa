@@ -513,8 +513,13 @@ if ($circuito == 'estandar') {
                             <p style="font-size: 1.1rem;">
                                 ¿Estás seguro de confirmar la aprobación final de esta asignatura? Esto finalizará el circuito y el programa quedará oficialmente aprobado.
                             </p>
+                            <?php
+                            include_once '../lib/notificacionesMail/constantesMail.php';
+                            $mailEdDistMostrar = defined('MAIL_EDUCACION_DISTANCIA') && MAIL_EDUCACION_DISTANCIA !== '' ? MAIL_EDUCACION_DISTANCIA : 'rfarias@unpa.edu.ar';
+                            $mailBiblioMostrar = defined('MAIL_BIBLIOTECA') && MAIL_BIBLIOTECA !== '' ? MAIL_BIBLIOTECA : 'biblioteca@uarg.unpa.edu.ar';
+                            ?>
                             <p class="text-muted small">
-                                Se enviará una notificación automática por correo electrónico al profesor informándole sobre la aprobación final y adjuntando el enlace de descarga del PDF.
+                                Se enviará automáticamente el programa aprobado por correo electrónico al profesor responsable, a <b>Educación a Distancia / Rectorado</b> (<code><?= e($mailEdDistMostrar); ?></code>) y a <b>Biblioteca</b> (<code><?= e($mailBiblioMostrar); ?></code>).
                             </p>
                         </div>
                         <div class="modal-footer">

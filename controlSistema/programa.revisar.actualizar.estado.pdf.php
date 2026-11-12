@@ -1,5 +1,6 @@
 <?php
 include_once '../lib/ControlAcceso.Class.php';
+include_once '../lib/notificacionesMail/constantesMail.php';
 require_once '../modeloSistema/BDConexionSistema.Class.php';
 require_once '../modeloSistema/ProgramaPDFDetalle.Class.php';
 require_once '../modeloSistema/Asignatura.Class.php';
@@ -67,12 +68,11 @@ if ($rol === 'Director de Departamento') {
 } elseif ($rol === 'Profesor') {
     $db = BDConexionSistema::getInstancia();
     $stmtProf = $db->prepare("SELECT p.id FROM profesor p 
-                              LEFT JOIN asignatura a ON a.idProfesor = p.id AND a.id = ?
                               LEFT JOIN profesor_asignatura pa ON pa.idProfesor = p.id AND pa.idAsignatura = ?
-                              LEFT JOIN asignatura_responsable ar ON ar.id_profesor = p.id AND ar.id_asignatura = ?
-                              WHERE p.email = ? AND (a.id IS NOT NULL OR pa.idAsignatura IS NOT NULL OR ar.id_asignatura IS NOT NULL) LIMIT 1");
+                              LEFT JOIN asignatura_responsable ar ON ar.idProfesor = p.id AND ar.idAsignatura = ?
+                              WHERE p.email = ? AND (pa.idAsignatura IS NOT NULL OR ar.idAsignatura IS NOT NULL) LIMIT 1");
     if ($stmtProf) {
-        $stmtProf->bind_param("ssss", $idAsignatura, $idAsignatura, $idAsignatura, $email);
+        $stmtProf->bind_param("sss", $idAsignatura, $idAsignatura, $email);
         $stmtProf->execute();
         $resProf = $stmtProf->get_result();
         $esResponsable = ($resProf && $resProf->num_rows > 0);
@@ -181,8 +181,13 @@ if (isset($_POST["aprobarPrograma"])) {
     $esFirmaFinal = ($rol == 'Vinculación Académica' || $rol == 'Administrador') && ($programaPDF->getAprobadoDepto() == 1);
     
     if ($programaPDF->aprobar($rol)) {
+        if ($esFirmaFinal && file_exists($mailLib)) {
+            include_once $mailLib;
+        }
+        $mailEdDistTxt = (defined('MAIL_EDUCACION_DISTANCIA') && MAIL_EDUCACION_DISTANCIA !== '') ? e(MAIL_EDUCACION_DISTANCIA) : 'rfarias@unpa.edu.ar';
+        $mailBiblioTxt = (defined('MAIL_BIBLIOTECA') && MAIL_BIBLIOTECA !== '') ? e(MAIL_BIBLIOTECA) : 'biblioteca@uarg.unpa.edu.ar';
         $_SESSION['mensajeRevisarPrograma'] = '<div class="alert alert-success alert-dismissible fade show text-center" role="alert">
-            El programa de '.$datosAsig.' <b>fue Aprobado</b>.
+            El programa de '.$datosAsig.' <b>fue Aprobado</b>' . ($esFirmaFinal ? ' y enviado por correo al docente responsable, Educación a Distancia / Rectorado (<code>' . $mailEdDistTxt . '</code>) y Biblioteca (<code>' . $mailBiblioTxt . '</code>)' : '') . '.
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>

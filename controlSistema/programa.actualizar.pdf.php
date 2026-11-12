@@ -2,6 +2,7 @@
 include_once __DIR__ . '/../lib/ControlAcceso.Class.php';
 ControlAcceso::verificaLogin();
 ControlAcceso::requiereCsrf();
+include_once __DIR__ . '/../lib/notificacionesMail/constantesMail.php';
 include_once __DIR__ . '/../modeloSistema/ProgramaPDFDetalle.Class.php';
 include_once __DIR__ . '/../modeloSistema/Asignatura.Class.php';
 

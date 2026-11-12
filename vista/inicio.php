@@ -713,70 +713,89 @@ if ($rol == PermisosSistema::ROL_PROFESOR) {
     <!-- CSS & JS -->
     <link rel="stylesheet" href="../lib/bootstrap-4.1.1-dist/css/bootstrap.css" />
     <link rel="stylesheet" href="../lib/open-iconic-master/font/css/open-iconic-bootstrap.css" />
+    <link rel="stylesheet" href="../lib/css/premium.css" />
     <script type="text/javascript" src="../lib/JQuery/jquery-3.3.1.js"></script>
     <script type="text/javascript" src="../lib/bootstrap-4.1.1-dist/js/bootstrap.min.js"></script>
     
     <style>
         body {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            color: #1e293b;
-            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f2f2f2 !important;
+            color: #333333;
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
             min-height: 100vh;
         }
 
-        /* Jumbotron Premium */
+        /* Encabezado de Bienvenida Estilo UNPA-UARG */
         .jumbotron-premium {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: white;
-            border-radius: 16px;
+            background: linear-gradient(135deg, #1d262d 0%, #263238 100%);
+            color: #ffffff;
+            border-bottom: 4px solid #9ab300;
+            border-radius: 10px;
             padding: 2.25rem 2.5rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2.5rem;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+            margin-bottom: 2.25rem;
             position: relative;
             overflow: hidden;
+        }
+
+        .jumbotron-premium h1 {
+            color: #ffffff;
+            font-size: 2rem;
+        }
+
+        .jumbotron-premium p.lead {
+            color: #e2e8f0;
+            font-size: 1.05rem !important;
         }
 
         .badge-rol {
             display: inline-flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: rgba(255, 255, 255, 0.9);
+            background: rgba(154, 179, 0, 0.2);
+            border: 1px solid #9ab300;
+            color: #ffffff;
             border-radius: 30px;
             padding: 0.35rem 0.9rem;
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.78rem;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
-        /* Buzón de Pendientes en Tarjetas */
+        /* Buzón de Pendientes en Tarjetas Estilo UNPA-UARG */
         .card-premium-buzon {
-            background: rgba(255, 255, 255, 0.85);
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-            backdrop-filter: blur(10px);
+            background: #ffffff;
+            border: 1px solid #dcdcdc;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
             margin-bottom: 2rem;
         }
 
         .card-header-buzon {
-            background: transparent;
-            border-bottom: 1px solid #f1f5f9;
-            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, #1d262d 0%, #263238 100%);
+            border-bottom: 3px solid #9ab300;
+            border-radius: 9px 9px 0 0;
+            padding: 1.25rem 1.75rem;
+        }
+
+        .card-header-buzon h4 {
+            color: #ffffff !important;
+        }
+        .card-header-buzon .text-primary {
+            color: #9ab300 !important;
         }
 
         .card-pendiente {
-            background: white;
-            border: 1px solid #f1f5f9;
-            border-radius: 14px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-            transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s ease;
-            margin-bottom: 1.25rem;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+            transition: background-color 0.15s ease, box-shadow 0.15s ease;
+            margin-bottom: 1rem;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            padding: 1.25rem;
+            padding: 1.15rem;
         }
 
         @media (min-width: 992px) {
@@ -788,127 +807,125 @@ if ($rol == PermisosSistema::ROL_PROFESOR) {
         }
 
         .card-pendiente:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            background-color: #fafafa;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
         }
 
         /* Indicadores laterales de estado */
-        .card-pendiente.status-borrador { border-left: 6px solid #94a3b8; }
-        .card-pendiente.status-devuelto { border-left: 6px solid #ef4444; }
-        .card-pendiente.status-revision { border-left: 6px solid #6366f1; }
-        .card-pendiente.status-desconocido { border-left: 6px solid #cbd5e1; }
+        .card-pendiente.status-borrador { border-left: 5px solid #94a3b8; }
+        .card-pendiente.status-devuelto { border-left: 5px solid #d93025; }
+        .card-pendiente.status-revision { border-left: 5px solid #0088cc; }
+        .card-pendiente.status-desconocido { border-left: 5px solid #cbd5e1; }
 
         .nombre-asignatura {
-            color: #0f172a;
-            font-size: 1.15rem;
+            color: #003366;
+            font-size: 1.05rem;
             font-weight: 700;
         }
 
         .detail-tag {
-            background-color: #f1f5f9;
-            color: #475569;
+            background-color: #f5f5f5;
+            color: #555555;
             font-size: 0.8rem;
             padding: 0.25rem 0.6rem;
-            border-radius: 6px;
+            border-radius: 2px;
+            border: 1px solid #e0e0e0;
             font-weight: 500;
             display: inline-flex;
             align-items: center;
         }
 
         .observaciones-box {
-            background-color: #fef2f2;
-            border: 1px solid #fee2e2;
-            color: #b91c1c;
-            border-radius: 8px;
+            background-color: #fff5f5;
+            border: 1px solid #f5c6cb;
+            color: #cc0000;
+            border-radius: 2px;
             padding: 0.75rem;
             margin-top: 0.75rem;
             font-size: 0.85rem;
         }
 
-        /* Botones de acción Premium */
+        /* Botones de acción UNPA-UARG */
         .btn-premium-action {
             font-weight: 600;
-            border-radius: 10px;
-            padding: 0.5rem 1.25rem;
-            transition: all 0.2s ease;
-            font-size: 0.875rem;
+            border-radius: 2px;
+            padding: 0.45rem 1.1rem;
+            transition: background-color 0.15s ease;
+            font-size: 0.85rem;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             border: none;
             cursor: pointer;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
         }
 
         .btn-premium-success {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background-color: #9ab300;
             color: white !important;
         }
         .btn-premium-success:hover {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            transform: translateY(-1px);
+            background-color: #829800;
         }
 
         .btn-premium-warning {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            background-color: #e67e22;
             color: white !important;
         }
         .btn-premium-warning:hover {
-            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-            transform: translateY(-1px);
+            background-color: #d35400;
         }
 
         .btn-premium-primary {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            background-color: #0088cc;
             color: white !important;
         }
         .btn-premium-primary:hover {
-            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
-            transform: translateY(-1px);
+            background-color: #006da3;
         }
 
         .btn-premium-outline-secondary {
-            background-color: transparent;
-            border: 1.5px solid #cbd5e1;
-            color: #475569;
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            color: #444444;
         }
         .btn-premium-outline-secondary:hover {
-            background-color: #f1f5f9;
-            color: #1e293b;
+            background-color: #f5f5f5;
+            color: #003366;
         }
 
         /* Accesos Rápidos */
         .card-acceso {
-            background: white;
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: #ffffff;
+            border: 1px solid #dedede;
+            border-top: 3px solid #0088cc;
+            border-radius: 2px;
+            box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.12);
+            transition: box-shadow 0.15s ease;
             height: 100%;
             overflow: hidden;
         }
 
         .card-acceso:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
         }
 
         .acceso-icon-container {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 44px;
+            height: 44px;
+            border-radius: 2px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             color: white;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1rem;
         }
 
-        .icon-blue { background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%); }
-        .icon-purple { background: linear-gradient(135deg, #c084fc 0%, #7c3aed 100%); }
-        .icon-pink { background: linear-gradient(135deg, #f472b6 0%, #db2777 100%); }
-        .icon-indigo { background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%); }
+        .icon-blue { background-color: #0088cc; }
+        .icon-purple { background-color: #003366; }
+        .icon-pink { background-color: #9ab300; }
+        .icon-indigo { background-color: #1d262d; }
 
         /* Estilos del Stepper Moderno */
         .stepper-wrapper {
